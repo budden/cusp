@@ -13,13 +13,12 @@ public class LispResourceFilter extends ResourcePatternFilter {
 			
 			String fileName = file.getName();
 		
-			if (fileName.equals(".project")) {
-				return false;
-			} else if (fileName.endsWith(".fas") || fileName.endsWith(".fasl")) {
-				return false;
-			} else if (fileName.endsWith("~")) {
-				return false;
-			} else if (fileName.endsWith(".lib")) {
+			if (fileName.equals(".project")
+					|| fileName.equals(".DS_Store")
+					|| fileName.endsWith(".fas")
+					|| fileName.endsWith(".fasl")
+					|| fileName.endsWith("~")
+					|| fileName.endsWith(".lib")) {
 				return false;
 			}
 		}
