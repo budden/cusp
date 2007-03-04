@@ -24,18 +24,23 @@ import org.eclipse.jface.text.source.*;
 import org.eclipse.ui.part.ViewPart;
 
 
+/**
+ * @author Tim Jasko
+ */
+
 public class ReplView extends ViewPart {
 	
 	protected ArrayList<String> prevCommands = new ArrayList<String>();
 
 	public static final String ID = "jasko.tim.lisp.views.ReplView";
-	protected enum State {
+	/*protected enum State {
 		Eval,
 		ReadString,
 		Debug
-	}
+	}*/
 	
-	protected State state = State.Eval;
+	//protected State state = State.Eval;
+	protected Stack<State> states = new Stack<State>();
 	
 	/**
 	 * Used when the Repl is returning input from ReadString mode.
@@ -66,6 +71,7 @@ public class ReplView extends ViewPart {
 	}
 	
 	public void createPartControl(Composite parent) {
+		
 		parentControl = parent;
 		swank = getSwank();
 		
@@ -220,6 +226,8 @@ public class ReplView extends ViewPart {
  		
  		parent.getShell().setDefaultButton(btn);
  		
+ 		pushEvalState();
+ 		
  		registerSwankListeners();
  		
  		fillToolBar(parent);
@@ -366,9 +374,7 @@ public class ReplView extends ViewPart {
 		
 		swank.addReadListener(new SwankRunnable() {
 			public void run() {
-				ReplView.this.stringNum1 = result.get(1).value;
-				ReplView.this.stringNum2 = result.get(2).value;
-				setState(State.ReadString);
+				pushReadState(result.get(1).value, result.get(2).value);
 				appendText(swank.fetchDisplayText() + "\n");
 				scrollDown();
 			}
@@ -380,7 +386,7 @@ public class ReplView extends ViewPart {
 				appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
 				
 				LispNode options = result.get(4);
-				numDebugOptions = options.params.size(); 
+				int numDebugOptions = options.params.size(); 
 				for (int i=0; i<options.params.size(); ++i) {
 					LispNode option = options.get(i);
 					appendText("\t" + i + ": [" + option.car().value + "] "
@@ -397,7 +403,7 @@ public class ReplView extends ViewPart {
 				} // for
 				
 				
-				setState(State.Debug);
+				pushDebugState(numDebugOptions);
 			} // run()
 		});
 		
@@ -410,35 +416,6 @@ public class ReplView extends ViewPart {
 	
 	private Color backgroundColor;
 	
-	protected void setState(State state) {
-		this.state = state;
-		Display display = this.getSite().getShell().getDisplay();
-		Color newColor = null;
-		
-		switch (state) {
-		case Eval:
-			in.getControl().setBackground(null);
-			in.getControl().setForeground(null);
-			replComposite.setBackground(null);
-			break;
-		case ReadString:
-			newColor = new Color(display, 0, 255, 0);
-			in.getControl().setBackground(newColor);
-			in.getControl().setForeground(newColor);
-			replComposite.setBackground(newColor);
-			break;
-		case Debug:
-			newColor = new Color(display, 255, 0, 0);
-			in.getControl().setBackground(newColor);
-			in.getControl().setForeground(newColor);
-			replComposite.setBackground(newColor);
-			break;
-		}
-		if (backgroundColor != null) {
-			backgroundColor.dispose();
-		}
-		backgroundColor = newColor;
-	}
 	
 	protected class ReturnHandler extends SwankRunnable {
 		public void run() {
@@ -460,44 +437,11 @@ public class ReplView extends ViewPart {
 			cmd = cmd + "\n"; 
 		}
 		String cleanCmd = cmd.replace("\r", "");
-		switch (state) {
-		case Eval: {
-			System.out.println(cleanCmd);
-			prevCommands.add(cmd.trim());
-			currPrevCommand = prevCommands.size();
-			appendText(swank.getPackage() + "> " + cmd);
-			scrollDown();
-			
-			swank.sendEval(cleanCmd, new ReturnHandler());
-			break;
-		}
-		case Debug: {
-			try {
-				int choice = Integer.parseInt(cleanCmd.trim());
-				if (choice >=0 && choice < numDebugOptions) {
-					swank.sendDebug(cleanCmd, null);
-					appendText("]> " + cmd);
-					scrollDown();
-					setState(State.Eval);
-				} else {
-					appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
-				}
-			} catch (Exception e) {
-				appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
-			}
-			break;
-		}
-		case ReadString: {
-			swank.sendReadString(cleanCmd, null, stringNum1, stringNum2);
-			appendText(">> " + cmd);
-			scrollDown();
-			setState(State.Eval);
-			break;
-		}
-		default:
-			System.out.println("Repl is in a theoretically unreachable state");
-		} // switch
+		State state = currState();
 		
+		if (state.handle(cmd, cleanCmd)) {
+			popState();
+		}
 		
 		// When this was called from the TextChanged event, exceptions got thrown
 		//  and the control became unresponsive. So, we execute elsewhere.
@@ -601,6 +545,124 @@ public class ReplView extends ViewPart {
 		}
 
 		public void widgetDefaultSelected(SelectionEvent e) {
+		}
+	
+	}
+	
+	
+	
+	
+	//******************************
+	//      State handling
+	//******************************
+	
+	protected void pushState(State s) {
+		states.push(s);
+		applyCurrentState();
+	}
+	
+	protected void popState() {
+		states.pop();
+		applyCurrentState();
+	}
+	
+	protected State currState() {
+		return states.peek();
+	}
+	
+	private void applyCurrentState() {
+		State state = currState();
+		Display display = this.getSite().getShell().getDisplay();
+		Color newColor = state.getColor(display);
+	
+		in.getControl().setBackground(newColor);
+		in.getControl().setForeground(newColor);
+		replComposite.setBackground(newColor);
+			
+		if (backgroundColor != null) {
+			backgroundColor.dispose();
+		}
+		backgroundColor = newColor;
+	}
+	
+	
+	protected void pushEvalState() {
+		pushState(new EvalState());
+	}
+	
+	protected void pushDebugState(int numDebugOptions) {
+		pushState(new DebugState(numDebugOptions));
+	}
+	
+	protected void pushReadState(String s1, String s2) {
+		pushState(new ReadState(s1, s2));
+	}
+
+	
+	protected class DebugState implements State {
+		private int numDebugOptions;
+		
+		public DebugState(int numDebugOptions) {
+			this.numDebugOptions = numDebugOptions;
+		}
+
+		public Color getColor(Display display) {
+			return new Color(display, 255, 0, 0);
+		}
+
+		public boolean handle(String command, String cleanCommand) {
+			try {
+				int choice = Integer.parseInt(cleanCommand.trim());
+				if (choice >=0 && choice < numDebugOptions) {
+					swank.sendDebug(cleanCommand, null);
+					appendText("]> " + command);
+					scrollDown();
+					return true;
+				} else {
+					appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
+				}
+			} catch (Exception e) {
+				appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
+			}
+			return false;
+		}
+	}
+	
+	protected class EvalState implements State {
+
+		public Color getColor(Display display) {
+			return null;
+		}
+
+		public boolean handle(String command, String cleanCommand) {
+			System.out.println(cleanCommand);
+			prevCommands.add(command.trim());
+			currPrevCommand = prevCommands.size();
+			appendText(swank.getPackage() + "> " + command);
+			scrollDown();
+			
+			swank.sendEval(cleanCommand, new ReturnHandler());
+			return false;
+		}
+	}
+	
+	protected class ReadState implements State {
+		private String stringNum1, stringNum2;
+		
+		public ReadState(String s1, String s2) {
+			stringNum1 = s1;
+			stringNum2 = s2;
+		}
+
+		public Color getColor(Display display) {
+			return new Color(display, 0, 255, 0);
+		}
+
+		public boolean handle(String command, String cleanCommand) {
+			swank.sendReadString(cleanCommand, null, stringNum1, stringNum2);
+			appendText(">> " + command);
+			scrollDown();
+			return true;
 		}
 	
 	}
