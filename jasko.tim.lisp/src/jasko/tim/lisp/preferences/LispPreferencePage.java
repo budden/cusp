@@ -35,11 +35,12 @@ public class LispPreferencePage
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
+		/*
 		addField(new FileFieldEditor(PreferenceConstants.LISP_EXE, 
 				"&Lisp Executable:", getFieldEditorParent()));
 		addField(new FileFieldEditor(PreferenceConstants.SWANK_LOADER, 
 				"&Swank loader:", getFieldEditorParent()));
-		/*addField(new DirectoryFieldEditor(PreferenceConstants.P_PATH, 
+		addField(new DirectoryFieldEditor(PreferenceConstants.P_PATH, 
 				"&Directory preference:", getFieldEditorParent()));
 		addField(
 			new BooleanFieldEditor(

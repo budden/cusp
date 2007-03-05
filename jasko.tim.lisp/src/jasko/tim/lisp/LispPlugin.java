@@ -31,6 +31,7 @@ public class LispPlugin extends AbstractUIPlugin {
 	 */
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
+		cm =  new ColorManager(this);
 		
 		try {
 			swank = new SwankInterface();
@@ -72,7 +73,7 @@ public class LispPlugin extends AbstractUIPlugin {
 	}
 	
 	
-	private ColorManager cm = new ColorManager();
+	private ColorManager cm;
 	public ColorManager getColorManager() {
 		return cm;
 	}

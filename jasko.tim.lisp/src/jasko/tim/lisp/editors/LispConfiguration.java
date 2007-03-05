@@ -72,7 +72,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 			tagScanner.setDefaultReturnToken(
 				new Token(
 					new TextAttribute(
-						colorManager.getColor(ColorManager.DEFAULT))));
+						colorManager.getColor(ColorManager.TokenType.DEFAULT))));
 		}
 		return tagScanner;
 	}
@@ -98,21 +98,21 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 		NonRuleBasedDamagerRepairer ndr =
 			new NonRuleBasedDamagerRepairer(
 				new TextAttribute(
-					colorManager.getColor(ColorManager.COMMENT), null, SWT.ITALIC));
+					colorManager.getColor(ColorManager.TokenType.COMMENT), null, SWT.ITALIC));
 		reconciler.setDamager(ndr, LispPartitionScanner.LISP_COMMENT);
 		reconciler.setRepairer(ndr, LispPartitionScanner.LISP_COMMENT);
 		
 		NonRuleBasedDamagerRepairer ndr3 =
 			new NonRuleBasedDamagerRepairer(
 				new TextAttribute(
-					colorManager.getColor(ColorManager.STRING)));
+					colorManager.getColor(ColorManager.TokenType.STRING)));
 		reconciler.setDamager(ndr3, LispPartitionScanner.LISP_CHARACTER);
 		reconciler.setRepairer(ndr3, LispPartitionScanner.LISP_CHARACTER);
 		
 		NonRuleBasedDamagerRepairer ndr2 =
 			new NonRuleBasedDamagerRepairer(
 				new TextAttribute(
-					colorManager.getColor(ColorManager.STRING)));
+					colorManager.getColor(ColorManager.TokenType.STRING)));
 		reconciler.setDamager(ndr2, LispPartitionScanner.LISP_STRING);
 		reconciler.setRepairer(ndr2, LispPartitionScanner.LISP_STRING);
 

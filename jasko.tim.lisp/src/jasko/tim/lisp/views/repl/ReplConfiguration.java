@@ -28,7 +28,7 @@ public class ReplConfiguration extends LispConfiguration {
 		
 		DefaultDamagerRepairer dr =
 			new DefaultDamagerRepairer(new LispScanner(colorManager, 
-					colorManager.getColor(ColorManager.SENT_MESSAGE)));
+					colorManager.getColor(ColorManager.TokenType.SENT_MESSAGE)));
 		reconciler.setDamager(dr, ReplPartitionScanner.SENT_COMMAND);
 		reconciler.setRepairer(dr, ReplPartitionScanner.SENT_COMMAND);
 
