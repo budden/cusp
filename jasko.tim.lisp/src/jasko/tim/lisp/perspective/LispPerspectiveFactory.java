@@ -11,7 +11,7 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 	public void createInitialLayout(IPageLayout layout) {
 		//	 Get the editor area.
 		String editorArea = layout.getEditorArea();
-
+		
 		// Top left: Resource Navigator view
 		IFolderLayout topLeft = layout.createFolder("topLeft", IPageLayout.LEFT, 0.25f,
 			editorArea);
@@ -27,7 +27,6 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		bottom.addView(ReplView.ID);
 		bottom.addView(IPageLayout.ID_PROBLEM_VIEW);
 		bottom.addView(AproposView.ID);
-
 	}
 
 }

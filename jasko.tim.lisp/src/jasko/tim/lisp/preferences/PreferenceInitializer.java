@@ -2,8 +2,10 @@ package jasko.tim.lisp.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.swt.graphics.RGB;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.ColorManager;;
 
 /**
  * Class used to initialize default preference values.
@@ -17,15 +19,21 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 */
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = LispPlugin.getDefault().getPreferenceStore();
-		//String exe = LispPlugin.getDefault().getPluginPath() + "CLisp-win32/clisp.exe";
-		store.setDefault(PreferenceConstants.LISP_EXE, "C:\\Program Files\\LispBox\\CLISP\\clisp-2.33\\full\\lisp.exe");
-		store.setDefault(PreferenceConstants.SWANK_LOADER, "C:\\Program Files\\LispBox\\slime\\swank-loader.lisp");
-
-		
-		store.setDefault(PreferenceConstants.P_BOOLEAN, true);
-		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
-		store.setDefault(PreferenceConstants.P_STRING,
-				"Default value");
+		store.setDefault(PreferenceConstants.COLOR_COMMENT, rgbAsPrefString(ColorManager.DEFAULT_COMMENT));
+		store.setDefault(PreferenceConstants.COLOR_CONSTANT, rgbAsPrefString(ColorManager.DEFAULT_CONSTANT));
+		store.setDefault(PreferenceConstants.COLOR_GLOBAL, rgbAsPrefString(ColorManager.DEFAULT_GLOBAL));
+		store.setDefault(PreferenceConstants.COLOR_KEYWORD, rgbAsPrefString(ColorManager.DEFAULT_KEYWORD));
+		store.setDefault(PreferenceConstants.COLOR_NUMBER, rgbAsPrefString(ColorManager.DEFAULT_NUMBER));
+		store.setDefault(PreferenceConstants.COLOR_PARAMS, rgbAsPrefString(ColorManager.DEFAULT_PARAMS));
+		store.setDefault(PreferenceConstants.COLOR_PAREN, rgbAsPrefString(ColorManager.DEFAULT_PAREN));
+		store.setDefault(PreferenceConstants.COLOR_SENT_MESSAGE, rgbAsPrefString(ColorManager.DEFAULT_SENT_MESSAGE));
+		store.setDefault(PreferenceConstants.COLOR_STRINGS, rgbAsPrefString(ColorManager.DEFAULT_STRING));
+		store.setDefault(PreferenceConstants.COLOR_SYMBOL, rgbAsPrefString(ColorManager.DEFAULT_SYMBOL));
+	}
+	
+	
+	protected static String rgbAsPrefString(RGB rgb) { 
+		return "" + rgb.red + "," + rgb.green + "," + rgb.blue + "";
 	}
 
 }

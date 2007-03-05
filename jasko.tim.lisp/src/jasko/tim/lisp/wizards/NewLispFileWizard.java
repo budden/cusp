@@ -40,7 +40,6 @@ public class NewLispFileWizard extends Wizard implements INewWizard {
 	/**
 	 * Adding the page to the wizard.
 	 */
-
 	public void addPages() {
 		page = new NewLispFileWizardPage(selection);
 		addPage(page);
