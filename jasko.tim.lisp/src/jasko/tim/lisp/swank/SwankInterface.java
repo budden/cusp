@@ -1,5 +1,6 @@
 package jasko.tim.lisp.swank;
 
+import jasko.tim.lisp.LispPlugin;
 
 import java.io.*;
 import java.util.*;
@@ -32,8 +33,6 @@ C:\sbcl\bin\sbcl.exe --load "C:/slime/swank-loader.lisp" --eval "(swank:create-s
  *   invoke (the debugger, for example). Probably 90% of these are subscribed to by the Repl. 
  *  
  * TODO:
- * -As we are extended to handle more implementations, it will probably make sense to turn the
- *  Implementation enum into a class that abstracts out the various issues we have to worry about.
  * -Indentation is very dumb right now, and needs to be made smarter.
  *  
  * 
@@ -41,15 +40,19 @@ C:\sbcl\bin\sbcl.exe --load "C:/slime/swank-loader.lisp" --eval "(swank:create-s
  *  @author Tim Jasko
  */
 public class SwankInterface {
-	public enum Implementation { SBCL, Allegro };
-	public Implementation implementation;
 	
+	public LispImplementation implementation;
+	 	
+	/** Port of the Swank server */
 	private static Integer port = 4004;
+	
 	private Socket echoSocket = null;
 	private Socket secondary = null;
 	private DataOutputStream out = null;
 	DataOutputStream commandInterface = null;
 	private int messageNum = 1;
+	
+	/** Holds whether we are connected to Swank. */
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
 	
@@ -110,6 +113,10 @@ public class SwankInterface {
 	public Hashtable<String, String> indents;
 	public Hashtable<String, String> fletIndents;
 
+	/**
+	 * TODO: Indentation is very dumb right now, and needs to be made smarter.
+	 *
+	 */
 	private void initIndents() {
 		fletIndents = new Hashtable<String, String>();
 		fletIndents.put("flet",			"  ");
@@ -157,7 +164,29 @@ public class SwankInterface {
 		return connected;
 	}
 	
-	
+	/**
+	 * 
+	 * @return
+	protected Process startAppropriateLispProcess()
+	{
+		Process lispProcess = null;
+		LispImplementation impl = null;
+		//the pecking order of lisps:
+		if (impl == null) impl = SBCLImplementation.findImplementation();
+		if (impl == null) impl = AllegroImplementation.findImplementation();
+		
+		if (impl != null)
+			lispProcess = impl.start("");
+		
+		return lispProcess;
+	}
+	*/
+	  	
+	/** 
+	 * Connects to the swank server.
+	 * 
+	 * @return whether connecting was successful
+	*/
 	public boolean connect() {
 		currPackage = "COMMON-LISP-USER";
 		//IPreferenceStore store = LispPlugin.getDefault().getPreferenceStore();
@@ -165,78 +194,32 @@ public class SwankInterface {
 		synchronized(port) {
 			++port;
 			
-			/*String[] commandLine = new String[] {
-					store.getString(PreferenceConstants.LISP_EXE),
-					"-ansi",
-					"-q",
-					"-B", "C:\\Program Files\\LispBox\\CLISP\\clisp-2.33\\full\\",
-					"-M", "C:\\Program Files\\LispBox\\CLISP\\clisp-2.33\\full\\lispinit.mem",
-					"-i", "C:\\Program Files\\LispBox\\load.lisp",
-					"-i", "C:\\Program Files\\LispBox\\slime\\swank-loader.lisp",
-					"-x", "(swank:create-swank-server " + port + ")",
-					"-interactive-debug"
-			};*/
-			String slimePath ="";
-			
-			try {
-				//String pluginDir = Platform.resolve(Platform.getBundle("jasko.tim.lisp").getEntry("/")).getFile();
-				String pluginDir = FileLocator.resolve(Platform.getBundle("jasko.tim.lisp").getEntry("/")).getFile();
-		
-				
-				ProcessBuilder pb = new ProcessBuilder(new String[] { "sbcl" });
-				
-				File sbclFolder = new File(pluginDir + "sbcl/");
-				if (sbclFolder.exists()) {
-					String sbclPath = pluginDir + "sbcl/";
-					String sbclExec  = sbclPath;
-					String os = System.getProperty("os.name").toLowerCase();
-					slimePath = pluginDir + "slime/swank-loader.lisp";
-					System.out.println(os);
-					if (os.contains("windows")) {
-						sbclPath = sbclPath.replaceFirst("/", "");
-						sbclExec = sbclPath + "/sbcl.exe";
-						slimePath = slimePath.replaceFirst("/", "");
-					} else {
-						sbclExec = sbclPath + "/sbcl";
-					}
-					
-					String[] commandLine = new String[] {
-							sbclExec,
-							"--load", slimePath//,
-					//		"--eval", "(swank:create-swank-server " + port + " nil)\n"
-					};
-					implementation = Implementation.SBCL;
-					
-					pb = new ProcessBuilder(commandLine);
-					pb.environment().put("SBCL_HOME", sbclPath);
-				} else {
-					String lispPath = pluginDir + "acl80/";
-					String lispExec  = lispPath;
-					String os = System.getProperty("os.name").toLowerCase();
-					slimePath = pluginDir + "slime/swank-loader.lisp";
-					System.out.println(os);
-					if (os.contains("windows")) {
-						lispPath = lispPath.replaceFirst("/", "");
-						lispExec = lispPath + "/alisp.exe";
-						slimePath = slimePath.replaceFirst("/", "");
-					} else {
-						lispExec = lispPath + "/alisp";
-					}
-					
-					String[] commandLine = new String[] {
-							lispExec
-					};
-					implementation = Implementation.Allegro;
-					
-					pb = new ProcessBuilder(commandLine);
-					
+			// Find an implementation and start a lisp process
+			// the pecking order of lisps:
+			if (implementation == null) {
+				implementation = SBCLImplementation.findImplementation();
+			}
+			if (implementation == null) {
+				implementation = AllegroImplementation.findImplementation();
+			}
+
+			String pluginDir = LispPlugin.getDefault().getPluginPath();
+			String slimePath = pluginDir + "slime/swank-loader.lisp";
+			if (implementation != null) {
+				try {
+					lispEngine = implementation.start(slimePath);
+				} catch (IOException e3) {
+					e3.printStackTrace();
+					return false;
 				}
-				
-				
-		
-				lispEngine = pb.start();
-			} catch (IOException e2) {
-				e2.printStackTrace();
+			} else {
+				try {
+					ProcessBuilder pb = new ProcessBuilder(new String[] {
+							"sbcl", "--load", slimePath });
+					lispEngine = pb.start();
+				} catch (IOException e) {
+					return false;
+				}
 			}
 			
 			// it's not happy unless we hook up to clear out the output
@@ -299,11 +282,7 @@ public class SwankInterface {
 	public void disconnect() {
 		
 		try {
-			if (implementation == Implementation.Allegro) {
-				commandInterface.writeBytes("(exit)\n");
-			} else {
-				commandInterface.writeBytes("(quit)\n");
-			}
+			commandInterface.writeBytes(implementation.getQuitForm() + "\n");
 			commandInterface.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
