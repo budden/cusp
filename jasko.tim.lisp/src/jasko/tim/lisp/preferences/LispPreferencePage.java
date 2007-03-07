@@ -35,18 +35,20 @@ public class LispPreferencePage
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
-		/*
+		
+		addField(
+				new BooleanFieldEditor(
+					PreferenceConstants.USE_SITEWIDE_LISP,
+					"Use a lisp &sitewide installation (executable is on the path)",
+					getFieldEditorParent()));
+
 		addField(new FileFieldEditor(PreferenceConstants.LISP_EXE, 
 				"&Lisp Executable:", getFieldEditorParent()));
+/*
 		addField(new FileFieldEditor(PreferenceConstants.SWANK_LOADER, 
 				"&Swank loader:", getFieldEditorParent()));
 		addField(new DirectoryFieldEditor(PreferenceConstants.P_PATH, 
 				"&Directory preference:", getFieldEditorParent()));
-		addField(
-			new BooleanFieldEditor(
-				PreferenceConstants.P_BOOLEAN,
-				"&An example of a boolean preference",
-				getFieldEditorParent()));
 
 		addField(new RadioGroupFieldEditor(
 				PreferenceConstants.P_CHOICE,
@@ -56,7 +58,8 @@ public class LispPreferencePage
 				"C&hoice 2", "choice2" }
 		}, getFieldEditorParent()));
 		addField(
-			new StringFieldEditor(PreferenceConstants.P_STRING, "A &text preference:", getFieldEditorParent()));*/
+			new StringFieldEditor(PreferenceConstants.P_STRING, "A &text preference:", getFieldEditorParent()));
+*/
 	}
 
 	/* (non-Javadoc)

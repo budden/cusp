@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.Platform;
  */
 public class AllegroImplementation extends LispImplementation {
 	/**
-	 * @return whether an SBCL implementation can be found on the host computer
+	 * @return whether an Allegro implementation can be found on the host computer
 	 */
 	static public boolean existsOnSystem() {
 		return findExecutable() != null;
@@ -27,7 +27,7 @@ public class AllegroImplementation extends LispImplementation {
 	
 	/**
 	 * 
-	 * @return the executable SBCL file on the host computer
+	 * @return the executable alisp file on the host computer
 	 */
 	static protected File findExecutable()
 	{
@@ -50,7 +50,7 @@ public class AllegroImplementation extends LispImplementation {
 		}
 		else
 		{
-			//TODO: just default to whatever happens when you type `sbcl' into bash
+			//TODO: just default to whatever happens when you type `alisp' into bash
 			exec = null;
 		}
 		return exec;
@@ -73,9 +73,9 @@ public class AllegroImplementation extends LispImplementation {
 	}
 	
 	/**
-	 * Attempts to find and return an SBCL implementation on the system.
+	 * Attempts to find and return an Allegro implementation on the system.
 	 *  
-	 * @return SBCL implementation found on the system, or null if none is found
+	 * @return Allegro implementation found on the system, or null if none is found
 	 */
 	static public AllegroImplementation findImplementation()
 	{
@@ -94,17 +94,17 @@ public class AllegroImplementation extends LispImplementation {
 	
 	/**
 	 * Constructs an instance of an AllegroImplementation.  Does NOT start a process
-	 * or find an SBCL implementation on the host machine.
+	 * or find an Allegro implementation on the host machine.
 	 * 
 	 * @see start()
 	 * @see 
 	 * @param executable
-	 * @param sbclDirectory
+	 * @param aclDirectory
 	 */
-	public AllegroImplementation(File executable, File sbclDirectory)
+	public AllegroImplementation(File executable, File aclDirectory)
 	{
 		this.executable = executable;
-		this.path = sbclDirectory;
+		this.path = aclDirectory;
 	}
 	
 	public boolean isValid() { return executable != null && path != null; }

@@ -22,39 +22,14 @@ import jasko.tim.lisp.LispPlugin;
  * be accessed directly via the preference store.
  */
 
-public class ImplementationsPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
+public class ImplementationsPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
 	public ImplementationsPreferencePage() {
-		super();
+		super(GRID);
 		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
 		setDescription("Add/remove installed Lisp implementations.");
 	}
 	
-	public class ImplementationListFieldEditor extends ListEditor {
-		
-		public ImplementationListFieldEditor(String name, String label, Composite parent)
-		{
-			super(name, label, parent);
-		}
-
-		@Override
-		protected String createList(String[] items) {
-			return items.toString();
-		}
-
-		@Override
-		protected String getNewInputObject() {
-			FileDialog dialog = new FileDialog(this.getShell());
-			dialog.open();
-			return dialog.getFileName();
-		}
-
-		@Override
-		protected String[] parseString(String stringList) {
-			return new String[]{ "Stuff 1", "more things 2", "and-yet-more 3" };
-		}
-		
-	}
 	
 	/**
 	 * Creates the field editors. Field editors are abstractions of
@@ -63,7 +38,14 @@ public class ImplementationsPreferencePage extends PreferencePage implements IWo
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
-		
+		addField(
+				new BooleanFieldEditor(
+					PreferenceConstants.USE_SITEWIDE_LISP,
+					"Use a lisp &sitewide installation (executable is on the path)",
+					getFieldEditorParent()));
+
+		addField(new FileFieldEditor(PreferenceConstants.LISP_EXE, 
+				"&Lisp Executable:", getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)
@@ -72,10 +54,6 @@ public class ImplementationsPreferencePage extends PreferencePage implements IWo
 	public void init(IWorkbench workbench) {
 	}
 
-	@Override
-	protected Control createContents(Composite parent) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+
 	
 }

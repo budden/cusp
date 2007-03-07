@@ -197,6 +197,9 @@ public class SwankInterface {
 			// Find an implementation and start a lisp process
 			// the pecking order of lisps:
 			if (implementation == null) {
+				implementation = SiteWideImplementation.findImplementation();
+ 			}
+			if (implementation == null) {
 				implementation = SBCLImplementation.findImplementation();
 			}
 			if (implementation == null) {
