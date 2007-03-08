@@ -5,8 +5,6 @@ import jasko.tim.lisp.LispPlugin;
 import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Platform;
 
 /**
  * This is a class for finding and starting Allegro.

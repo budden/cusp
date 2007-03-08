@@ -1,9 +1,5 @@
 package jasko.tim.lisp.preferences;
 
-import jasko.tim.lisp.ColorManager.TokenType;
-
-import org.eclipse.swt.graphics.RGB;
-
 
 /**
  * Constant definitions for plug-in preferences

@@ -2,7 +2,6 @@ package jasko.tim.lisp;
 
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
-import java.awt.Event;
 import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashMap;

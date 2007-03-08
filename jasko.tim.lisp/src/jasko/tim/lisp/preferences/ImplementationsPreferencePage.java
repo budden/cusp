@@ -1,9 +1,6 @@
 package jasko.tim.lisp.preferences;
 
 import org.eclipse.jface.preference.*;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;
 import jasko.tim.lisp.LispPlugin;

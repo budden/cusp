@@ -382,28 +382,8 @@ public class ReplView extends ViewPart {
 		
 		swank.addDebugListener(new SwankRunnable() {
 			public void run() {
-				LispNode desc = result.get(3);
-				appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
 				
-				LispNode options = result.get(4);
-				int numDebugOptions = options.params.size(); 
-				for (int i=0; i<options.params.size(); ++i) {
-					LispNode option = options.get(i);
-					appendText("\t" + i + ": [" + option.car().value + "] "
-							+ option.cadr().value + "\n");
-				} // for
-				
-				scrollDown();
-				
-				LispNode backtrace = result.get(5);
-				appendText("BACKTRACE:\n");
-				for (int i=0; i<backtrace.params.size(); ++i) {
-					LispNode trace = backtrace.get(i);
-					appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
-				} // for
-				
-				
-				pushDebugState(numDebugOptions);
+				pushDebugState(result);
 			} // run()
 		});
 		
@@ -583,6 +563,8 @@ public class ReplView extends ViewPart {
 			backgroundColor.dispose();
 		}
 		backgroundColor = newColor;
+		
+		state.activate();
 	}
 	
 	
@@ -590,8 +572,8 @@ public class ReplView extends ViewPart {
 		pushState(new EvalState());
 	}
 	
-	protected void pushDebugState(int numDebugOptions) {
-		pushState(new DebugState(numDebugOptions));
+	protected void pushDebugState(LispNode debugInfo) {
+		pushState(new DebugState(debugInfo));
 	}
 	
 	protected void pushReadState(String s1, String s2) {
@@ -601,9 +583,14 @@ public class ReplView extends ViewPart {
 	
 	protected class DebugState implements State {
 		private int numDebugOptions;
+		LispNode desc, options, backtrace;
 		
-		public DebugState(int numDebugOptions) {
-			this.numDebugOptions = numDebugOptions;
+		public DebugState(LispNode debugInfo) {
+			desc = debugInfo.get(3);
+			options = debugInfo.get(4);
+			backtrace = debugInfo.get(5);
+			
+			numDebugOptions = options.params.size();
 		}
 
 		public Color getColor(Display display) {
@@ -626,6 +613,26 @@ public class ReplView extends ViewPart {
 			}
 			return false;
 		}
+
+		public void activate() {
+			
+			appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
+			
+			for (int i=0; i<options.params.size(); ++i) {
+				LispNode option = options.get(i);
+				appendText("\t" + i + ": [" + option.car().value + "] "
+						+ option.cadr().value + "\n");
+			} // for
+			
+			scrollDown();
+			
+			appendText("BACKTRACE:\n");
+			for (int i=0; i<backtrace.params.size(); ++i) {
+				LispNode trace = backtrace.get(i);
+				appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
+			} // for
+			
+		}
 	}
 	
 	protected class EvalState implements State {
@@ -643,6 +650,9 @@ public class ReplView extends ViewPart {
 			
 			swank.sendEval(cleanCommand, new ReturnHandler());
 			return false;
+		}
+
+		public void activate() {
 		}
 	}
 	
@@ -663,6 +673,9 @@ public class ReplView extends ViewPart {
 			appendText(">> " + command);
 			scrollDown();
 			return true;
+		}
+
+		public void activate() {
 		}
 	
 	}

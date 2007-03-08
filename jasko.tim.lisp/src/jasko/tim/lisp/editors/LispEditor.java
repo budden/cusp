@@ -1,11 +1,9 @@
 package jasko.tim.lisp.editors;
 
-import java.util.EventListener;
 import java.util.HashMap;
 
 import jasko.tim.lisp.*;
 import jasko.tim.lisp.ColorManager.ColorChangeEvent;
-import jasko.tim.lisp.ColorManager.TokenType;
 import jasko.tim.lisp.editors.assist.*;
 import jasko.tim.lisp.editors.outline.*;
 import jasko.tim.lisp.editors.actions.*;
@@ -13,15 +11,11 @@ import jasko.tim.lisp.swank.*;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
-import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
-import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.*;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.*;

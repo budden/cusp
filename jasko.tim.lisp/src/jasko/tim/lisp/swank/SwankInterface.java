@@ -7,8 +7,6 @@ import java.util.*;
 import java.net.*;
 
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.core.runtime.*;
-//import org.eclipse.jface.preference.IPreferenceStore;
 
 /*
 C:\sbcl\bin\sbcl.exe --load "C:/slime/swank-loader.lisp" --eval "(swank:create-swank-server 4005 nil)"
