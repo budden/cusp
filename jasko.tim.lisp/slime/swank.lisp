@@ -102,7 +102,8 @@ Redirection is done while Lisp is processing a request for Emacs.")
     (*print-radix*            . nil)
     (*print-array*            . t)
     (*print-lines*            . 10)
-    (*print-escape*           . t))
+    (*print-escape*           . t)
+    (*print-right-margin*     . 70))
   "A set of printer variables used in the debugger.")
 
 (defvar *default-worker-thread-bindings* '()
@@ -270,7 +271,7 @@ recently established one."
 (defun make-swank-error (condition)
   (let ((bt (ignore-errors 
               (call-with-debugging-environment 
-               (lambda ()(backtrace 0 nil))))))
+               (lambda () (backtrace 0 nil))))))
     (make-condition 'swank-error :condition condition :backtrace bt)))
 
 (add-hook *new-connection-hook* 'notify-backend-of-connection)
@@ -537,7 +538,10 @@ DEDICATED-OUTPUT INPUT OUTPUT IO REPL-RESULTS"
             (let* ((repl-results-fn
                     (make-output-function-for-target connection :repl-result))
                    (repl-results
-                    (nth-value 1 (make-fn-streams nil repl-results-fn))))
+                    (nth-value 1 (make-fn-streams 
+                                  (lambda ()
+                                    (error "Should never be called"))
+                                  repl-results-fn))))
               (values dedicated-output in out io repl-results))))))))
 
 (defun make-output-function (connection)
@@ -591,14 +595,18 @@ This is an optimized way for Lisp to deliver output to Emacs."
       (when socket
         (close-socket socket)))))
 
+(defvar *sldb-quit-restart* 'abort
+  "What restart should swank attempt to invoke when the user sldb-quits.")
+
 (defun handle-request (connection)
   "Read and process one request.  The processing is done in the extent
 of the toplevel restart."
   (assert (null *swank-state-stack*))
   (let ((*swank-state-stack* '(:handle-request)))
     (with-connection (connection)
-      (with-simple-restart (abort-request "Abort handling SLIME request.")
-        (read-from-emacs)))))
+      (with-simple-restart (abort "Return to SLIME's top level.")
+        (let ((*sldb-quit-restart* (find-restart 'abort)))
+          (read-from-emacs))))))
 
 (defun current-socket-io ()
   (connection.socket-io *emacs-connection*))
@@ -1433,32 +1441,37 @@ Return the package or nil."
          (= (length string) pos)
          (find-package name))))
 
-(defun guess-package-from-string (name &optional (default-package *package*))
-  (or (and name
-           (or (parse-package name)
-               (find-package (string-upcase name))
-               (parse-package (substitute #\- #\! name))))
-      default-package))
+(defun unparse-name (string)
+  "Print the name STRING according to the current printer settings."
+  ;; this is intended for package or symbol names
+  (subseq (prin1-to-string (make-symbol string)) 2))
+
+(defun guess-package (string)
+  "Guess which package corresponds to STRING.
+Return nil if no package matches."
+  (or (find-package string)
+      (parse-package string)
+      (if (find #\! string) ; for SBCL
+          (guess-package (substitute #\- #\! string)))))
 
 (defvar *readtable-alist* (default-readtable-alist)
   "An alist mapping package names to readtables.")
 
-(defun guess-buffer-readtable (package-name &optional (default *readtable*))
-  (let ((package (guess-package-from-string package-name)))
-    (if package 
-        (or (cdr (assoc (package-name package) *readtable-alist* 
-                        :test #'string=))
-            default)
-        default)))
+(defun guess-buffer-readtable (package-name)
+  (let ((package (guess-package package-name)))
+    (or (and package 
+             (cdr (assoc (package-name package) *readtable-alist* 
+                         :test #'string=)))
+        *readtable*)))
 
 (defun valid-operator-symbol-p (symbol)
-  "Test if SYMBOL names a function, macro, or special-operator."
+  "Is SYMBOL the name of a function, a macro, or a special-operator?"
   (or (fboundp symbol)
       (macro-function symbol)
       (special-operator-p symbol)))
   
 (defun valid-operator-name-p (string)
-  "Test if STRING names a function, macro, or special-operator."
+  "Is STRING the name of a function, macro, or special-operator?"
   (let ((symbol (parse-symbol string)))
     (valid-operator-symbol-p symbol)))
 
@@ -2455,7 +2468,7 @@ The secondary value indicates the absence of an entry."
 (defun guess-buffer-package (string)
   "Return a package for STRING. 
 Fall back to the the current if no such package exists."
-  (or (guess-package-from-string string nil)
+  (or (and string (guess-package string))
       *package*))
 
 (defun eval-for-emacs (form buffer-package id)
@@ -2501,7 +2514,9 @@ Errors are trapped and invoke our debugger."
              (let ((i (car values)))
                (format nil "~A~D (#x~X, #o~O, #b~B)" 
                        *echo-area-prefix* i i i i)))
-            (t (format nil "~A~{~S~^, ~}" *echo-area-prefix* values))))))
+            (t (with-output-to-string (s)
+                 (pprint-logical-block (s () :prefix *echo-area-prefix*)
+                   (format s "~{~S~^, ~}" values))))))))
 
 (defslimefun interactive-eval (string)
   (with-buffer-syntax ()
@@ -2585,11 +2600,10 @@ change, then send Emacs an update."
 
 (defun package-string-for-prompt (package)
   "Return the shortest nickname (or canonical name) of PACKAGE."
-  (princ-to-string 
-   (make-symbol
-    (or (canonical-package-nickname package)
-        (auto-abbreviated-package-name package)
-        (shortest-package-nickname package)))))
+  (unparse-name
+   (or (canonical-package-nickname package)
+       (auto-abbreviated-package-name package)
+       (shortest-package-nickname package))))
 
 (defun canonical-package-nickname (package)
   "Return the canonical package nickname, if any, of PACKAGE."
@@ -2650,10 +2664,12 @@ Used by pprint-eval.")
   (with-buffer-syntax ()
     (swank-pprint (multiple-value-list (eval (read-from-string string))))))
 
-(defslimefun set-package (package)
-  "Set *package* to PACKAGE.
-Return its name and the string to use in the prompt."
-  (let ((p (setq *package* (guess-package-from-string package))))
+(defslimefun set-package (name)
+  "Set *package* to the package named NAME.
+Return the full package-name and the string to use in the prompt."
+  (let ((p (guess-package name)))
+    (assert (packagep p))
+    (setq *package* p)
     (list (package-name p) (package-string-for-prompt p))))
 
 (defun send-repl-results-to-emacs (values)
@@ -2791,9 +2807,6 @@ after Emacs causes a restart to be invoked."
 (defvar *sldb-stepping-p* nil
   "True during execution of a step command.")
 
-(defvar *sldb-quit-restart* 'abort-request
-  "What restart should swank attempt to invoke when the user sldb-quits.")
-
 (defun debug-in-emacs (condition)
   (let ((*swank-debugger-condition* condition)
         (*sldb-restarts* (compute-restarts condition))
@@ -2805,7 +2818,9 @@ after Emacs causes a restart to be invoked."
         (*swank-state-stack* (cons :swank-debugger-hook *swank-state-stack*)))
     (force-user-output)
     (call-with-debugging-environment
-     (lambda () (sldb-loop *sldb-level*)))))
+     (lambda () 
+       (with-bindings *sldb-printer-bindings*
+         (sldb-loop *sldb-level*))))))
 
 (defun sldb-loop (level)
   (unwind-protect
@@ -2868,13 +2883,10 @@ format suitable for Emacs."
 (defslimefun backtrace (start end)
   "Return a list ((I FRAME) ...) of frames from START to END.
 I is an integer describing and FRAME a string."
-  (with-bindings *sldb-printer-bindings*
-    ;; we don't want newlines in the backtrace, that makes it unreadable
-    (let ((*print-right-margin* most-positive-fixnum))
-      (loop for frame in (compute-backtrace start end)
-            for i from start
-            collect (list i (with-output-to-string (stream)
-                              (print-frame frame stream)))))))
+  (loop for frame in (compute-backtrace start end)
+        for i from start
+        collect (list i (with-output-to-string (stream)
+                          (print-frame frame stream)))))
 
 (defslimefun debugger-info-for-emacs (start end)
   "Return debugger state, with stack frames from START to END.
@@ -2907,11 +2919,10 @@ Operation was KERNEL::DIVISION, operands (1 0).\"
    (\"ABORT\" \"Return to Top-Level.\"))
   ((0 \"(KERNEL::INTEGER-/-INTEGER 1 0)\"))
   (4))"
-  (with-bindings *sldb-printer-bindings*
-    (list (debugger-condition-for-emacs)
-          (format-restarts-for-emacs)
-          (backtrace start end)
-          *pending-continuations*)))
+  (list (debugger-condition-for-emacs)
+        (format-restarts-for-emacs)
+        (backtrace start end)
+        *pending-continuations*))
 
 (defun nth-restart (index)
   (nth index *sldb-restarts*))
@@ -2957,12 +2968,11 @@ has changed, ignore the request."
 (defslimefun frame-locals-for-emacs (index)
   "Return a property list ((&key NAME ID VALUE) ...) describing
 the local variables in the frame INDEX."
-  (with-bindings *sldb-printer-bindings*
-    (mapcar (lambda (frame-locals)
-              (destructuring-bind (&key name id value) frame-locals
-                (list :name (prin1-to-string name) :id id
-                      :value (to-string value))))
-            (frame-locals index))))
+  (mapcar (lambda (frame-locals)
+            (destructuring-bind (&key name id value) frame-locals
+              (list :name (prin1-to-string name) :id id
+                    :value (to-string value))))
+          (frame-locals index)))
 
 (defslimefun frame-catch-tags-for-emacs (frame-index)
   (mapcar #'to-string (frame-catch-tags frame-index)))
@@ -3078,18 +3088,36 @@ Record compiler notes signalled as `compiler-condition's."
 
 (defslimefun list-all-systems-in-central-registry ()
   "Returns a list of all systems in ASDF's central registry."
-  (delete-duplicates
-    (loop for dir in (asdf-central-registry)
-          for defaults = (eval dir)
-          when defaults
-            nconc (mapcar #'file-namestring
-                            (directory
-                              (make-pathname :defaults defaults
-                                             :version :newest
-                                             :type "asd"
-                                             :name :wild
-                                             :case :local))))
-    :test #'string=))
+  (mapcar #'pathname-name
+          (delete-duplicates
+           (loop for dir in (asdf-central-registry)
+                 for defaults = (eval dir)
+                 when defaults
+                   nconc (mapcar #'file-namestring
+                                   (directory
+                                     (make-pathname :defaults defaults
+                                          :version :newest
+                                          :type "asd"
+                                          :name :wild
+                                          :case :local))))
+           :test #'string=)))
+
+(defslimefun list-all-systems-known-to-asdf ()
+  "Returns a list of all systems ASDF knows already."
+  (unless (find-package :asdf)
+    (error "ASDF not loaded"))
+  ;; ugh, yeah, it's unexported - but do we really expect this to
+  ;; change anytime soon?
+  (loop for name being the hash-keys of (read-from-string 
+                                         "#.asdf::*defined-systems*")
+        collect name))
+
+(defslimefun list-asdf-systems ()
+  "Returns the systems in ASDF's central registry and those which ASDF
+already knows."
+  (nunion (list-all-systems-known-to-asdf)
+          (list-all-systems-in-central-registry)
+          :test #'string=))
   
 (defun file-newer-p (new-file old-file)
   "Returns true if NEW-FILE is newer than OLD-FILE."
@@ -3268,8 +3296,7 @@ Return these values:
 *buffer-package*.  NAME and DEFAULT-PACKAGE-NAME can be nil."
   (let ((string (cond ((equal name "") "KEYWORD")
                       (t (or name default-package-name)))))
-    (if string
-        (guess-package-from-string string nil)
+    (or (and string (guess-package string))
         *buffer-package*)))
 
 ;;;;; Format completion results
@@ -3586,7 +3613,7 @@ symbols are returned."
 completion algorithm."
   (let ((converter (completion-output-package-converter name))
         (completions (make-array 32 :adjustable t :fill-pointer 0)))
-    (declare (optimize (speed 3))
+    (declare ;;(optimize (speed 3))
              (type function converter))  
     (loop for package in (list-all-packages)
           for package-name = (concatenate 'string 
@@ -3876,18 +3903,12 @@ COMPLETIONS is a list of strings."
   "Make an apropos search for Emacs.
 The result is a list of property lists."
   (let ((package (if package
-                     (or (find-package (string-to-package-designator package))
+                     (or (parse-package package)
                          (error "No such package: ~S" package)))))
     (mapcan (listify #'briefly-describe-symbol-for-emacs)
             (sort (remove-duplicates
                    (apropos-symbols name external-only case-sensitive package))
                   #'present-symbol-before-p))))
-
-(defun string-to-package-designator (string)
-  "Return a package designator made from STRING.
-Uses READ to case-convert STRING."
-  (let ((*package* *swank-io-package*))
-    (read-from-string string)))
 
 (defun briefly-describe-symbol-for-emacs (symbol)
   "Return a property list describing SYMBOL.
@@ -4008,12 +4029,13 @@ that symbols accessible in the current package go first."
 
 ;;;; Package Commands
 
-(defslimefun list-all-package-names (&optional include-nicknames)
+(defslimefun list-all-package-names (&optional nicknames)
   "Return a list of all package names.
-Include the nicknames if INCLUDE-NICKNAMES is true."
-  (loop for package in (list-all-packages)
-        collect (package-name package)
-        when include-nicknames append (package-nicknames package)))
+Include the nicknames if NICKNAMES is true."
+  (mapcar #'unparse-name
+          (loop for package in (list-all-packages)
+                collect (package-name package)
+                when nicknames append (package-nicknames package))))
 
 
 ;;;; Tracing
@@ -4487,7 +4509,6 @@ See `methods-by-applicability'.")
                                            (not (string= value-string "")))
                                   (setf (swank-mop:slot-value-using-class class object slot)
                                         (eval (read-from-string value-string))))))))
-               " "
                ,@(when boundp
                    `(" " (:action "[make unbound]"
                           ,(lambda () (swank-mop:slot-makunbound-using-class class object slot)))))))))
@@ -4667,7 +4688,8 @@ See `methods-by-applicability'.")
     (values "A package."
             `("Name: " (:value ,(package-name package))
               (:newline)
-              "Nick names: " ,@(common-seperated-spec (sort (package-nicknames package) #'string-lessp))
+              "Nick names: " ,@(common-seperated-spec (sort (copy-seq (package-nicknames package))
+                                                            #'string-lessp))
               (:newline)
               ,@(when (documentation package t)
                   `("Documentation:" (:newline)
@@ -4759,8 +4781,8 @@ See `methods-by-applicability'.")
   (declare (ignore inspector))
   (values "A number."
           (append
-           `(,(format nil "Value: ~D = #x~8,'0X = #o~O = #b~,,' ,8:B = ~E"
-                      i i i i i)
+           `(,(format nil "Value: ~D = #x~8,'0X = #o~O = #b~,,' ,8:B~@[ = ~E~]"
+                      i i i i (ignore-errors (coerce i 'float)))
               (:newline))
            (when (< -1 i char-code-limit)
              (label-value-line "Code-char" (code-char i)))
@@ -4785,16 +4807,24 @@ See `methods-by-applicability'.")
 
 (defmethod inspect-for-emacs ((f float) inspector)
   (declare (ignore inspector))
-  (multiple-value-bind (significand exponent sign) (decode-float f)
-    (values "A floating point number."
-            (append 
-             `("Scientific: " ,(format nil "~E" f) (:newline)
-               "Decoded: " 
-               (:value ,sign) " * " 
-               (:value ,significand) " * " 
-               (:value ,(float-radix f)) "^" (:value ,exponent) (:newline))
-             (label-value-line "Digits" (float-digits f))
-             (label-value-line "Precision" (float-precision f))))))
+  (values "A floating point number."
+          (cond
+            ((> f most-positive-long-float)
+             (list "Positive infinity."))
+            ((< f most-negative-long-float)
+             (list "Negative infinity."))
+            ((not (= f f))
+             (list "Not a Number."))
+            (t
+             (multiple-value-bind (significand exponent sign) (decode-float f)
+               (append 
+                `("Scientific: " ,(format nil "~E" f) (:newline)
+                                 "Decoded: " 
+                                 (:value ,sign) " * " 
+                                 (:value ,significand) " * " 
+                                 (:value ,(float-radix f)) "^" (:value ,exponent) (:newline))
+                (label-value-line "Digits" (float-digits f))
+                (label-value-line "Precision" (float-precision f))))))))
 
 (defmethod inspect-for-emacs ((stream file-stream) inspector)
   (declare (ignore inspector))

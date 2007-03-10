@@ -801,6 +801,34 @@
              menubarPath="additions"/>
     </objectContribution>
  </extension>
+ <extension
+       point="org.eclipse.ui.preferencePages">
+    <page
+          class="jasko.tim.lisp.preferences.CuspPreferencePage"
+          id="jasko.tim.lisp.preferences.CuspPreferencePage"
+          name="Lisp"/>
+    <page
+          category="jasko.tim.lisp.preferences.CuspPreferencePage"
+          class="jasko.tim.lisp.preferences.EditorPreferencePage"
+          id="jasko.tim.lisp.preferences.EditorPreferencePage"
+          name="Editing"/>
+    <page
+          category="jasko.tim.lisp.preferences.EditorPreferencePage"
+          class="jasko.tim.lisp.preferences.ColorsPreferencePage"
+          id="jasko.tim.lisp.preferences.ColorsPreferencePage"
+          name="Colors"/>
+    <page
+          category="jasko.tim.lisp.preferences.CuspPreferencePage"
+          class="jasko.tim.lisp.preferences.ImplementationsPreferencePage"
+          id="jasko.tim.lisp.preferences.CuspPreferencePage"
+          name="Implementations"/>
+ </extension>
+ <extension
+       point="org.eclipse.core.runtime.preferences">
+    <initializer class="jasko.tim.lisp.preferences.PreferenceInitializer"/>
+    <initializer class="jasko.tim.lisp.preferences.PreferenceInitializer"/>
+    <initializer class="jasko.tim.lisp.preferences.PreferenceInitializer"/>
+ </extension>
  
  
  
