@@ -233,7 +233,9 @@ public class ReplView extends ViewPart {
  		fillToolBar(parent);
  		fillMenu(parent);
  		
- 		swank.sendEval("(format nil \"You are running ~a ~a\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
+ 		if (swank != null) {
+ 			swank.sendEval("(format nil \"You are running ~a ~a\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
+ 		}
 	}
 	
 	protected void fillMenu(Composite parent) {
