@@ -21,6 +21,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
+import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.part.ViewPart;
 
 
@@ -33,25 +34,8 @@ public class ReplView extends ViewPart {
 	protected ArrayList<String> prevCommands = new ArrayList<String>();
 
 	public static final String ID = "jasko.tim.lisp.views.ReplView";
-	/*protected enum State {
-		Eval,
-		ReadString,
-		Debug
-	}*/
-	
-	//protected State state = State.Eval;
+
 	protected Stack<State> states = new Stack<State>();
-	
-	/**
-	 * Used when the Repl is returning input from ReadString mode.
-	 */
-	String stringNum1;
-	String stringNum2;
-	
-	/**
-	 * Tells us what options we actually have in Debug mode; prevents bad debug answers
-	 */
-	int numDebugOptions;
 
 	protected SwankInterface swank;
 	
@@ -150,7 +134,16 @@ public class ReplView extends ViewPart {
  		in.showAnnotationsOverview(false);
  		in.getControl().setLayoutData(gd);
  		in.getTextWidget().setFont(newFont);
- 		in.appendVerifyKeyListener(new PrevCommandsShortcuts());
+ 		//in.appendVerifyKeyListener(new PrevCommandsShortcuts());
+ 		in.appendVerifyKeyListener(new CheckEvalListener());
+ 		
+ 		IKeyBindingService keys = this.getSite().getKeyBindingService();
+ 		PreviousREPLCommandAction prevCmdAction = new PreviousREPLCommandAction(this);
+ 		prevCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.PreviousREPLCommandAction");
+ 		keys.registerAction(prevCmdAction);
+ 		NextREPLCommandAction nextCmdAction = new NextREPLCommandAction(this);
+ 		nextCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.NextREPLCommandAction");
+ 		keys.registerAction(nextCmdAction);
  		/*in.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
 				try {
@@ -452,34 +445,31 @@ public class ReplView extends ViewPart {
 	}
 	
 	int currPrevCommand=0;
+    public void showPreviousCommandFromHistory () {
+    	 --currPrevCommand;
+    	if (currPrevCommand < 0) {
+    		currPrevCommand = prevCommands.size() - 1;
+    	}
+    	if (currPrevCommand >=0 ) {
+    		in.getDocument().set(prevCommands.get(currPrevCommand));
+    		in.setSelectedRange(in.getDocument().getLength(), 0);
+    	}
+    }
+    	    
+    public void showNextCommandFromHistory () {
+    	++currPrevCommand;
+    	if (currPrevCommand >= prevCommands.size()) {
+    		currPrevCommand = 0;
+    	}
+    	if (prevCommands.size() > 0) {
+    		in.getDocument().set(prevCommands.get(currPrevCommand));
+    		in.setSelectedRange(in.getDocument().getLength(), 0);
+    	}
+    }
 	
-	protected class PrevCommandsShortcuts implements VerifyKeyListener {
+	protected class CheckEvalListener implements VerifyKeyListener {
 		public void verifyKey(VerifyEvent event) {
-			//System.out.println("*" + event.keyCode);
-			if ((event.stateMask & SWT.CTRL) == SWT.CTRL) {
-				
-				if (event.keyCode == 'p' || event.keyCode == 'P') {
-					event.doit = false;
-					--currPrevCommand;
-					if (currPrevCommand < 0) {
-						currPrevCommand = prevCommands.size() - 1;
-					}
-					if (currPrevCommand >=0 ) {
-						in.getDocument().set(prevCommands.get(currPrevCommand));
-						in.setSelectedRange(in.getDocument().getLength(), 0);
-					}
-				} else if (event.keyCode == 'n' || event.keyCode == 'N') {
-					event.doit = false;
-					++currPrevCommand;
-					if (currPrevCommand >= prevCommands.size()) {
-						currPrevCommand = 0;
-					}
-					if (prevCommands.size() > 0) {
-						in.getDocument().set(prevCommands.get(currPrevCommand));
-						in.setSelectedRange(in.getDocument().getLength(), 0);
-					}
-				}
-			} else if ((event.keyCode == '\r' || event.keyCode == '\n')
+			if ((event.keyCode == '\r' || event.keyCode == '\n')
 					&& LispUtil.doParensBalance(in.getDocument())) {
 				//System.out.println("*" + event.text + ":" + event.text.length());
 				eval();

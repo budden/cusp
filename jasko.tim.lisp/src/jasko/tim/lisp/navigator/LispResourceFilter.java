@@ -21,6 +21,12 @@ public class LispResourceFilter extends ResourcePatternFilter {
 					|| fileName.endsWith(".lib")) {
 				return false;
 			}
+		} else if (element instanceof IResource) {
+			IResource res = (IResource) element;
+			String name = res.getName();
+			if (name.equals(".svn")) {
+				return false;
+			}
 		}
 		
 		return true;

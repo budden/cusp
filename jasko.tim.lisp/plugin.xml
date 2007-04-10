@@ -295,6 +295,49 @@
 			parentId="org.eclipse.ui.textEditorScope"/>
 	</extension>
 
+	<!-- The REPL editing context -->
+	<!-- I couldn't figure out how to register the new repl key binding scope, since the repl component is a SourceViewer,
+		not a TextEditor (like LispEditor is).  So, the next/previous actions for the repl are "stuck" in the eclipse
+		default "in windows" context.  I'll bet some people will choose "While editing text" or "While editing lisp",
+		so this is worth fixing. -->
+	<!--
+	<extension point="org.eclipse.ui.contexts">
+		<context
+			id="jasko.tim.lisp.replcontext"
+			name="REPL Interaction"
+			parentId="org.eclipse.ui.contexts.window"/>
+	</extension>
+	-->
+	
+	<!-- last/next previous REPL command history -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Recalls the previous REPL command from history."
+			id="jasko.tim.lisp.actions.PreviousREPLCommandAction"
+			name="Previous REPL Command"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.actions.PreviousREPLCommandAction"
+			contextId="org.eclipse.ui.contexts.window"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Ctrl+P"/>
+	</extension>
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Recalls the next REPL command from history."
+			id="jasko.tim.lisp.actions.NextREPLCommandAction"
+			name="Next REPL Command"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.actions.NextREPLCommandAction"
+			contextId="org.eclipse.ui.contexts.window"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Ctrl+N"/>
+	</extension>
 
 	<!-- Key bindings and all the cruft associated with them -->
 	
