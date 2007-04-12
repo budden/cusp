@@ -39,10 +39,15 @@ public class ReplView extends ViewPart {
 
 	protected SwankInterface swank;
 	
-	protected Composite parentControl;
 	protected Sash replComposite;
 	protected SourceViewer history;
 	protected SourceViewer in;
+	
+	protected Composite parentControl;
+	protected Composite mainView;
+	protected Composite debugView;
+	protected Tree debugTree;
+	protected Label debugLabel;
 	
 	protected Button btn;
 	
@@ -55,8 +60,14 @@ public class ReplView extends ViewPart {
 	}
 	
 	public void createPartControl(Composite parent) {
-		
 		parentControl = parent;
+		parent.setLayout(new GridLayout(1, false));
+		mainView = new Composite(parent, SWT.NONE);
+		debugView = new Composite(parent, SWT.BORDER);
+		
+		hideFrame(debugView);
+		showFrame(mainView);
+		
 		swank = getSwank();
 		
 		if (swank == null) {
@@ -68,14 +79,7 @@ public class ReplView extends ViewPart {
 			
 			return;
 		}
-
-		GridLayout layout = new GridLayout(1, false);
-		layout.marginLeft = 1;
-		layout.marginTop = 1;
-		layout.marginRight = 1;
-		layout.marginBottom = 1;
-		parent.setLayout(layout);
-		
+		// layout controllers we need in a few places
 		GridData gd;
 		gd = new GridData();
 		gd.horizontalAlignment = GridData.FILL;
@@ -83,7 +87,35 @@ public class ReplView extends ViewPart {
  		gd.grabExcessHorizontalSpace = true;
  		gd.grabExcessVerticalSpace = true;
  		
- 		
+ 		GridLayout layout = new GridLayout(1, false);
+		layout.marginLeft = 1;
+		layout.marginTop = 1;
+		layout.marginRight = 1;
+		layout.marginBottom = 1;
+		
+		// Create the debug view
+		RowLayout rl = new RowLayout();
+		rl.type = SWT.VERTICAL;
+		rl.fill = true;
+		debugView.setLayout(layout);
+		
+		debugLabel = new Label(debugView, SWT.BORDER);
+		debugLabel.setText("Debugging");
+		
+		RowData rd = new RowData();
+		rd.width = SWT.FILL;
+		rd.height = SWT.FILL;
+		debugTree = new Tree(debugView, SWT.SINGLE);
+		debugTree.setLayoutData(gd);
+		debugTree.setLayout(layout);
+		
+		
+		// Create the main repl view
+		
+		parent = mainView;
+		
+		parent.setLayout(layout);
+		
  		final Composite notButtons = new Composite(parent, SWT.NONE);
  		notButtons.setLayoutData(gd);
  		
@@ -229,6 +261,30 @@ public class ReplView extends ViewPart {
  		if (swank != null) {
  			swank.sendEval("(format nil \"You are running ~a ~a\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
  		}
+ 		
+ 		parentControl.layout(false);
+	}
+	
+	private void hideFrame(Composite control) {
+		GridData hider = new GridData();
+		hider.exclude = true;
+		control.setLayoutData(hider);
+		control.setVisible(false);
+		
+		parentControl.layout(false);
+	}
+	
+	private void showFrame(Composite control) {
+		GridData shower = new GridData();
+		shower.horizontalAlignment = SWT.FILL;
+		shower.verticalAlignment = GridData.FILL;
+		shower.grabExcessHorizontalSpace = true;
+		shower.grabExcessVerticalSpace = true;
+		shower.exclude = false;
+		control.setLayoutData(shower);
+		control.setVisible(true);
+		
+		parentControl.layout(false);
 	}
 	
 	protected void fillMenu(Composite parent) {
@@ -550,7 +606,7 @@ public class ReplView extends ViewPart {
 		in.getControl().setBackground(newColor);
 		in.getControl().setForeground(newColor);
 		replComposite.setBackground(newColor);
-			
+		
 		if (backgroundColor != null) {
 			backgroundColor.dispose();
 		}
@@ -571,11 +627,11 @@ public class ReplView extends ViewPart {
 	protected void pushReadState(String s1, String s2) {
 		pushState(new ReadState(s1, s2));
 	}
-
 	
-	protected class DebugState implements State {
+	
+	protected class DebugState implements State, MouseListener, KeyListener {
 		private int numDebugOptions;
-		LispNode desc, options, backtrace;
+		private LispNode desc, options, backtrace;
 		
 		public DebugState(LispNode debugInfo) {
 			desc = debugInfo.get(3);
@@ -590,7 +646,7 @@ public class ReplView extends ViewPart {
 		}
 
 		public boolean handle(String command, String cleanCommand) {
-			try {
+			/*try {
 				int choice = Integer.parseInt(cleanCommand.trim());
 				if (choice >=0 && choice < numDebugOptions) {
 					swank.sendDebug(cleanCommand, null);
@@ -602,11 +658,13 @@ public class ReplView extends ViewPart {
 				}
 			} catch (Exception e) {
 				appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
-			}
+			}*/
 			return false;
 		}
 
 		public void activate() {
+			debugLabel.setText(desc.car().value + "\n" + desc.cadr().value);
+			debugTree.removeAll();
 			
 			appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
 			
@@ -614,18 +672,93 @@ public class ReplView extends ViewPart {
 				LispNode option = options.get(i);
 				appendText("\t" + i + ": [" + option.car().value + "] "
 						+ option.cadr().value + "\n");
+				TreeItem item = new TreeItem(debugTree, 0);
+				item.setText(i + ": [" + option.car().value + "] " + option.cadr().value);
+				item.setData(i);
 			} // for
 			
 			scrollDown();
 			
-			appendText("BACKTRACE:\n");
+			TreeItem bt = new TreeItem(debugTree, SWT.NONE);
+			bt.setText("==Backtrace==");
+			bt.setData(null);
+			
 			for (int i=0; i<backtrace.params.size(); ++i) {
 				LispNode trace = backtrace.get(i);
-				appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
+				//appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
+				
+				TreeItem item = new TreeItem(bt, 0);
+				item.setText(trace.car().value + "] " + trace.cadr().value);
+				item.setData(null);
 			} // for
 			
+			debugTree.addMouseListener(this);
+			debugTree.addKeyListener(this);
+			debugView.addKeyListener(this);
+			
+			hideFrame(mainView);
+			showFrame(debugView);
+			debugTree.setFocus();
+		}
+		
+		public void choose(Integer choice) {
+			System.out.println("***" + choice);
+			swank.sendDebug(choice.toString(), null);
+			
+			appendText("]> " + choice + "\n");
+			scrollDown();
+			
+			debugTree.removeMouseListener(this);
+			debugTree.removeKeyListener(this);
+			debugView.removeKeyListener(this);
+			
+			hideFrame(debugView);
+			showFrame(mainView);
+			popState();
+			in.getControl().setFocus();
+		}
+		
+		public void mouseDoubleClick(MouseEvent e) {
+			TreeItem item = debugTree.getItem(new Point(e.x, e.y));
+			if (item != null && item.getData() != null && item.getData() instanceof Integer) {
+				Integer choice = (Integer) item.getData();
+				choose(choice);
+			}
+		}
+		
+		public void keyPressed(KeyEvent e) {
+			if (e.character == '\r' || e.character == '\n') {
+				TreeItem[] sels = debugTree.getSelection();
+				if (sels.length > 0) {
+					TreeItem item = sels[0];
+					if (item.getData() != null && item.getData() instanceof Integer) {
+						Integer choice = (Integer) item.getData();
+						choose(choice);
+					}
+				}
+			} else {
+				Character c = new Character(e.character);
+				try {
+					int choice = Integer.parseInt(c.toString());
+					if (choice >=0 && choice < numDebugOptions) {
+						choose(choice);
+					}
+				} catch (NumberFormatException ex) {
+				}
+			}
+		}
+
+
+		public void mouseDown(MouseEvent e) {
+		}
+		public void mouseUp(MouseEvent e) {
+		}
+		public void keyReleased(KeyEvent e) {
 		}
 	}
+	
+	
+	
 	
 	protected class EvalState implements State {
 
@@ -647,6 +780,8 @@ public class ReplView extends ViewPart {
 		public void activate() {
 		}
 	}
+	
+	
 	
 	protected class ReadState implements State {
 		private String stringNum1, stringNum2;
