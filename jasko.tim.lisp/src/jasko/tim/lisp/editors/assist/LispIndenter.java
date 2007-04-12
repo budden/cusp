@@ -49,6 +49,7 @@ public class LispIndenter implements IAutoEditStrategy {
 			String indent = "";
 			for (int i=0; i<fi.offset-funcLineOffset; ++i) {
 				if (doc.getChar(i) == '\t') {
+					System.out.println("-tab");
 					indent += "        ";
 				} else {
 					indent += " ";
@@ -61,7 +62,7 @@ public class LispIndenter implements IAutoEditStrategy {
 			} else if (swank.indents.containsKey(fi.name)) {
 				indent += swank.indents.get(fi.name);
 			} else {
-				if (fi.name.startsWith("def")) {
+				if (fi.name.startsWith("def") || fi.name.startsWith(":")) {
 					indent += "  ";
 				} else {
 					for (int i=fi.offset+fi.name.length()+1; i<doc.getLength(); ++i) {
