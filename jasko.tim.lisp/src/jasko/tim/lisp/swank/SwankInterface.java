@@ -520,6 +520,11 @@ public class SwankInterface {
 		emacsRex(msg, pkg);
 	}
 	
+	public synchronized void sendListThreads(SwankRunnable callBack) {
+		registerCallback(callBack);
+		emacsRex("(swank:list-threads)");
+	}
+	
 	public synchronized void sendUndefine(String symbol, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:undefine-function \"" + formatCode(symbol) + "\")";
