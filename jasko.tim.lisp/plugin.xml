@@ -216,6 +216,14 @@
 			category="jasko.tim.lisp"
 			class="jasko.tim.lisp.views.AproposView"
 			id="jasko.tim.lisp.views.AproposView" />
+			
+		<!-- Threads view -->
+		<view
+			name="Threads"
+			icon="icons/threads.gif"
+			category="jasko.tim.lisp"
+			class="jasko.tim.lisp.views.ThreadView"
+			id="jasko.tim.lisp.views.ThreadView" />
 		
 		<!-- Navigator -->
 		<view 
