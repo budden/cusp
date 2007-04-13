@@ -629,7 +629,7 @@ public class ReplView extends ViewPart {
 	}
 	
 	
-	protected class DebugState implements State, MouseListener, KeyListener {
+	protected class DebugState implements State, MouseListener, KeyListener, TreeListener {
 		private int numDebugOptions;
 		private LispNode desc, options, backtrace;
 		
@@ -690,8 +690,13 @@ public class ReplView extends ViewPart {
 				TreeItem item = new TreeItem(bt, 0);
 				item.setText(trace.car().value + "] " + trace.cadr().value);
 				item.setData(null);
+				item.setData("frame", i);
+				
+				TreeItem tmp = new TreeItem(item, 0);
+				tmp.setText("Getting data...");
 			} // for
 			
+			debugTree.addTreeListener(this);
 			debugTree.addMouseListener(this);
 			debugTree.addKeyListener(this);
 			debugView.addKeyListener(this);
@@ -717,6 +722,34 @@ public class ReplView extends ViewPart {
 			popState();
 			in.getControl().setFocus();
 		}
+		
+		public void treeExpanded(TreeEvent e) {
+			final TreeItem sel = (TreeItem)e.item;
+			System.out.println("**treeExpand:" + sel);
+			
+			if (sel.getData("frame") != null) {
+				Object frame = sel.getData("frame");
+				
+				getSwank().sendFrameLocals(frame.toString(), new SwankRunnable() {
+					public void run() {
+						sel.removeAll();
+						LispNode vars = result.getf(":return").getf(":ok");
+						if (vars.params.size() <= 0) {
+							TreeItem tmp = new TreeItem(sel, 0);
+							tmp.setText("[No Locals]");
+						} else {
+							for (LispNode var : vars.params) { 
+								String name = var.getf(":name").value;
+								String val = var.getf(":value").value;
+								TreeItem varItem = new TreeItem(sel, 0);
+								varItem.setText(name + " = " + val);
+							}
+						}
+					}
+				});
+			}
+		}
+
 		
 		public void mouseDoubleClick(MouseEvent e) {
 			TreeItem item = debugTree.getItem(new Point(e.x, e.y));
@@ -755,6 +788,9 @@ public class ReplView extends ViewPart {
 		}
 		public void keyReleased(KeyEvent e) {
 		}
+		public void treeCollapsed(TreeEvent e) {
+		}
+
 	}
 	
 	

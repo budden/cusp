@@ -415,6 +415,7 @@ public class SwankInterface {
 			return "";
 		}
 	}
+	
 	public synchronized String getMakeInstanceArglist(String className, long timeout) {
 		return getMakeInstanceArglist(className, currPackage, timeout);
 	}
@@ -487,6 +488,13 @@ public class SwankInterface {
 		registerCallback(callBack);
 		String msg = "(swank:invoke-nth-restart-for-emacs 1 "
 			+ commandNum + ")";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendFrameLocals(String frameNum, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:frame-locals-for-emacs " + frameNum + ")";
 		
 		emacsRex(msg);
 	}
