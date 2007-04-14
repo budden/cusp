@@ -594,7 +594,7 @@ public class SwankInterface {
 		System.out.println(dir);
 		String msg = "(swank:compile-string-for-emacs \""
 			+ formatCode(expr) + "\" \""
-			+ formatCode(file) + "\" " + (offset+1) + " \"" + formatCode(dir)
+			+ formatCode(dir + file) + "\" " + (offset+1) + " \"" + formatCode(dir)
 			+ "\")";
 		if (pckg.equals("nil")) {
 			emacsRex(msg);

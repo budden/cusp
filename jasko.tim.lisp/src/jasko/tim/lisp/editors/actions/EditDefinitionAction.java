@@ -102,6 +102,9 @@ public class EditDefinitionAction extends Action implements IEditorActionDelegat
 				return;
 			}
 			String path = location.getf(":file").value;
+			if (path.equals("")) {
+				path = location.getf(":buffer").value;
+			}
 			int position = location.getf(":position").asInt();
 			String snippet = location.getf(":snippet").value;
 			

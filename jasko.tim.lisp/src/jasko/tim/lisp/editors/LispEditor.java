@@ -78,6 +78,7 @@ public class LispEditor extends TextEditor {
 	 * @param symbol
 	 */
 	public static void jumpToDefinition(String filePath, int position, String snippet, String symbol) {
+		System.out.println("*jump: " + filePath + ":" + position);
 		IWorkbenchPage page =
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
