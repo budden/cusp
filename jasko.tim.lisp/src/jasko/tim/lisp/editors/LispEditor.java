@@ -60,7 +60,7 @@ public class LispEditor extends TextEditor {
 	 * @param snippet
 	 */
 	public static void jumpToDefinition(String filePath, int position, String snippet) {
-		jumpToDefinition(filePath, position, snippet, "");
+		jumpToDefinition(filePath, position, snippet, null);
 	}
 	
 	/**
@@ -112,55 +112,43 @@ public class LispEditor extends TextEditor {
 		}
 		
 		if (editor != null) {
+			//System.out.println("0");
 			TextEditor editor2 = (TextEditor) editor;
 			try {
-				editor2.selectAndReveal(position, 0);
+				IDocument doc = editor2.getDocumentProvider().getDocument(editor2.getEditorInput());
+				String contents = doc.get();
+				
+				if (symbol == null) {
+					//System.out.println("A0 " + snippet);
+					
+					int offset = contents.indexOf(snippet, position);
+					if (offset >= 0) {
+						//System.out.println("A1 " + offset);
+						editor2.selectAndReveal(offset, 0);
+					} else {
+						//System.out.println("A2 " + position);
+						editor2.selectAndReveal(position, 0);
+					}
+				} else {
+					//System.out.println("B0");
+					int offset = contents.indexOf(symbol, position);
+					if (offset >= 0) {
+						//System.out.println("B1 " + offset);
+						editor2.selectAndReveal(offset, symbol.length());
+					} else {
+						//System.out.println("B2 " + position);
+						editor2.selectAndReveal(position, 0);
+					}
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				try {
-					IDocument doc = editor2.getDocumentProvider().getDocument(editor2.getEditorInput());
-					String contents = doc.get();
-					// The snippet is of code *before* the part that we care about, so we'll want to jump to the end of it
-					int snippetLength = snippet.length();
-					// Search for the snippet in the document. The position given by SBCL tends to be early,
-					//  so check for it after that.
-					int offset = contents.indexOf(snippet, position);
-					System.out.println("**jump fallback 1");
-					if (offset >= 0) {
-						editor2.selectAndReveal(offset + snippetLength, 0);
-					} else {
-						System.out.println("**jump fallback 2");
-						// That failed. See if the snippet occurs before the position given
-						offset = contents.indexOf(snippet);
-						if (offset >= 0) {
-							editor2.selectAndReveal(offset + snippetLength, 0);
-						} else {
-
-							System.out.println("**jump fallback 3");
-							// Still we fail! Check for usage of the symbol after position.
-							//  That should be close to correct
-							offset = contents.indexOf(symbol, position);
-							if (offset >= 0) {
-								editor2.selectAndReveal(offset, 0);
-							} else {
-								System.out.println("**jump fallback 4");
-								// Screw it
-								editor2.selectAndReveal(position, 0);
-							}
-						}
-					}
-				} catch (Exception e2) {
-					System.out.println("**jump fallback 5");
-					// Somewhere something went wrong. Who knows precisely what?
-					// We'll just jump to the symbol, if we can find it
-					IDocument doc = editor2.getDocumentProvider().getDocument(editor2.getEditorInput());
-					int offset = doc.get().indexOf(symbol);
-					if (offset >= 0) {
-						editor2.selectAndReveal(offset, 0);
-					}
-					
-				}
+				System.out.println("**jump fallback 5");
+				// Somewhere something went wrong. Who knows precisely what?
+				// We'll just jump to the given position
+				editor2.selectAndReveal(position, 0);
 			}
+			System.out.println("**** jump done");
+			
 		}
 	}
 	
