@@ -520,17 +520,34 @@ public class SwankInterface {
 		emacsRex(msg, pkg);
 	}
 	
-	public synchronized void sendListThreads(SwankRunnable callBack) {
-		registerCallback(callBack);
-		emacsRex("(swank:list-threads)");
-	}
-	
 	public synchronized void sendUndefine(String symbol, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:undefine-function \"" + formatCode(symbol) + "\")";
 		
 		emacsRex(msg, pkg);
 	}
+	
+	// Threads
+	
+	public synchronized void sendListThreads(SwankRunnable callBack) {
+		registerCallback(callBack);
+		emacsRex("(swank:list-threads)");
+	}
+	
+	public synchronized void sendDebugThread(String threadNum, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:debug-nth-thread " + threadNum + ")";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendKillThread(String threadNum, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:kill-nth-thread " + threadNum + ")";
+		
+		emacsRex(msg);
+	}
+	
 	
 	
 	public synchronized void sendApropos(String regex, SwankRunnable callBack) {
