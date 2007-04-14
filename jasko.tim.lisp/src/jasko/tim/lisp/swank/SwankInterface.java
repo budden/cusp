@@ -492,9 +492,18 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
-	public synchronized void sendFrameLocals(String frameNum, SwankRunnable callBack) {
+	// Debug related
+	
+	public synchronized void sendGetFrameLocals(String frameNum, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:frame-locals-for-emacs " + frameNum + ")";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendGetFrameSourceLocation(String frameNum, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:frame-source-location-for-emacs " + frameNum + ")";
 		
 		emacsRex(msg);
 	}

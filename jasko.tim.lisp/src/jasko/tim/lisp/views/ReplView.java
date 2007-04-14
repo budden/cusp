@@ -641,7 +641,9 @@ public class ReplView extends ViewPart {
 	}
 	
 	
-	protected class DebugState implements State, MouseListener, KeyListener, TreeListener {
+	protected class DebugState implements State, 
+		MouseListener, KeyListener, TreeListener, SelectionListener {
+		
 		private int numDebugOptions;
 		private LispNode desc, options, backtrace;
 		
@@ -707,7 +709,9 @@ public class ReplView extends ViewPart {
 				TreeItem tmp = new TreeItem(item, 0);
 				tmp.setText("Getting data...");
 			} // for
+			bt.setExpanded(true);
 			
+			debugTree.addSelectionListener(this);
 			debugTree.addTreeListener(this);
 			debugTree.addMouseListener(this);
 			debugTree.addKeyListener(this);
@@ -725,6 +729,8 @@ public class ReplView extends ViewPart {
 			appendText("]> " + choice + "\n");
 			scrollDown();
 			
+			debugTree.removeSelectionListener(this);
+			debugTree.removeTreeListener(this);
 			debugTree.removeMouseListener(this);
 			debugTree.removeKeyListener(this);
 			debugView.removeKeyListener(this);
@@ -737,12 +743,11 @@ public class ReplView extends ViewPart {
 		
 		public void treeExpanded(TreeEvent e) {
 			final TreeItem sel = (TreeItem)e.item;
-			System.out.println("**treeExpand:" + sel);
 			
 			if (sel.getData("frame") != null) {
 				Object frame = sel.getData("frame");
 				
-				getSwank().sendFrameLocals(frame.toString(), new SwankRunnable() {
+				getSwank().sendGetFrameLocals(frame.toString(), new SwankRunnable() {
 					public void run() {
 						sel.removeAll();
 						LispNode vars = result.getf(":return").getf(":ok");
@@ -756,6 +761,25 @@ public class ReplView extends ViewPart {
 								TreeItem varItem = new TreeItem(sel, 0);
 								varItem.setText(name + " = " + val);
 							}
+						}
+					}
+				});
+			}
+		}
+		
+		public void widgetSelected(SelectionEvent e) {
+			final TreeItem sel = (TreeItem)e.item;
+			
+			if (sel.getData("frame") != null) {
+				Object frame = sel.getData("frame");
+				getSwank().sendGetFrameSourceLocation(frame.toString(), new SwankRunnable() {
+					public void run() {
+						LispNode res = result.getf(":return").getf(":ok");
+						if (!res.car().value.equals(":error")) {
+							String file = res.getf(":file").value;
+							int pos = res.getf(":position").asInt();
+							String snippet = res.getf(":snippet").value;
+							LispEditor.jumpToDefinition(file, pos, snippet);
 						}
 					}
 				});
@@ -802,7 +826,8 @@ public class ReplView extends ViewPart {
 		}
 		public void treeCollapsed(TreeEvent e) {
 		}
-
+		public void widgetDefaultSelected(SelectionEvent e) {
+		}
 	}
 	
 	

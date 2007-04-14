@@ -28,7 +28,7 @@ public class ThreadView extends ViewPart {
  		gd.grabExcessHorizontalSpace = true;
  		gd.grabExcessVerticalSpace = true;
  		
- 		threadTree = new Tree(parent, SWT.BORDER);
+ 		threadTree = new Tree(parent, SWT.BORDER | SWT.FULL_SELECTION);
  		threadTree.setLayoutData(gd);
  		threadTree.setHeaderVisible(true);
  		
