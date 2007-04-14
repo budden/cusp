@@ -32,6 +32,9 @@ public class LispImages {
 	public static final String RECONNECT = "reconnect";
 	public static final String DISCONNECTED = "disconnected";
 	public static final String CLEAR = "clear";
+	public static final String THREAD_DEBUG = "thread-debug";
+	public static final String THREAD_KILL = "thread-kill";
+	public static final String REFRESH = "refresh";
 
 	static {
 		ImageRegistry imageReg = LispPlugin.getDefault().getImageRegistry();
@@ -63,6 +66,10 @@ public class LispImages {
 		imageReg.put(LispImages.DISCONNECTED, loadImageDescriptor("disconnected.gif"));
 		
 		imageReg.put(LispImages.CLEAR, loadImageDescriptor("clear.gif"));
+		
+		imageReg.put(LispImages.THREAD_DEBUG, loadImageDescriptor("thread-debug.gif"));
+		imageReg.put(LispImages.THREAD_KILL, loadImageDescriptor("thread-kill.gif"));
+		imageReg.put(LispImages.REFRESH, loadImageDescriptor("refresh.gif"));
 		
 	}
 	

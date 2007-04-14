@@ -23,12 +23,7 @@ public class SwitchToReplAction extends Action implements IEditorActionDelegate 
 	}
 	
 	public void run() {
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-		try {
-			page.showView(ReplView.ID);
-		} catch (PartInitException e) {
-			e.printStackTrace();
-		}
+		ReplView.switchToRepl();
 	}
 
 	public void run(IAction action) {

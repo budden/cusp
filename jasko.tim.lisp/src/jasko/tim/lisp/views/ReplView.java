@@ -22,6 +22,9 @@ import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.ui.IKeyBindingService;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 
@@ -50,6 +53,15 @@ public class ReplView extends ViewPart {
 	protected Label debugLabel;
 	
 	protected Button btn;
+	
+	public static void switchToRepl() {
+		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		try {
+			page.showView(ReplView.ID);
+		} catch (PartInitException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public void setFocus() {
 		in.getControl().setFocus();
