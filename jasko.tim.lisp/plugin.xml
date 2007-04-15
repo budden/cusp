@@ -294,6 +294,18 @@
 		</editorContribution>
 	</extension>
 	
+	<!-- Profiling Menu -->
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus.profile">
+			<menu
+				id="Lisp.Profile"
+				label="&amp;Profile">
+				<separator name="grpMisc"/>
+			</menu>
+		</editorContribution>
+	</extension>
 	
 	<!-- The Lisp editing context -->
 	<extension point="org.eclipse.ui.contexts">
@@ -502,6 +514,59 @@
 				label="&amp;Evaluate Top Level"
 				menubarPath="Lisp/grpCompile"
 				tooltip="Evaluate top-level action.">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Profile function -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category2"
+			description="Toggles profiling for the function."
+			id="jasko.tim.lisp.actions.ProfileFunctionAction"
+			name="Profile Function"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.actions.ProfileFunctionAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+P"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus.profile">
+			<action
+				class="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
+				definitionId="jasko.tim.lisp.actions.ProfileFunctionAction"
+				id="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
+				label="&amp;Profile Function"
+				menubarPath="Lisp.Profile/grpMisc"
+				tooltip="Profile function.">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Profile report -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category2"
+			description="Toggles profiling for the function."
+			id="jasko.tim.lisp.actions.ProfileReportAction"
+			name="Profile Function"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus.profile">
+			<action
+				class="jasko.tim.lisp.editors.actions.ProfileReportAction"
+				definitionId="jasko.tim.lisp.actions.ProfileReportAction"
+				id="jasko.tim.lisp.editors.actions.ProfileReportAction"
+				label="&amp;Profile Report"
+				menubarPath="Lisp.Profile/grpMisc"
+				tooltip="Profile Report">
 			</action>
 		</editorContribution>
 	</extension>

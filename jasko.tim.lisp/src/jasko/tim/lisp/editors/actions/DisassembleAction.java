@@ -3,35 +3,19 @@ package jasko.tim.lisp.editors.actions;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.*;
-import jasko.tim.lisp.util.LispUtil;
 
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.text.*;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.ui.*;
 
-public class DisassembleAction extends Action implements IEditorActionDelegate {
-	private LispEditor editor;
+public class DisassembleAction extends LispAction {
 	
 	public DisassembleAction() {
 	}
 	
 	public DisassembleAction(LispEditor editor) {
-		this.editor = editor;
-	}
-
-	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
-		editor = (LispEditor) targetEditor;
+		super(editor);
 	}
 	
 	public void run() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider()
-				.getSelection();
-		int offset = ts.getOffset();
-		IDocument doc = editor.getDocumentProvider().getDocument(
-				editor.getEditorInput());
-
-		String sym = LispUtil.getCurrentFullWord(doc, offset);
+		String sym = getSymbol();
 
 		LispPlugin.getDefault().getSwank().sendDisassemble(sym, editor.getPackage(),
 				new SwankRunnable() {
@@ -44,16 +28,6 @@ public class DisassembleAction extends Action implements IEditorActionDelegate {
 				}
 			}
 		});
-
-		
 	}
 
-	public void run(IAction action) {
-		run();
-	}
-	
-
-	public void selectionChanged(IAction action, ISelection selection) {
-
-	}
 }

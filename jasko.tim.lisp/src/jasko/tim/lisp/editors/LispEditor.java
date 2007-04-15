@@ -275,6 +275,10 @@ public class LispEditor extends TextEditor {
 		SwitchToReplAction switchToRepl = new SwitchToReplAction(this);
 		undefineFunc.setActionDefinitionId("jasko.tim.lisp.actions.SwitchToReplAction");
 		keys.registerAction(switchToRepl);
+		
+		ProfileFunctionAction profileFunc = new ProfileFunctionAction(this);
+		undefineFunc.setActionDefinitionId(ProfileFunctionAction.ID);
+		keys.registerAction(profileFunc);
 	}
 	
 	public void doSave(IProgressMonitor monitor) {

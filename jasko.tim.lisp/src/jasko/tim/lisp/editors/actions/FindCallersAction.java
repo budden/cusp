@@ -2,41 +2,25 @@ package jasko.tim.lisp.editors.actions;
 
 import java.util.ArrayList;
 
-import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.*;
-import jasko.tim.lisp.util.LispUtil;
 
-import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.ui.*;
-import org.eclipse.ui.texteditor.AbstractTextEditor;
 
 
-public class FindCallersAction extends Action implements IEditorActionDelegate {
-	private LispEditor editor;
+public class FindCallersAction extends LispAction {
 	
 	public FindCallersAction() {
 	}
 	
-	public FindCallersAction(AbstractTextEditor editor) {
-		this.editor = (LispEditor) editor;
-	}
-
-	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
-		editor = (LispEditor) targetEditor;
+	public FindCallersAction(LispEditor editor) {
+		super(editor);
 	}
 	
 	public void run() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
-		String symbol = LispUtil.getCurrentFullWord(
-				editor.getDocumentProvider().getDocument(editor.getEditorInput()), offset);
-		SwankInterface swank = LispPlugin.getDefault().getSwank();
+		String symbol = getSymbol();
 		
-		swank.sendGetCallers(symbol, editor.getPackage(), new SwankRunnable() {
+		getSwank().sendGetCallers(symbol, editor.getPackage(), new SwankRunnable() {
 			public void run() {
 				LispNode guts = result.getf(":return").getf(":ok");
 				
@@ -83,11 +67,4 @@ public class FindCallersAction extends Action implements IEditorActionDelegate {
 		});
 	}
 
-	public void run(IAction action) {
-		run();
-	}
-
-	public void selectionChanged(IAction action, ISelection selection) {
-
-	}
 }

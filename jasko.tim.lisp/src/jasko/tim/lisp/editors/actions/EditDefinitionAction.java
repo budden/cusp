@@ -1,46 +1,27 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.*;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.*;
-import jasko.tim.lisp.util.*;
 
 import java.util.*;
 
-import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.text.*;
-import org.eclipse.jface.viewers.*;
-import org.eclipse.ui.*;
 
-public class EditDefinitionAction extends Action implements IEditorActionDelegate {
-	private LispEditor editor;
+public class EditDefinitionAction extends LispAction {
 	
 	public EditDefinitionAction() {
 	}
 	
 	public EditDefinitionAction(LispEditor editor) {
-		this.editor = editor;
+		super(editor);
 	}
 
-	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
-		editor = (LispEditor) targetEditor;
-	}
 	
 	public void run() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-		
-		String symbol = LispUtil.getCurrentFullWord(doc, offset);
-		symbol = symbol.replace("'", "");
-		symbol = symbol.replace("`", "");
-		
-		//System.out.println("*" + symbol);
+		String symbol = getSymbol();
 		
 		if (!symbol.equals("")) {
-			SwankInterface swank = LispPlugin.getDefault().getSwank();
-			swank.sendFindDefinitions(symbol, editor.getPackage(), new OpenDefinitionRunnable(symbol));
+			getSwank().sendFindDefinitions(symbol, editor.getPackage(), new OpenDefinitionRunnable(symbol));
 		}
 		
 	}
@@ -62,10 +43,8 @@ public class EditDefinitionAction extends Action implements IEditorActionDelegat
 				data.add(possibility);
 				if (possibility.get(1).get(0).value.equals(":error")) {
 					tips.add(possibility.get(1).get(1).value);
-					System.out.println("**" + possibility.get(1).get(1).value);
 				} else {
 					tips.add(possibility.get(1).getf(":file").value);
-					System.out.println("**" + possibility.get(1).getf(":file").value);
 				}
 			}
 			
@@ -111,15 +90,6 @@ public class EditDefinitionAction extends Action implements IEditorActionDelegat
 			LispEditor.jumpToDefinition(path, position, snippet, symbol);
 			
 		}
-	}
-
-	public void run(IAction action) {
-		run();
-	}
-	
-
-	public void selectionChanged(IAction action, ISelection selection) {
-
 	}
 	
 

@@ -1,45 +1,27 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.LispNode;
-import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.swank.SwankRunnable;
-import jasko.tim.lisp.util.LispUtil;
 
 import java.util.ArrayList;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.ui.IEditorActionDelegate;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.texteditor.AbstractTextEditor;
 
-public class FindCalleesAction extends Action implements IEditorActionDelegate {
-	private LispEditor editor;
+
+public class FindCalleesAction extends LispAction {
 	
 	public FindCalleesAction() {
 	}
 	
-	public FindCalleesAction(AbstractTextEditor editor) {
-		this.editor = (LispEditor) editor;
-	}
-
-	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
-		editor = (LispEditor) targetEditor;
+	public FindCalleesAction(LispEditor editor) {
+		super(editor);
 	}
 	
 	public void run() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
-		String symbol = LispUtil.getCurrentFullWord(
-				editor.getDocumentProvider().getDocument(editor.getEditorInput()), offset);
-		SwankInterface swank = LispPlugin.getDefault().getSwank();
+		String symbol = getSymbol();
 		
-		swank.sendGetCallees(symbol, editor.getPackage(), new SwankRunnable() {
+		getSwank().sendGetCallees(symbol, editor.getPackage(), new SwankRunnable() {
 			public void run() {
 				LispNode guts = result.getf(":return").getf(":ok");
 				
@@ -85,14 +67,6 @@ public class FindCalleesAction extends Action implements IEditorActionDelegate {
 			}
 		
 		});
-	}
-
-	public void run(IAction action) {
-		run();
-	}
-
-	public void selectionChanged(IAction action, ISelection selection) {
-
 	}
 
 }

@@ -18,7 +18,8 @@
  */
 package jasko.tim.lisp.editors.actions;
 
-import org.eclipse.ui.texteditor.AbstractTextEditor;
+import jasko.tim.lisp.editors.LispEditor;
+
 
 public class HyperSpecAction extends CallUrlAction {
 	
@@ -26,7 +27,7 @@ public class HyperSpecAction extends CallUrlAction {
 		super(null, "http://www.xach.com/clhs?q=%s");
 	}
 	
-	public HyperSpecAction(AbstractTextEditor editor) {
+	public HyperSpecAction(LispEditor editor) {
 		super(editor, "http://www.xach.com/clhs?q=%s");
 	}
 
