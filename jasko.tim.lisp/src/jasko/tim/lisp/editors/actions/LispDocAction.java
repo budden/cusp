@@ -1,8 +1,6 @@
 package jasko.tim.lisp.editors.actions;
 
-import org.eclipse.ui.texteditor.*;
-
-
+import jasko.tim.lisp.editors.LispEditor;
 
 
 public class LispDocAction extends CallUrlAction {
@@ -11,7 +9,7 @@ public class LispDocAction extends CallUrlAction {
 		super(null, "http://www.lispdoc.com/?q=%s&search=Basic+search");
 	}
 	
-	public LispDocAction(AbstractTextEditor editor) {
+	public LispDocAction(LispEditor editor) {
 		super(editor, "http://www.lispdoc.com/?q=%s&search=Basic+search");
 	}
 

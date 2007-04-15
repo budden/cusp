@@ -588,6 +588,8 @@ public class SwankInterface {
 		emacsRex(msg, pckg);
 	}
 	
+	// Compiling
+	
 	public synchronized void sendCompileString(String expr, String file, String dir, int offset, String pckg, SwankRunnable callBack) {
 		registerCallback(new CompileRunnable(callBack));
 		System.out.println(file);
@@ -640,6 +642,9 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	
+	// X-ref
+	
 	public synchronized void sendGetCallers(String functionName, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
 		
@@ -651,6 +656,21 @@ public class SwankInterface {
 		
 		emacsRex("(swank:xref (quote :callees) (quote \"" + formatCode(functionName) + "\"))", pkg);
 	}
+	
+	// Profiling
+	
+	public synchronized void sendToggleProfileFunction(String functionName, String pkg, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:toggle-profile-fdefinition \"" + formatCode(functionName) + "\")"; 
+		emacsRex(msg, pkg);
+	}
+	
+	public synchronized void sendReportProfile(SwankRunnable callBack) {
+		registerCallback(callBack);
+		emacsRex("(swank:profile-report)");
+	}
+	
+	
 	
 	private void signalResponse(LispNode reply) {
 		String jobNum = reply.get(reply.params.size() - 1).value;
