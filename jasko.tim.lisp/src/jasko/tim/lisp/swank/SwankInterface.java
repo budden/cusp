@@ -536,6 +536,14 @@ public class SwankInterface {
 		emacsRex(msg, pkg);
 	}
 	
+	public synchronized void sendInterrupt(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(:emacs-interrupt :repl-thread)\n";
+		
+		sendRaw(msg);
+	}
+	
+	
 	// Threads
 	
 	public synchronized void sendListThreads(SwankRunnable callBack) {
