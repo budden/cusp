@@ -33,10 +33,9 @@ import org.eclipse.ui.part.ViewPart;
  */
 
 public class ReplView extends ViewPart {
+	public static final String ID = "jasko.tim.lisp.views.ReplView";
 	
 	protected ArrayList<String> prevCommands = new ArrayList<String>();
-
-	public static final String ID = "jasko.tim.lisp.views.ReplView";
 
 	protected Stack<State> states = new Stack<State>();
 
@@ -64,7 +63,11 @@ public class ReplView extends ViewPart {
 	}
 	
 	public void setFocus() {
-		in.getControl().setFocus();
+		if (currState() instanceof DebugState) {
+			debugTree.setFocus();
+		} else {
+			in.getControl().setFocus();
+		}
 	}
 	
 	protected SwankInterface getSwank() {
@@ -379,6 +382,15 @@ public class ReplView extends ViewPart {
 				LispImages.getImageDescriptor(LispImages.DEFPACKAGE));
 		packageButton.setToolTipText("Change Package");
 		
+		Action pauseButton = new Action("Interrupt execution") {
+			public void run() {
+				getSwank().sendInterrupt(null);
+			}
+		};
+		pauseButton.setImageDescriptor(LispImages.getImageDescriptor(LispImages.THREAD_DEBUG));
+		pauseButton.setToolTipText("Interrupt execution");
+		
+		
 		Action clearButton = new Action("Clear Console") {
 			public void run() {
 				IDocument doc = history.getDocument();
@@ -389,6 +401,7 @@ public class ReplView extends ViewPart {
 		clearButton.setToolTipText("Clear Console");
 		
 		tbm.add(clearButton);
+		tbm.add(pauseButton);
 		tbm.add(packageButton);
 		tbm.add(connectButton);
 		
@@ -641,6 +654,62 @@ public class ReplView extends ViewPart {
 	}
 	
 	
+	
+	
+	
+	
+	protected class EvalState implements State {
+
+		public Color getColor(Display display) {
+			return null;
+		}
+
+		public boolean handle(String command, String cleanCommand) {
+			System.out.println(cleanCommand);
+			prevCommands.add(command.trim());
+			currPrevCommand = prevCommands.size();
+			appendText(swank.getPackage() + "> " + command);
+			scrollDown();
+			
+			swank.sendEval(cleanCommand, new ReturnHandler());
+			return false;
+		}
+
+		public void activate() {
+		}
+	}
+	
+	
+	
+	protected class ReadState implements State {
+		private String stringNum1, stringNum2;
+		
+		public ReadState(String s1, String s2) {
+			stringNum1 = s1;
+			stringNum2 = s2;
+		}
+
+		public Color getColor(Display display) {
+			return new Color(display, 0, 255, 0);
+		}
+
+		public boolean handle(String command, String cleanCommand) {
+			swank.sendReadString(cleanCommand, null, stringNum1, stringNum2);
+			appendText(">> " + command);
+			scrollDown();
+			return true;
+		}
+
+		public void activate() {
+		}
+	
+	}
+	
+	
+	
+	
+	
+
 	protected class DebugState implements State, 
 		MouseListener, KeyListener, TreeListener, SelectionListener {
 		
@@ -660,19 +729,6 @@ public class ReplView extends ViewPart {
 		}
 
 		public boolean handle(String command, String cleanCommand) {
-			/*try {
-				int choice = Integer.parseInt(cleanCommand.trim());
-				if (choice >=0 && choice < numDebugOptions) {
-					swank.sendDebug(cleanCommand, null);
-					appendText("]> " + command);
-					scrollDown();
-					return true;
-				} else {
-					appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
-				}
-			} catch (Exception e) {
-				appendText("; You must choose a debug option between 0 and " + (numDebugOptions - 1) + "\n");
-			}*/
 			return false;
 		}
 
@@ -723,7 +779,6 @@ public class ReplView extends ViewPart {
 		}
 		
 		public void choose(Integer choice) {
-			System.out.println("***" + choice);
 			swank.sendDebug(choice.toString(), null);
 			
 			appendText("]> " + choice + "\n");
@@ -780,6 +835,7 @@ public class ReplView extends ViewPart {
 							int pos = res.getf(":position").asInt();
 							String snippet = res.getf(":snippet").value;
 							LispEditor.jumpToDefinition(file, pos, snippet);
+							setFocus();
 						}
 					}
 				});
@@ -793,6 +849,24 @@ public class ReplView extends ViewPart {
 				Integer choice = (Integer) item.getData();
 				choose(choice);
 			}
+		}
+		
+		public void mouseDown(MouseEvent e) {
+			/*TreeItem item = debugTree.getItem(new Point(e.x, e.y));
+			if (item != null && item.getData("frame") != null) {
+				Object frame = item.getData("frame");
+				getSwank().sendGetFrameSourceLocation(frame.toString(), new SwankRunnable() {
+					public void run() {
+						LispNode res = result.getf(":return").getf(":ok");
+						if (!res.car().value.equals(":error")) {
+							String file = res.getf(":file").value;
+							int pos = res.getf(":position").asInt();
+							String snippet = res.getf(":snippet").value;
+							LispEditor.jumpToDefinition(file, pos, snippet);
+						}
+					}
+				});
+			}*/
 		}
 		
 		public void keyPressed(KeyEvent e) {
@@ -818,8 +892,7 @@ public class ReplView extends ViewPart {
 		}
 
 
-		public void mouseDown(MouseEvent e) {
-		}
+		
 		public void mouseUp(MouseEvent e) {
 		}
 		public void keyReleased(KeyEvent e) {
@@ -828,55 +901,5 @@ public class ReplView extends ViewPart {
 		}
 		public void widgetDefaultSelected(SelectionEvent e) {
 		}
-	}
-	
-	
-	
-	
-	protected class EvalState implements State {
-
-		public Color getColor(Display display) {
-			return null;
-		}
-
-		public boolean handle(String command, String cleanCommand) {
-			System.out.println(cleanCommand);
-			prevCommands.add(command.trim());
-			currPrevCommand = prevCommands.size();
-			appendText(swank.getPackage() + "> " + command);
-			scrollDown();
-			
-			swank.sendEval(cleanCommand, new ReturnHandler());
-			return false;
-		}
-
-		public void activate() {
-		}
-	}
-	
-	
-	
-	protected class ReadState implements State {
-		private String stringNum1, stringNum2;
-		
-		public ReadState(String s1, String s2) {
-			stringNum1 = s1;
-			stringNum2 = s2;
-		}
-
-		public Color getColor(Display display) {
-			return new Color(display, 0, 255, 0);
-		}
-
-		public boolean handle(String command, String cleanCommand) {
-			swank.sendReadString(cleanCommand, null, stringNum1, stringNum2);
-			appendText(">> " + command);
-			scrollDown();
-			return true;
-		}
-
-		public void activate() {
-		}
-	
 	}
 }
