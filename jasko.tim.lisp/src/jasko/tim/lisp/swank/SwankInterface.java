@@ -650,6 +650,31 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	public synchronized ArrayList<String> getAvailablePackages(long timeout) {
+		SyncCallback callback = new SyncCallback();
+		++messageNum;
+		syncJobs.put(new Integer(messageNum).toString(), callback);
+
+		java.util.ArrayList<String> packageNames = new java.util.ArrayList<String>();
+
+		try {
+			synchronized (callback) {
+				if (emacsRex("(swank:list-all-package-names t)")) {
+					callback.wait(timeout);
+					LispNode packages = callback.result.getf(":return").getf(
+							":ok");
+					for (LispNode p : packages.params) {
+						packageNames.add(p.value);
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return packageNames;
+	}
+	
 	
 	// X-ref
 	

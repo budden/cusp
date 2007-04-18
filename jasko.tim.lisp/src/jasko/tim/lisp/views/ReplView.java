@@ -363,19 +363,11 @@ public class ReplView extends ViewPart {
 		
 		Action packageButton = new Action("Change Package") {
 			public void run() {
-				swank.sendGetPackages(new SwankRunnable() {
-					public void run() {
-						LispNode packages = result.getf(":return").getf(":ok");
-						PackageDialog pd = new PackageDialog(ReplView.this.getSite().getShell(),
-								packages.params, swank.getPackage());
-						if (pd.open() == Dialog.OK) {
-							String p = pd.getPackage();
-							swank.setPackage(p);
-							appendText(";Package changed to " + p + "\n");
-							scrollDown();
-						}
-					}
-				});
+				PackageDialog pd = new PackageDialog(ReplView.this.getSite().getShell(),
+						swank.getAvailablePackages(5000), swank.getPackage());
+				if (pd.open() == Dialog.OK) {
+					switchPackage(pd.getPackage());
+				}
 			}
 		};
 		packageButton.setImageDescriptor(
@@ -486,7 +478,36 @@ public class ReplView extends ViewPart {
 			scrollDown();
 		}
 	}
-	
+
+	/**
+	 * Checks the next repl command to be issued for a valid in-package form.
+	 * If one is found, the name specified in the form is checked against the list
+	 * of available packages.  If the specified package name is available, then
+	 * the swank connection's current package is changed as requested.
+	 */
+	private void checkSwitchPackage (String replCmd) {
+		LispNode n = LispParser.parse(replCmd);
+		if (n.car().car().value.toUpperCase().equals("IN-PACKAGE")) {
+			String packageName = n.car().cadr().value.toUpperCase();
+			if (packageName.startsWith(":")) packageName = packageName.substring(1);
+			if (!packageName.equals(swank.getPackage())) {
+				ArrayList<String> packages = swank.getAvailablePackages(5000);
+				if (packages.contains(packageName.toUpperCase())) switchPackage(packageName);
+			}
+		}
+	}
+
+	/**
+	 * Switches the swank connection's current package to the given package name,
+	 * prints an appropriate commented message, and forces the repl to scroll to the
+	 * bottom.
+	 */
+	private void switchPackage (String packageName) {
+		swank.setPackage(packageName);
+		appendText(";Package changed to " + packageName + "\n");
+		scrollDown();
+	}
+
 	protected void eval() {
 		String cmd = in.getDocument().get();
 		if (!cmd.endsWith("\n")) {
@@ -672,6 +693,9 @@ public class ReplView extends ViewPart {
 			scrollDown();
 			
 			swank.sendEval(cleanCommand, new ReturnHandler());
+			
+			checkSwitchPackage(command);
+			
 			return false;
 		}
 
