@@ -10,14 +10,14 @@ import org.eclipse.swt.graphics.Color;
 public class LispScanner extends RuleBasedScanner {
 
 	public LispScanner(ColorManager manager, Color background) {
-		IRule[] rules = new IRule[8];
+		IRule[] rules = new IRule[10];
 		
 		IToken number = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.NUMBER), background, SWT.NORMAL));
 		rules[0] = new NumberRule(number);
 		
 		IToken comment = new Token(
-			new TextAttribute(manager.getColor(ColorManager.TokenType.PAREN), background, SWT.NORMAL));
+			new TextAttribute(manager.getColor(ColorManager.TokenType.COMMENT), background, SWT.NORMAL));
 		rules[1] = new EndOfLineRule(";", comment);
 		
 		IToken paren = new Token(
@@ -41,6 +41,11 @@ public class LispScanner extends RuleBasedScanner {
 				new TextAttribute(manager.getColor(ColorManager.TokenType.CONSTANT), background, SWT.NORMAL));
 		rules[6] = new WordPatternRule(new LispIdentifierDetector(), "+", "+", constant);
 		
+		IToken ucwToken = new Token(
+				new TextAttribute(manager.getColor(ColorManager.TokenType.UCW_TAG), background, SWT.BOLD));
+		rules[7] = new WordPatternRule(new LispIdentifierDetector(), "<:", "", ucwToken);
+		rules[8] = new WordPatternRule(new LispIdentifierDetector(), "<ucw:", "", ucwToken);
+		
 		IToken defaultToken = new Token(
 				new TextAttribute(manager.getColor(ColorManager.TokenType.KEYWORD), background, SWT.NORMAL));
 		IToken keyword = new Token(
@@ -50,7 +55,10 @@ public class LispScanner extends RuleBasedScanner {
 		for(int i = 0; i < LispSpecialWordDetector.RESERVED_WORDS.length; i++) {
 			keywordRule.addWord(LispSpecialWordDetector.RESERVED_WORDS[i], keyword);
 		}
-		rules[7] = keywordRule;
+		rules[9] = keywordRule;
+		
+		
+		
 		// Add generic whitespace rule.
 		//rules[7] = new WhitespaceRule(new LispWhitespaceDetector());
 		setRules(rules);

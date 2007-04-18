@@ -21,7 +21,7 @@ public class ColorManager {
 
 	public static enum TokenType 
 	  { STRING, NUMBER, PAREN, KEYWORD, SYMBOL, PARAMS,
-		COMMENT, DEFAULT, GLOBAL, CONSTANT, SENT_MESSAGE };
+		COMMENT, DEFAULT, GLOBAL, CONSTANT, SENT_MESSAGE, UCW_TAG };
 	
 
 	public static RGB DEFAULT_STRING = new RGB(200, 128, 0);
@@ -35,6 +35,7 @@ public class ColorManager {
 	public static RGB DEFAULT_GLOBAL = new RGB(128, 0, 255);
 	public static RGB DEFAULT_CONSTANT = new RGB(128, 0, 128);
 	public static RGB DEFAULT_SENT_MESSAGE = new RGB(220,220,220);
+	public static RGB DEFAULT_UCW = new RGB(200, 50, 0);
 	
 	protected static Map<String, TokenType> prefTokenTypeMap;
 	public static TokenType preferenceStringToTokenType(String str)
@@ -58,6 +59,7 @@ public class ColorManager {
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_SENT_MESSAGE, TokenType.SENT_MESSAGE);
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_STRINGS,       TokenType.STRING);
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_SYMBOL,       TokenType.SYMBOL);
+			prefTokenTypeMap.put(PreferenceConstants.COLOR_UCW,       TokenType.UCW_TAG);
 		}
 		return prefTokenTypeMap;
 	}

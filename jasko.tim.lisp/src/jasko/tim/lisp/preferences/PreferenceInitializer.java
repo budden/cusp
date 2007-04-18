@@ -29,6 +29,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.COLOR_SENT_MESSAGE, rgbAsPrefString(ColorManager.DEFAULT_SENT_MESSAGE));
 		store.setDefault(PreferenceConstants.COLOR_STRINGS, rgbAsPrefString(ColorManager.DEFAULT_STRING));
 		store.setDefault(PreferenceConstants.COLOR_SYMBOL, rgbAsPrefString(ColorManager.DEFAULT_SYMBOL));
+		store.setDefault(PreferenceConstants.COLOR_UCW, rgbAsPrefString(ColorManager.DEFAULT_UCW));
 	}
 	
 	
