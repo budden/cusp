@@ -78,6 +78,11 @@ public class ColorsPreferencePage extends FieldEditorPreferencePage implements I
 				PreferenceConstants.COLOR_PAREN,
 				"Parentheses: ",
 				getFieldEditorParent()));
+		
+		addField(new org.eclipse.jface.preference.ColorFieldEditor(
+				PreferenceConstants.COLOR_UCW,
+				"Ucw Tags: ",
+				getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)

@@ -16,6 +16,7 @@ public class PreferenceConstants {
 	public static final String COLOR_SENT_MESSAGE  = "colorSentMessage";
 	public static final String COLOR_STRINGS       = "colorStrings";
 	public static final String COLOR_SYMBOL        = "colorSymbol";
+	public static final String COLOR_UCW        = "colorUcw";
 
 	public static final String LISP_EXE = "lispExecutable";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
