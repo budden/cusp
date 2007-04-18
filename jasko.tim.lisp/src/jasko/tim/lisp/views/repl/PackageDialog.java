@@ -1,6 +1,5 @@
 package jasko.tim.lisp.views.repl;
 
-import jasko.tim.lisp.swank.LispNode;
 
 import java.util.*;
 
@@ -20,13 +19,10 @@ public class PackageDialog extends Dialog {
 	String result = "";
 	String currPackage;
 	
-	public PackageDialog(Shell parentShell, ArrayList<LispNode> packages, String currPackage) {
+	public PackageDialog(Shell parentShell, ArrayList<String> packages, String currPackage) {
 		super(parentShell);
 		this.currPackage = currPackage;
-		this.packages = new ArrayList<String>(packages.size());
-		for (LispNode p: packages) {
-			this.packages.add(p.value);
-		}
+		this.packages = packages;
 		Collections.sort(this.packages);
 	}
 	
