@@ -1,6 +1,7 @@
 package jasko.tim.lisp;
 
 import jasko.tim.lisp.preferences.PreferenceConstants;
+import jasko.tim.lisp.preferences.PreferenceInitializer;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -12,7 +13,6 @@ import java.util.Map;
 import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
 import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
-import org.eclipse.jface.resource.DataFormatException;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
@@ -126,23 +126,22 @@ public class ColorManager {
 	protected void loadColorPreferences()
 	{
 		Map<String, TokenType> prefMap = getPrefTokenTypeMap();
-		try {
-			for (String pref : prefMap.keySet())
-			{
-				TokenType toktype = preferenceStringToTokenType(pref);
-				RGB prefVal;
-				try {
-					prefVal = StringConverter.asRGB(getPlugin().getPreferenceStore().getString(pref));
-				} catch (DataFormatException e)
-				{
-					prefVal = DEFAULT_DEFAULT;
-				}
-				setRGBForTokenType(toktype, prefVal);
-			}
-		} 
-		catch (Exception e)
+		for (String pref : prefMap.keySet())
 		{
-			e.printStackTrace();
+			TokenType toktype = preferenceStringToTokenType(pref);
+			RGB prefVal = null;
+			try {
+				prefVal = StringConverter.asRGB(getPlugin().getPreferenceStore().getString(pref));
+			} catch (Exception e) {
+                e.printStackTrace();
+                try {
+                    prefVal = StringConverter.asRGB(PreferenceInitializer.getDefaultColorFor(pref));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+			}
+
+			setRGBForTokenType(toktype, prefVal == null ? DEFAULT_DEFAULT : prefVal);
 		}
 	}
 	

@@ -62,12 +62,14 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 	 * using wizard as execution context.
 	 */
 	public boolean performFinish() {
-		final String fileName = page.getProjectName();
+		final String projectName = page.getProjectName();
+		final String customProjectPath = page.getCustomProjectPath();
 		IRunnableWithProgress op = new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException {
 				try {
-					doFinish(fileName, monitor);
+					doFinish(projectName, customProjectPath, monitor);
 				} catch (CoreException e) {
+					e.printStackTrace();
 					throw new InvocationTargetException(e);
 				} finally {
 					monitor.done();
@@ -97,38 +99,35 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 	 * The worker method. It will create a new project, then
 	 * create the appropriate Soar heirarchy and files.
 	 */
-	private void doFinish( String projectName, IProgressMonitor monitor)
-	  throws CoreException {
-		
-		monitor.beginTask("Creating " + projectName, 10);
-		
-		
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IProject newProject = root.getProject(projectName);
-		
-		//creation of the project
-		if (newProject.exists()) {
-			throwCoreException("Project \"" + projectName + "\" already exists");
-		} else {
-			
-			newProject.create(monitor);
-			newProject.open(monitor);
-			
-			try {
-
-				IProjectDescription description = newProject.getDescription();
-				String[] natures = description.getNatureIds();
-				String[] newNatures = new String[natures.length + 1];
-				System.arraycopy(natures, 0, newNatures, 0, natures.length);
-				newNatures[natures.length] = LispNature.NATURE_ID;
-				description.setNatureIds(newNatures);
-				
-				newProject.setDescription(description, IResource.FORCE ,monitor);
-				
-				
-			} catch (CoreException e) {
-				e.printStackTrace();
-			} // catch
+	private void doFinish (String projectName, String customProjectPath, IProgressMonitor monitor) throws CoreException {
+  		monitor.beginTask("Creating " + projectName, 10);
+  		
+         IWorkspace workspace = ResourcesPlugin.getWorkspace();
+ 		IWorkspaceRoot root = workspace.getRoot();
+  		IProject newProject = root.getProject(projectName);
+  		
+  		//creation of the project
+  		if (newProject.exists()) {
+  			throwCoreException("Project \"" + projectName + "\" already exists");
+  		} else {
+             IProjectDescription pdesc = workspace.newProjectDescription(newProject.getName());
+             pdesc.setLocation(customProjectPath != null ? 
+                     new Path(new File(customProjectPath, projectName).getAbsolutePath()) : null);
+             
+             newProject.create(pdesc, monitor);
+  			newProject.open(monitor);
+  			
+  			try {
+ 				String[] natures = pdesc.getNatureIds();
+  				String[] newNatures = new String[natures.length + 1];
+  				System.arraycopy(natures, 0, newNatures, 0, natures.length);
+  				newNatures[natures.length] = LispNature.NATURE_ID;
+                 pdesc.setNatureIds(newNatures);
+  				
+ 				newProject.setDescription(pdesc, IResource.FORCE, monitor);
+  			} catch (CoreException e) {
+  				e.printStackTrace();
+  			} // catch
 			
 		} // else
 		
@@ -136,7 +135,6 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		
 		// Create the contents of the project's root directory
-		
 		String pkg = projectName.toLowerCase();
 		
 		InputStream contents = Templater.getTemplate("main.lisp", pkg);
