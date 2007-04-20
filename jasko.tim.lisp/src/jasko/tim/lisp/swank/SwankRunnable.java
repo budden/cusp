@@ -15,14 +15,12 @@ package jasko.tim.lisp.swank;
  */
 public abstract class SwankRunnable implements Runnable {
 	public LispNode result;
-	public String resultString;
 	
 	public SwankRunnable clone() {
 		SwankRunnable ret;
 		try {
 			ret = this.getClass().newInstance();
 			ret.result = result;
-			ret.resultString = resultString;
 			
 			return ret;
 		} catch (InstantiationException e) {

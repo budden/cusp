@@ -15,6 +15,7 @@ import org.eclipse.jface.text.*;
  * @see jasko.tim.lisp.editors.assist.LispIndenter
  */
 public class IndentAction extends LispAction {
+	public static final String ID = "jasko.tim.lisp.actions.IndentAction";
 	
 	public IndentAction() {
 	}

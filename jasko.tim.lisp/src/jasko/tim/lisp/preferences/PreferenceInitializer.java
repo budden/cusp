@@ -28,6 +28,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
         DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_SENT_MESSAGE, rgbAsPrefString(ColorManager.DEFAULT_SENT_MESSAGE));
         DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_STRINGS, rgbAsPrefString(ColorManager.DEFAULT_STRING));
         DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_SYMBOL, rgbAsPrefString(ColorManager.DEFAULT_SYMBOL));
+        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_UCW, rgbAsPrefString(ColorManager.DEFAULT_UCW));
     }
     
 	/*

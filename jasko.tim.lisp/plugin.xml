@@ -557,7 +557,7 @@
 				class="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
 				definitionId="jasko.tim.lisp.actions.ProfileFunctionAction"
 				id="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
-				label="&amp;Profile Function"
+				label="Profile &amp;Function"
 				menubarPath="Lisp.Profile/grpMisc"
 				tooltip="Profile function.">
 			</action>
@@ -568,9 +568,9 @@
 	<extension point="org.eclipse.ui.commands">
 		<command
 			categoryId="jasko.tim.lisp.category2"
-			description="Toggles profiling for the function."
+			description="Shows the profiling report."
 			id="jasko.tim.lisp.actions.ProfileReportAction"
-			name="Profile Function"/>
+			name="Profile Report"/>
 	</extension>
 	<extension point="org.eclipse.ui.editorActions">
 		<editorContribution
@@ -580,9 +580,32 @@
 				class="jasko.tim.lisp.editors.actions.ProfileReportAction"
 				definitionId="jasko.tim.lisp.actions.ProfileReportAction"
 				id="jasko.tim.lisp.editors.actions.ProfileReportAction"
-				label="&amp;Profile Report"
+				label="Profile &amp;Report"
 				menubarPath="Lisp.Profile/grpMisc"
 				tooltip="Profile Report">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Reset Profiling -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category2"
+			description="Resets profiling."
+			id="jasko.tim.lisp.actions.ProfileResetAction"
+			name="Reset Profiling"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus.profile">
+			<action
+				class="jasko.tim.lisp.editors.actions.ProfileResetAction"
+				definitionId="jasko.tim.lisp.actions.ProfileResetAction"
+				id="jasko.tim.lisp.editors.actions.ProfileResetAction"
+				label="&amp;Reset profiling"
+				menubarPath="Lisp.Profile/grpMisc"
+				tooltip="Reset the profiler.">
 			</action>
 		</editorContribution>
 	</extension>

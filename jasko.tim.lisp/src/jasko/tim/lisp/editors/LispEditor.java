@@ -220,7 +220,11 @@ public class LispEditor extends TextEditor {
 		super.createActions();
 		
 		IKeyBindingService keys = this.getSite().getKeyBindingService();
-		CompileAction compile = new CompileAction(this);
+		IndentAction indent = new IndentAction(this);
+		indent.setActionDefinitionId(IndentAction.ID);
+		keys.registerAction(indent);
+		
+		/*CompileAction compile = new CompileAction(this);
 		compile.setActionDefinitionId("jasko.tim.lisp.actions.CompileAction");
 		keys.registerAction(compile);
 		
@@ -277,8 +281,12 @@ public class LispEditor extends TextEditor {
 		keys.registerAction(switchToRepl);
 		
 		ProfileFunctionAction profileFunc = new ProfileFunctionAction(this);
-		undefineFunc.setActionDefinitionId(ProfileFunctionAction.ID);
+		profileFunc.setActionDefinitionId(ProfileFunctionAction.ID);
 		keys.registerAction(profileFunc);
+		
+		ProfileResetAction profileReset = new ProfileResetAction(this);
+		profileReset.setActionDefinitionId(ProfileResetAction.ID);
+		keys.registerAction(profileReset);*/
 	}
 	
 	public void doSave(IProgressMonitor monitor) {

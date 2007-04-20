@@ -703,6 +703,11 @@ public class SwankInterface {
 		emacsRex("(swank:profile-report)");
 	}
 	
+	public synchronized void sendProfileReset(SwankRunnable callBack) {
+		registerCallback(callBack);
+		emacsRex("(swank:profile-reset)");
+	}
+	
 	
 	
 	private void signalResponse(LispNode reply) {
@@ -784,7 +789,7 @@ public class SwankInterface {
 			for (int i=0; i<listeners.size(); ++i) {
 				SwankRunnable runnable = listeners.get(i).clone();
 				runnable.result = result;
-				runnable.resultString = result.value;
+				//runnable.resultString = result.value;
 				Display.getDefault().asyncExec(runnable);
 			}
 		}
@@ -918,7 +923,7 @@ public class SwankInterface {
 								if (echo) {
 									for (int i=0; i<displayListeners.size(); ++i) {
 										SwankRunnable runnable = displayListeners.get(i).clone();
-										runnable.resultString = curr;
+										runnable.result = new LispNode(curr);
 										Display.getDefault().asyncExec(runnable);
 									}
 								}

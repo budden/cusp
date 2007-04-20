@@ -185,8 +185,9 @@ public class ReplView extends ViewPart {
  		//in.appendVerifyKeyListener(new PrevCommandsShortcuts());
  		in.appendVerifyKeyListener(new CheckEvalListener());
         in.appendVerifyKeyListener(new SelectAllListener());
- 		
+        
  		IKeyBindingService keys = this.getSite().getKeyBindingService();
+ 		keys.setScopes(new String[] { "jasko.tim.lisp.context1" });
  		PreviousREPLCommandAction prevCmdAction = new PreviousREPLCommandAction(this);
  		prevCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.PreviousREPLCommandAction");
  		keys.registerAction(prevCmdAction);
@@ -412,18 +413,22 @@ public class ReplView extends ViewPart {
 		}
 	}
 	
+	
+	/**
+	 * This is a real class rather than an anonymous one so that it can be cloned properly.
+	 *  If it weren't, you'd sometimes get results printed twice on the repl
+	 */
 	protected class DisplayRunnable extends SwankRunnable {
 		public ReplView rv;
 		
 		public void run() {
-			rv.appendText(resultString + "\n");
+			rv.appendText(result.value + "\n");
 			scrollDown();
 		}
 		
 		public SwankRunnable clone() {
 			DisplayRunnable re = new DisplayRunnable();
 			re.result = this.result;
-			re.resultString = this.resultString;
 			re.rv = this.rv;
 			
 			return re;
