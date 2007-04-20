@@ -15,6 +15,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -183,6 +184,7 @@ public class ReplView extends ViewPart {
  		in.getTextWidget().setFont(newFont);
  		//in.appendVerifyKeyListener(new PrevCommandsShortcuts());
  		in.appendVerifyKeyListener(new CheckEvalListener());
+        in.appendVerifyKeyListener(new SelectAllListener());
  		
  		IKeyBindingService keys = this.getSite().getKeyBindingService();
  		PreviousREPLCommandAction prevCmdAction = new PreviousREPLCommandAction(this);
@@ -567,6 +569,17 @@ public class ReplView extends ViewPart {
     		in.getDocument().set(prevCommands.get(currPrevCommand));
     		in.setSelectedRange(in.getDocument().getLength(), 0);
     	}
+    }
+    
+    protected class SelectAllListener implements VerifyKeyListener {
+        public void verifyKey (VerifyEvent evt) {
+            if (evt.keyCode == 'a') {
+                if (evt.stateMask == SWT.CONTROL ||
+                        (evt.stateMask == SWT.COMMAND && Platform.getOS().equals(Platform.OS_MACOSX))) {
+                    in.setSelectedRange(0, in.getDocument().getLength());
+                }
+            }
+        }
     }
 	
 	protected class CheckEvalListener implements VerifyKeyListener {
