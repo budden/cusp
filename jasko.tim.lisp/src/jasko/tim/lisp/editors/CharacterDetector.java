@@ -14,7 +14,7 @@ public class CharacterDetector implements IWordDetector {
 	
 	
 	public boolean isWordPart(char c) {
-		System.out.println("***" + c + ":" + index);
+		//System.out.println("***" + c + ":" + index);
 		/*if (index == 0 && c == '#') {
 			index = 1;
 			return true;
