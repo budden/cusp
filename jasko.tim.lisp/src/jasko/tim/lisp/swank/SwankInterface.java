@@ -234,7 +234,7 @@ public class SwankInterface {
 				commandInterface = new DataOutputStream(lispEngine.getOutputStream());
 				//commandInterface.writeBytes("(progn (swank:create-swank-server " + port + " nil) (quit))\n");
 				commandInterface.writeBytes("(load \"" + slimePath.replace("\\", "\\\\") + "\")\n");
-				commandInterface.writeBytes("(swank:create-server :port " + port + ")\n");
+				commandInterface.writeBytes("(swank:create-server :coding-system \"utf-8\" :port " + port + ")\n");
 				commandInterface.flush();
 				
 			} catch (IOException e2) {
@@ -767,14 +767,16 @@ public class SwankInterface {
 			// which is a hexadecimal number. Not sure why they do it this way.
 			String hexLen = Integer.toHexString(message.length());
 			
-			while (hexLen.length() < 6) {
-				hexLen = "0" + hexLen;
+            switch (hexLen.length()) {
+                case 1: out.write('0');
+                case 2: out.write('0');
+                case 3: out.write('0');
+                case 4: out.write('0');
+                case 5: out.write('0');
 			}
 			
-			//out.writeByte(0);
-			//out.writeShort(message.length());
 			out.writeBytes(hexLen);
-			out.writeBytes(message);
+			out.write(message.getBytes("UTF-8"));
 			out.flush();
 		} catch (IOException e) {
 			signalListeners(disconnectListeners, new LispNode());
@@ -800,9 +802,15 @@ public class SwankInterface {
 		public boolean running = true;
 		
 		public ListenerThread(InputStream stream) {
-			super ("Swank Listener");
+			super("Swank Listener");
 			
-			in = new BufferedReader(new InputStreamReader(stream));
+			try {
+                in = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+            	System.out.println("Could not load UTF-8 character set -- something seriously wrong....");
+            	e.printStackTrace();
+            	throw new IllegalStateException("Could not initialize swank listener -- UTF-8 character set not available.", e);
+            }
 		}
 		
 		
