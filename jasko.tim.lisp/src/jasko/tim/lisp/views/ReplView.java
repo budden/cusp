@@ -277,7 +277,8 @@ public class ReplView extends ViewPart {
  		fillMenu(parent);
  		
  		if (swank != null) {
- 			swank.sendEval("(format nil \"You are running ~a ~a\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
+ 			swank.sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
+                    "\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
  		}
  		
  		parentControl.layout(false);
