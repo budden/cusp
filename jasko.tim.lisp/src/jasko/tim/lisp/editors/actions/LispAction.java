@@ -59,6 +59,13 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
 		
 		return LispUtil.getTopLevelExpression(doc, offset);
 	}
+    
+    protected String getCurrentExpression () {
+        ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
+        IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        
+        return LispUtil.getCurrentExpression(doc, ts.getOffset(), ts.getLength());
+    }
 	
 	protected String getExpression() {
 		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();

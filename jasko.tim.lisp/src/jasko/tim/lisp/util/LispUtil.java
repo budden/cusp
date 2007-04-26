@@ -208,15 +208,15 @@ public class LispUtil {
 	
 
 	public static boolean doParensBalance(IDocument doc) {
-		return doParensBalance(doc, doc.getLength());
+		return doParensBalance(doc, 0, doc.getLength());
 	}
 	
-	public static boolean doParensBalance(IDocument doc, int offset) {
+	public static boolean doParensBalance(IDocument doc, int start, int end) {
 		String code = doc.get();
 		int open = 0;
 		int close = 0;
 		
-		for (int i=0; i<offset; ++i) {
+		for (int i = start; i < end; ++i) {
 			char c = code.charAt(i);
 			if (c == ')') {
 				try {
@@ -358,4 +358,32 @@ public class LispUtil {
 		
 		return -1;
 	}
+
+    public static String getCurrentExpression (IDocument doc, int offset, int selLength) {
+        // todo -- add support for returning the entire selection,
+        //    if the current selection delimits a valid and complete set of s-expressions
+        try {
+            if (selLength > 0) {
+                if (doParensBalance(doc, offset, offset + selLength)) {
+                    return doc.get(offset, selLength);
+                } else {
+                    System.out.println("Not evaluating current selection; parens do not balance.");
+                }
+            } else {
+                if (offset < doc.getLength() && doc.getChar(offset) == '(') {
+                    int end = findCloseParen(doc, offset + 1);
+                    if (end > -1) return doc.get(offset, end - offset + 1);
+                } else if (offset > 0 && doc.getChar(offset - 1) == ')') {
+                    int start = findOpenParen(doc, offset - 1);
+                    if (start > -1) return doc.get(start, offset - start);
+                } else {
+                    return getCurrentFullExpression(doc, offset);
+                }
+            }
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+        
+        return "";
+    }
 }
