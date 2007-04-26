@@ -363,9 +363,13 @@ public class LispEditor extends TextEditor {
 			
 			annotations[contents.params.size()-1] = annotation;	
 			
-			
-			annotationModel.modifyAnnotations(prevAnnotations, newAnnotations, null);
-			prevAnnotations = annotations;
+			if (annotationModel != null) {
+                // there are times when the annotation model is null, such as when one opens a lisp file from disk
+                // that is not part of a project.  I don't know how to really fix this, but it seems that it's better
+                // to show the editor than to fail because we can't get folding to work.  - Chas
+    			annotationModel.modifyAnnotations(prevAnnotations, newAnnotations, null);
+    			prevAnnotations = annotations;
+            }
 		}
 	}
 	
