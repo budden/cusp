@@ -492,6 +492,32 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	// Inspection related
+	
+	public synchronized void sendInspectReplResult(String num, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:init-inspector \"(swank:get-repl-result #10r" + num 
+			+ ")\" :reset t :eval t :dwim-mode nil)";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendInspectInspectedPart(String partNum, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:init-inspector \"(swank:get-repl-result '(:inspected-part " 
+			+ partNum + "))\" :reset t :eval t :dwim-mode nil)";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendInspectFrameLocal(String threadNum, String frameNum, String varNum, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:init-inspector \"(swank:get-repl-result '(:frame-var " 
+			+ threadNum + " " + frameNum + " " + varNum + "))\" :reset t :eval t :dwim-mode nil)";
+		
+		emacsRex(msg);
+	}
+	
 	// Debug related
 	
 	public synchronized void sendGetFrameLocals(String frameNum, SwankRunnable callBack) {
@@ -821,9 +847,7 @@ public class SwankInterface {
 				} else if (node.car().value.equals(":read-string")) {
 					signalListeners(readListeners, node);
 				} else if (node.car().value.equals(":write-string")) {
-					if (! node.get(1).value.equals("\n")) {
-						signalListeners(displayListeners, node.get(1));
-					}
+					signalListeners(displayListeners, node);
 				} else if (node.car().value.equals(":indentation-update")) {
 					signalListeners(indentationListeners, node);
 				} else {
