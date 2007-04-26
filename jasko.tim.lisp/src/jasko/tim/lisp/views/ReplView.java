@@ -5,6 +5,7 @@ import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.views.repl.*;
 import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.editors.*;
+import jasko.tim.lisp.inspector.InspectorRunnable;
 
 import java.util.*;
 
@@ -33,7 +34,7 @@ import org.eclipse.ui.part.ViewPart;
  * @author Tim Jasko
  */
 
-public class ReplView extends ViewPart {
+public class ReplView extends ViewPart implements SelectionListener {
 	public static final String ID = "jasko.tim.lisp.views.ReplView";
 	
 	protected ArrayList<String> prevCommands = new ArrayList<String>();
@@ -43,8 +44,9 @@ public class ReplView extends ViewPart {
 	protected SwankInterface swank;
 	
 	protected Sash replComposite;
-	protected SourceViewer history;
+	protected ReplHistory history;
 	protected SourceViewer in;
+	
 	
 	protected Composite parentControl;
 	protected Composite mainView;
@@ -96,8 +98,7 @@ public class ReplView extends ViewPart {
 			return;
 		}
 		// layout controllers we need in a few places
-		GridData gd;
-		gd = new GridData();
+		GridData gd = new GridData();
 		gd.horizontalAlignment = GridData.FILL;
 		gd.verticalAlignment = GridData.FILL;
  		gd.grabExcessHorizontalSpace = true;
@@ -110,17 +111,11 @@ public class ReplView extends ViewPart {
 		layout.marginBottom = 1;
 		
 		// Create the debug view
-		RowLayout rl = new RowLayout();
-		rl.type = SWT.VERTICAL;
-		rl.fill = true;
 		debugView.setLayout(layout);
 		
 		debugLabel = new Label(debugView, SWT.BORDER);
 		debugLabel.setText("Debugging");
 		
-		RowData rd = new RowData();
-		rd.width = SWT.FILL;
-		rd.height = SWT.FILL;
 		debugTree = new Tree(debugView, SWT.SINGLE);
 		debugTree.setLayoutData(gd);
 		debugTree.setLayout(layout);
@@ -156,16 +151,8 @@ public class ReplView extends ViewPart {
  		fd.setHeight(9);
  		Font newFont = new Font(Display.getDefault(), fd);
  		
- 		history = new SourceViewer(comp, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
- 		history.setEditable(false);
- 		//history.configure(new ReplConfiguration(LispPlugin.getDefault().getColorManager()));
- 		history.configure(new LispConfiguration(null, LispPlugin.getDefault().getColorManager()));
- 		IDocument doc = new Document();
- 		ReplPartitionScanner.connectPartitioner(doc);
- 		history.setDocument(doc);
- 		
- 		history.showAnnotations(false);
- 		history.showAnnotationsOverview(false);
+ 		history = new ReplHistory(comp);
+
  		history.getControl().setLayoutData(gd);
  		history.getTextWidget().setFont(newFont);
 		
@@ -175,7 +162,7 @@ public class ReplView extends ViewPart {
  		in = new SourceViewer(comp2, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
  		in.setEditable(true);
  		in.configure(new LispConfiguration(null, LispPlugin.getDefault().getColorManager()));
- 		doc = new Document();
+ 		IDocument doc = new Document();
  		LispDocumentProvider.connectPartitioner(doc);
  		in.setDocument(doc);
  		in.showAnnotations(false);
@@ -282,6 +269,27 @@ public class ReplView extends ViewPart {
  		}
  		
  		parentControl.layout(false);
+ 		
+ 		// reposition widgets on paint event
+		/*history.getTextWidget().addPaintObjectListener(new PaintObjectListener() {
+			public void paintObject(PaintObjectEvent event) {
+				StyleRange style = event.style;
+				int start = style.start;
+				
+				for (int i = 0; i < offsets.size(); i++) {
+					int offset = offsets.get(i);
+					if (start == offset) {
+						Point pt = controls.get(i).getSize();
+						Point loc = history.getTextWidget().getLocationAtOffset(offset);
+						System.out.println("*" + loc);
+						int x = loc.x + 5;
+						int y = loc.y + event.ascent - 2*pt.y/3;
+						controls.get(i).setLocation(x, y);
+						break;
+					}
+				}
+			}
+		});*/
 	}
 	
 	private void hideFrame(Composite control) {
@@ -389,8 +397,7 @@ public class ReplView extends ViewPart {
 		
 		Action clearButton = new Action("Clear Console") {
 			public void run() {
-				IDocument doc = history.getDocument();
-				doc.set("");
+				history.clear();
 			}
 		};
 		clearButton.setImageDescriptor(LispImages.getImageDescriptor(LispImages.CLEAR));
@@ -400,18 +407,25 @@ public class ReplView extends ViewPart {
 		tbm.add(pauseButton);
 		tbm.add(packageButton);
 		tbm.add(connectButton);
-		
-		
 	}
 	
+	public void widgetDefaultSelected(SelectionEvent e) {
+	}
+
+	public void widgetSelected(SelectionEvent e) {
+		if (e.widget.getData() != null) {
+			String partNum = e.widget.getData().toString();
+			System.out.println("part: " + partNum);
+			LispPlugin.getDefault().getSwank().sendInspectInspectedPart(partNum, new InspectorRunnable());
+		}
+	}
 	
 	protected void appendText(String text) {
-		IDocument doc = history.getDocument();
-		try {
-			doc.replace(doc.getLength(), 0, text);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
-		}
+		history.appendText(text);
+	}
+	
+	public void appendInspectable(String text, String id) {
+		history.appendInspectable(text, id);
 	}
 	
 	
@@ -423,7 +437,12 @@ public class ReplView extends ViewPart {
 		public ReplView rv;
 		
 		public void run() {
-			rv.appendText(result.value + "\n");
+			if (result.params.size() <= 3) {
+				rv.appendText(result.get(1).value);
+			} else {
+				rv.appendInspectable(result.get(1).value, result.get(2).value);
+			}
+			//history.appendText(result.get(1).value);
 			scrollDown();
 		}
 		
@@ -756,15 +775,16 @@ public class ReplView extends ViewPart {
 	protected class DebugState implements State, 
 		MouseListener, KeyListener, TreeListener, SelectionListener {
 		
-		private int numDebugOptions;
 		private LispNode desc, options, backtrace;
+		private String thread, level;
 		
 		public DebugState(LispNode debugInfo) {
+			thread = debugInfo.get(1).value;
+			level = debugInfo.get(2).value;
+			
 			desc = debugInfo.get(3);
 			options = debugInfo.get(4);
 			backtrace = debugInfo.get(5);
-			
-			numDebugOptions = options.params.size();
 		}
 
 		public Color getColor(Display display) {
@@ -843,7 +863,7 @@ public class ReplView extends ViewPart {
 			final TreeItem sel = (TreeItem)e.item;
 			
 			if (sel.getData("frame") != null) {
-				Object frame = sel.getData("frame");
+				final Object frame = sel.getData("frame");
 				
 				getSwank().sendGetFrameLocals(frame.toString(), new SwankRunnable() {
 					public void run() {
@@ -853,11 +873,14 @@ public class ReplView extends ViewPart {
 							TreeItem tmp = new TreeItem(sel, 0);
 							tmp.setText("[No Locals]");
 						} else {
-							for (LispNode var : vars.params) { 
+							for (int i=0; i < vars.params.size(); ++i) {
+								LispNode var = vars.params.get(i);
 								String name = var.getf(":name").value;
 								String val = var.getf(":value").value;
 								TreeItem varItem = new TreeItem(sel, 0);
 								varItem.setText(name + " = " + val);
+								varItem.setData("frameNum", frame);
+								varItem.setData("varNum", i);
 							}
 						}
 					}
@@ -884,14 +907,22 @@ public class ReplView extends ViewPart {
 				});
 			}
 		}
+		
+		public void widgetDefaultSelected(SelectionEvent e) {
+			final TreeItem item = (TreeItem)e.item;
+			
+			if (item.getData() != null && item.getData() instanceof Integer) {
+				Integer choice = (Integer) item.getData();
+				choose(choice);
+			} else if (item.getData("frameNum") != null && item.getData("varNum") != null) {
+				Object frame = item.getData("frameNum");
+				Object var = item.getData("varNum");
+				getSwank().sendInspectFrameLocal(thread, frame.toString(), var.toString(), new InspectorRunnable());
+			}
+		}
 
 		
 		public void mouseDoubleClick(MouseEvent e) {
-			TreeItem item = debugTree.getItem(new Point(e.x, e.y));
-			if (item != null && item.getData() != null && item.getData() instanceof Integer) {
-				Integer choice = (Integer) item.getData();
-				choose(choice);
-			}
 		}
 		
 		public void mouseDown(MouseEvent e) {
@@ -926,7 +957,7 @@ public class ReplView extends ViewPart {
 				Character c = new Character(e.character);
 				try {
 					int choice = Integer.parseInt(c.toString());
-					if (choice >=0 && choice < numDebugOptions) {
+					if (choice >=0 && choice < options.params.size()) {
 						choose(choice);
 					}
 				} catch (NumberFormatException ex) {
@@ -942,7 +973,6 @@ public class ReplView extends ViewPart {
 		}
 		public void treeCollapsed(TreeEvent e) {
 		}
-		public void widgetDefaultSelected(SelectionEvent e) {
-		}
+		
 	}
 }

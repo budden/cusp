@@ -16,6 +16,10 @@ package jasko.tim.lisp.swank;
 public abstract class SwankRunnable implements Runnable {
 	public LispNode result;
 	
+	protected LispNode getReturn() {
+		return result.getf(":return").getf(":ok");
+	}
+	
 	public SwankRunnable clone() {
 		SwankRunnable ret;
 		try {

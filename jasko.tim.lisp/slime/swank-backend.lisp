@@ -39,6 +39,7 @@
            #:label-value-line
            #:label-value-line*
            #:type-for-emacs
+           #:with-struct
            ))
 
 (defpackage :swank-mop
@@ -600,6 +601,13 @@ returned.  Frame zero is defined as the frame which invoked the
 debugger.  If END is nil, return the frames from START to the end of
 the stack.")
 
+(definterface compute-sane-restarts (condition)
+  "This is an opportunity for Lisps such as CLISP to remove
+unwanted restarts from the output of CL:COMPUTE-RESTARTS,
+otherwise it should simply call CL:COMPUTE-RESTARTS, which is
+what the default implementation does."
+  (compute-restarts condition))
+
 (definterface print-frame (frame stream)
   "Print frame to stream.")
 
@@ -850,8 +858,10 @@ inserted into the buffer as is, or a list of the form:
 
  (:newline) - Render a \\n
 
- (:action label lambda) - Render LABEL (a text string) which when
- clicked will call LAMBDA.
+ (:action label lambda &key (refresh t)) - Render LABEL (a text
+ string) which when clicked will call LAMBDA. If REFRESH is
+ non-NIL the currently inspected object will be re-inspected
+ after calling the lambda.
 
  NIL - do nothing."))
 
@@ -870,9 +880,11 @@ output of CL:DESCRIBE."
 
 ;;; Utilities for inspector methods.
 ;;; 
-(defun label-value-line (label value)
-  "Create a control list which prints \"LABEL: VALUE\" in the inspector."
-  (list (princ-to-string label) ": " `(:value ,value) '(:newline)))
+(defun label-value-line (label value &key (newline t))
+  "Create a control list which prints \"LABEL: VALUE\" in the inspector.
+If NEWLINE is non-NIL a `(:newline)' is added to the result."
+  (list* (princ-to-string label) ": " `(:value ,value)
+         (if newline '((:newline)) nil)))
 
 (defmacro label-value-line* (&rest label-values)
   ` (append ,@(loop for (label value) in label-values

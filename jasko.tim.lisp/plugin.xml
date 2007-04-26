@@ -241,6 +241,14 @@
 			class="jasko.tim.lisp.views.ThreadView"
 			id="jasko.tim.lisp.views.ThreadView" />
 		
+		<!-- Inspector view -->
+		<view
+			name="Inspector"
+			icon="icons/apropos.gif"
+			category="jasko.tim.lisp"
+			class="jasko.tim.lisp.inspector.InspectorView"
+			id="jasko.tim.lisp.inspector.InspectorView" />
+		
 		<!-- Navigator -->
 		<view 
 			id="jasko.tim.lisp.navigator.LispNavigator"
