@@ -266,21 +266,34 @@ public class LispUtil {
 		
 		return -1;
 	}
-	
+    
+    /**
+     * Returns a 2-element integer array indicating the range in the current document of the smallest complete
+     * s-expression that encloses the given.  If no such s-expression is found, this function returns null.
+     */
+    public static int[] getCurrentFullExpressionRange (IDocument doc, int offset) {
+        int begin = findOpenParen(doc, offset);
+        if (begin >= 0) {
+            int end = findCloseParen(doc, begin+1);
+            if (end >= 0) {
+                return new int[] { begin, end-begin + 1 };
+            }
+        }
+        
+        return null;
+    }
+    
 	public static String getCurrentFullExpression(IDocument doc, int offset) {
-		int begin = findOpenParen(doc, offset);
-		if (begin >= 0) {
-			int end = findCloseParen(doc, begin+1);
-			if (end >= 0) {
-				try {
-					return doc.get(begin, end-begin+1);
-				} catch (BadLocationException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		return "";
+        int[] range = getCurrentFullExpressionRange(doc, offset);
+        if (range == null) {
+            return "";
+        } else {
+            try {
+                return doc.get(range[0], range[1]);
+            } catch (BadLocationException e) {
+                return "";
+            }
+        }
 	}
 	
 	/**
@@ -358,6 +371,24 @@ public class LispUtil {
 		
 		return -1;
 	}
+    
+    /**
+     * Returns a 2-element integer array indicating the range (start, length) in the current document of the current "active"
+     * s-expression.  If there is no current s-expression, this function returns null.
+     */
+    public static int[] getCurrentExpressionRange (IDocument doc, int offset) throws BadLocationException {
+        if (offset < doc.getLength() && doc.getChar(offset) == '(') {
+            int end = findCloseParen(doc, offset + 1);
+            if (end > -1) return new int[] { offset, end - offset + 1 };
+        } else if (offset > 0 && doc.getChar(offset - 1) == ')') {
+            int start = findOpenParen(doc, offset - 1);
+            if (start > -1) return new int[] { start, offset - start };
+        } else {
+            return getCurrentFullExpressionRange(doc, offset);
+        }
+        
+        return null;
+    }
 
     public static String getCurrentExpression (IDocument doc, int offset, int selLength) {
         // todo -- add support for returning the entire selection,
@@ -370,15 +401,8 @@ public class LispUtil {
                     System.out.println("Not evaluating current selection; parens do not balance.");
                 }
             } else {
-                if (offset < doc.getLength() && doc.getChar(offset) == '(') {
-                    int end = findCloseParen(doc, offset + 1);
-                    if (end > -1) return doc.get(offset, end - offset + 1);
-                } else if (offset > 0 && doc.getChar(offset - 1) == ')') {
-                    int start = findOpenParen(doc, offset - 1);
-                    if (start > -1) return doc.get(start, offset - start);
-                } else {
-                    return getCurrentFullExpression(doc, offset);
-                }
+                int[] range = getCurrentExpressionRange(doc, offset);
+                if (range != null) return doc.get(range[0], range[1]);
             }
         } catch (BadLocationException e) {
             e.printStackTrace();
