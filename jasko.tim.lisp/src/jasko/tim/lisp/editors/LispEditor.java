@@ -1,5 +1,6 @@
 package jasko.tim.lisp.editors;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import jasko.tim.lisp.*;
@@ -8,24 +9,28 @@ import jasko.tim.lisp.editors.assist.*;
 import jasko.tim.lisp.editors.outline.*;
 import jasko.tim.lisp.editors.actions.*;
 import jasko.tim.lisp.swank.*;
+import jasko.tim.lisp.util.LispUtil;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.*;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.*;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.*;
 import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.views.contentoutline.*;
 
-
 public class LispEditor extends TextEditor {
-	
-
 	private LispOutlinePage outline;
 	private ColorManager.ChangeEventListener colorPrefChangeListener;
 
@@ -33,7 +38,6 @@ public class LispEditor extends TextEditor {
 		super();
 		setSourceViewerConfiguration(new LispConfiguration(this, LispPlugin.getDefault().getColorManager()));
 		setDocumentProvider(new LispDocumentProvider());
-		
 		colorPrefChangeListener = new ColorManager.ChangeEventListener() {
 
 			public void colorPreferenceChanged(ColorChangeEvent event) {
@@ -41,12 +45,8 @@ public class LispEditor extends TextEditor {
 			}
 			
 		};
-		
+        
 		//setRangeIndicator(new DefaultRangeIndicator());
-	}
-	
-	public void dispose() {
-		super.dispose();
 	}
 	
 	/**
@@ -155,7 +155,8 @@ public class LispEditor extends TextEditor {
 	
 	
 	private ProjectionSupport projectionSupport;
-	private ProjectionAnnotationModel annotationModel;
+	private ProjectionAnnotationModel projectionAnnotationModel;
+    private IAnnotationModel annotationModel;
 	
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
@@ -165,7 +166,8 @@ public class LispEditor extends TextEditor {
 				getSharedColors());
 		projectionSupport.install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
-		annotationModel = viewer.getProjectionAnnotationModel();
+		projectionAnnotationModel = viewer.getProjectionAnnotationModel();
+        annotationModel = viewer.getAnnotationModel();
 
 		licm = new LispInformationControlManager(this);
 		licm.install(this.getSourceViewer().getTextWidget());
@@ -177,10 +179,14 @@ public class LispEditor extends TextEditor {
 	protected ISourceViewer createSourceViewer(Composite parent,
          IVerticalRuler ruler, int styles) {
 		
-		ISourceViewer viewer = new ProjectionViewer(parent, ruler,
+		SourceViewer viewer = new ProjectionViewer(parent, ruler,
 				getOverviewRuler(), isOverviewRulerVisible(), styles);
 		// ensure decoration support has been created and configured.
 		getSourceViewerDecorationSupport(viewer);
+ 
+        CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
+        viewer.getTextWidget().addKeyListener(highlighter);
+        viewer.getTextWidget().addMouseListener(highlighter);
 		
 		return viewer;
 	}
@@ -196,16 +202,74 @@ public class LispEditor extends TextEditor {
 		licm.showInformation();
 	}
 	
+    private class CurrentExpressionHighlightingListener implements KeyListener, MouseListener {
+        private Annotation currentHighlightAnnotation = new Annotation("jasko.tim.lisp.editors.LispEditor.current-sexp",
+        																false, "does this show up anywhere?");
+        private int[] currentHighlightRange;
+        
+        private void removeHighlight () {
+            if (currentHighlightAnnotation != null) {
+                annotationModel.removeAnnotation(currentHighlightAnnotation);
+            }
+        }
+        
+        private void updateHighlighting () {
+            ITextSelection ts = (ITextSelection)getSelectionProvider().getSelection();
+            try {
+                int[] range = LispUtil.getCurrentExpressionRange(getDocument(), ts.getOffset());
+                try {
+                    if (range == null) {
+                        removeHighlight();
+                    } else if (currentHighlightRange != null && Arrays.equals(currentHighlightRange, range)) {
+                        // leave current highlight in place, still valid
+                    } else {
+                        removeHighlight();
+                        annotationModel.addAnnotation(currentHighlightAnnotation, new Position(range[0], range[1]));
+                    }
+                } finally {
+                    currentHighlightRange = range;
+                }
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
+            }
+        }
+        
+        public void keyPressed (KeyEvent e) {
+            // only need to update highlighting for key events that might move us into a different s-expression scope
+            switch (e.character) {
+                case '(':
+                case ')':
+                    updateHighlighting();
+                    return;
+            }
+            switch (e.keyCode) {
+                case SWT.ARROW_DOWN:
+                case SWT.ARROW_RIGHT:
+                case SWT.ARROW_LEFT:
+                case SWT.ARROW_UP:
+                    updateHighlighting();
+            }
+        }
 
+        public void keyReleased (KeyEvent e) {
+        }
+
+        public void mouseDoubleClick (MouseEvent e) {
+        }
+
+        public void mouseDown (MouseEvent e) {
+            updateHighlighting();
+        }
+
+        public void mouseUp (MouseEvent e) {
+        }
+        
+    }
 	
 	protected void initializeKeyBindingScopes() {
 		super.initializeKeyBindingScopes();
 		setKeyBindingScopes(new String[] { "jasko.tim.lisp.context1" });  
 	}
-	
-	/*protected void configureSourceViewerDecorationSupport(SourceViewerDecorationSupport support) {
-		super.configureSourceViewerDecorationSupport(support);
-	}*/
 	
 	/**
 	 * Behold, my secret shame.
@@ -355,7 +419,7 @@ public class LispEditor extends TextEditor {
 				inPackage = sexp.get(1).value;
 			}
 		}
-		
+        
 		if (contents.params.size() > 0) {
 			LispNode last = contents.params.get(contents.params.size()-1);
 			ProjectionAnnotation annotation = new ProjectionAnnotation();
@@ -363,11 +427,11 @@ public class LispEditor extends TextEditor {
 			
 			annotations[contents.params.size()-1] = annotation;	
 			
-			if (annotationModel != null) {
+			if (projectionAnnotationModel != null) {
                 // there are times when the annotation model is null, such as when one opens a lisp file from disk
                 // that is not part of a project.  I don't know how to really fix this, but it seems that it's better
                 // to show the editor than to fail because we can't get folding to work.  - Chas
-    			annotationModel.modifyAnnotations(prevAnnotations, newAnnotations, null);
+    			projectionAnnotationModel.modifyAnnotations(prevAnnotations, newAnnotations, null);
     			prevAnnotations = annotations;
             }
 		}
