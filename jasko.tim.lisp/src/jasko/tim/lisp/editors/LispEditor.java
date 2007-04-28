@@ -8,9 +8,7 @@ import jasko.tim.lisp.editors.assist.LispInformationControlManager;
 import jasko.tim.lisp.editors.outline.LispOutlinePage;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
-import jasko.tim.lisp.util.LispUtil;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.eclipse.core.resources.*;
@@ -20,22 +18,15 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.text.source.projection.ProjectionSupport;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.*;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.ide.IDE;
@@ -45,6 +36,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private LispOutlinePage outline;
 	private ColorManager.ChangeEventListener colorPrefChangeListener;
     private final LispConfiguration config = new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
+    
+    private final CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
     
 	public LispEditor() {
 		super();
@@ -176,7 +169,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	
 	private ProjectionSupport projectionSupport;
 	private ProjectionAnnotationModel projectionAnnotationModel;
-    private IAnnotationModel annotationModel;
 	
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
@@ -187,7 +179,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		projectionSupport.install();
 		viewer.doOperation(ProjectionViewer.TOGGLE);
 		projectionAnnotationModel = viewer.getProjectionAnnotationModel();
-        annotationModel = viewer.getAnnotationModel();
 
 		licm = new LispInformationControlManager(this);
 		licm.install(this.getSourceViewer().getTextWidget());
@@ -196,17 +187,13 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	}
 	
 	
-	protected ISourceViewer createSourceViewer(Composite parent,
-         IVerticalRuler ruler, int styles) {
-		
+	protected ISourceViewer createSourceViewer (Composite parent, IVerticalRuler ruler, int styles) {
 		SourceViewer viewer = new ProjectionViewer(parent, ruler,
 				getOverviewRuler(), isOverviewRulerVisible(), styles);
 		// ensure decoration support has been created and configured.
 		getSourceViewerDecorationSupport(viewer);
- 
-        CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
-        viewer.getTextWidget().addKeyListener(highlighter);
-        viewer.getTextWidget().addMouseListener(highlighter);
+        
+        highlighter.install(viewer);
 		
 		return viewer;
 	}
@@ -222,80 +209,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		licm.showInformation();
 	}
 	
-    private class CurrentExpressionHighlightingListener implements KeyListener, MouseListener {
-        private final IDocument doc = getDocument();
-        private final Annotation currentHighlightAnnotation = new Annotation("jasko.tim.lisp.editors.LispEditor.current-sexp",
-        																    false, "does this show up anywhere?");
-        private int[] currentHighlightRange;
-        
-        private void removeHighlight () {
-            if (currentHighlightAnnotation != null) {
-                annotationModel.removeAnnotation(currentHighlightAnnotation);
-            }
-        }
-        
-        private void updateHighlighting () {
-            ITextSelection ts = (ITextSelection)getSelectionProvider().getSelection();
-            try {
-                int[] range = LispUtil.getCurrentExpressionRange(getDocument(), ts.getOffset());
-                try {
-                    if (range == null) {
-                        removeHighlight();
-                    } else if (currentHighlightRange != null && Arrays.equals(currentHighlightRange, range)) {
-                        // leave current highlight in place, still valid
-                    } else {
-                        removeHighlight();
-                        annotationModel.addAnnotation(currentHighlightAnnotation, new Position(range[0], range[1]));
-                    }
-                } finally {
-                    currentHighlightRange = range;
-                }
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
-        }
-        
-        public void keyPressed (KeyEvent e) {// only need to update highlighting for key events that might move us into a different s-expression scope
-            switch (e.character) {
-                case '(':
-                case ')':
-                case '\b':
-                case '\n':
-                case '\r':
-                    updateHighlighting();
-                    return;
-            }
-            switch (e.keyCode) {
-                case SWT.KEYPAD_CR:
-                case SWT.ARROW_RIGHT:
-                case SWT.ARROW_LEFT:
-                case SWT.ARROW_DOWN:
-                case SWT.ARROW_UP:
-                case SWT.HOME:
-                case SWT.END:
-                case SWT.PAGE_DOWN:
-                case SWT.PAGE_UP:
-                case SWT.DEL:
-                    updateHighlighting();
-            }
-        }
-
-        public void keyReleased (KeyEvent e) {
-        }
-
-        public void mouseDoubleClick (MouseEvent e) {
-        }
-
-        public void mouseDown (MouseEvent e) {
-            updateHighlighting();
-        }
-
-        public void mouseUp (MouseEvent e) {
-        }
-        
-    }
-	
-	protected void initializeKeyBindingScopes() {
+    protected void initializeKeyBindingScopes() {
 		super.initializeKeyBindingScopes();
 		setKeyBindingScopes(new String[] { "jasko.tim.lisp.context1" });  
 	}
@@ -466,6 +380,11 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 	}
 	
+    public void dispose () {
+        super.dispose();
+        highlighter.uninstall(getSourceViewer());
+    }
+    
 	/**
 	 * Seriously, couldn't they have made this a little easier to get at?
 	 */

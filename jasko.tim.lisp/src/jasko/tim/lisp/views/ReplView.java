@@ -81,6 +81,7 @@ public class ReplView extends ViewPart implements SelectionListener {
     
     private class ReplEditor extends SourceViewer implements ILispEditor {
         private final LispConfiguration config = new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
+        private final CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
         
         public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
             super(comp2, ruler, i);
@@ -89,9 +90,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 
             IDocument doc = new Document();
             LispDocumentProvider.connectPartitioner(doc);
-            setDocument(doc);
+            setDocument(doc, new AnnotationModel());
             showAnnotations(false);
             showAnnotationsOverview(false);
+            
+            //highlighter.install(this);
         }
         
         public String showParameterHints () {
