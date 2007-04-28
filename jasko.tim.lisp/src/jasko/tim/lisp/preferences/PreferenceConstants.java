@@ -4,7 +4,7 @@ package jasko.tim.lisp.preferences;
 /**
  * Constant definitions for plug-in preferences
  */
-public class PreferenceConstants {
+public interface PreferenceConstants {
 	public static final String COLOR_COMMENT       = "colorComment";
 	public static final String COLOR_CONSTANT      = "colorConstant";
 	public static final String COLOR_DEFAULT       = "colorDefault";
@@ -20,5 +20,6 @@ public class PreferenceConstants {
 
 	public static final String LISP_EXE = "lispExecutable";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
-	
+	public static final String AUTO_POPUP_COMPLETIONS = "autoPopupCompletions";
+    public static final String AUTO_INSERT_COMPLETIONS = "autoInsertCompletions";
 }

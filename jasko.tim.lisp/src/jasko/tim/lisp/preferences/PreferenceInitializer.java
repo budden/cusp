@@ -13,22 +13,22 @@ import jasko.tim.lisp.ColorManager;;
 /**
  * Class used to initialize default preference values.
  */
-public class PreferenceInitializer extends AbstractPreferenceInitializer {
+public class PreferenceInitializer extends AbstractPreferenceInitializer implements PreferenceConstants {
 
     private static final HashMap<String, String> DEFAULT_COLOR_MAP = new HashMap<String, String>();
     
     static {
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_COMMENT, rgbAsPrefString(ColorManager.DEFAULT_COMMENT));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_CONSTANT, rgbAsPrefString(ColorManager.DEFAULT_CONSTANT));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_GLOBAL, rgbAsPrefString(ColorManager.DEFAULT_GLOBAL));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_KEYWORD, rgbAsPrefString(ColorManager.DEFAULT_KEYWORD));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_NUMBER, rgbAsPrefString(ColorManager.DEFAULT_NUMBER));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_PARAMS, rgbAsPrefString(ColorManager.DEFAULT_PARAMS));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_PAREN, rgbAsPrefString(ColorManager.DEFAULT_PAREN));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_SENT_MESSAGE, rgbAsPrefString(ColorManager.DEFAULT_SENT_MESSAGE));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_STRINGS, rgbAsPrefString(ColorManager.DEFAULT_STRING));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_SYMBOL, rgbAsPrefString(ColorManager.DEFAULT_SYMBOL));
-        DEFAULT_COLOR_MAP.put(PreferenceConstants.COLOR_UCW, rgbAsPrefString(ColorManager.DEFAULT_UCW));
+        DEFAULT_COLOR_MAP.put(COLOR_COMMENT, rgbAsPrefString(ColorManager.DEFAULT_COMMENT));
+        DEFAULT_COLOR_MAP.put(COLOR_CONSTANT, rgbAsPrefString(ColorManager.DEFAULT_CONSTANT));
+        DEFAULT_COLOR_MAP.put(COLOR_GLOBAL, rgbAsPrefString(ColorManager.DEFAULT_GLOBAL));
+        DEFAULT_COLOR_MAP.put(COLOR_KEYWORD, rgbAsPrefString(ColorManager.DEFAULT_KEYWORD));
+        DEFAULT_COLOR_MAP.put(COLOR_NUMBER, rgbAsPrefString(ColorManager.DEFAULT_NUMBER));
+        DEFAULT_COLOR_MAP.put(COLOR_PARAMS, rgbAsPrefString(ColorManager.DEFAULT_PARAMS));
+        DEFAULT_COLOR_MAP.put(COLOR_PAREN, rgbAsPrefString(ColorManager.DEFAULT_PAREN));
+        DEFAULT_COLOR_MAP.put(COLOR_SENT_MESSAGE, rgbAsPrefString(ColorManager.DEFAULT_SENT_MESSAGE));
+        DEFAULT_COLOR_MAP.put(COLOR_STRINGS, rgbAsPrefString(ColorManager.DEFAULT_STRING));
+        DEFAULT_COLOR_MAP.put(COLOR_SYMBOL, rgbAsPrefString(ColorManager.DEFAULT_SYMBOL));
+        DEFAULT_COLOR_MAP.put(COLOR_UCW, rgbAsPrefString(ColorManager.DEFAULT_UCW));
     }
     
 	/*
@@ -41,6 +41,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		for (Map.Entry e: DEFAULT_COLOR_MAP.entrySet()) {
 			store.setDefault((String)e.getKey(), (String)e.getValue());
 		}
+        
+        store.setDefault(AUTO_POPUP_COMPLETIONS, true);
+        store.setDefault(AUTO_INSERT_COMPLETIONS, false);
 	}
 
 	/**
