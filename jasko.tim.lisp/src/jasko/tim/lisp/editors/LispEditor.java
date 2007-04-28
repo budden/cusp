@@ -1,42 +1,54 @@
 package jasko.tim.lisp.editors;
 
+import jasko.tim.lisp.ColorManager;
+import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.ColorManager.ColorChangeEvent;
+import jasko.tim.lisp.editors.actions.IndentAction;
+import jasko.tim.lisp.editors.assist.LispInformationControlManager;
+import jasko.tim.lisp.editors.outline.LispOutlinePage;
+import jasko.tim.lisp.swank.LispNode;
+import jasko.tim.lisp.swank.LispParser;
+import jasko.tim.lisp.util.LispUtil;
+
 import java.util.Arrays;
 import java.util.HashMap;
 
-import jasko.tim.lisp.*;
-import jasko.tim.lisp.ColorManager.ColorChangeEvent;
-import jasko.tim.lisp.editors.assist.*;
-import jasko.tim.lisp.editors.outline.*;
-import jasko.tim.lisp.editors.actions.*;
-import jasko.tim.lisp.swank.*;
-import jasko.tim.lisp.util.LispUtil;
-
-import org.eclipse.swt.SWT;
 import org.eclipse.core.resources.*;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jface.text.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.*;
-import org.eclipse.jface.text.source.projection.*;
+import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
+import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
+import org.eclipse.jface.text.source.projection.ProjectionSupport;
+import org.eclipse.jface.text.source.projection.ProjectionViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.*;
-import org.eclipse.ui.editors.text.*;
+import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.ide.IDE;
-import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
-import org.eclipse.ui.views.contentoutline.*;
+import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
-public class LispEditor extends TextEditor {
+public class LispEditor extends TextEditor implements ILispEditor {
 	private LispOutlinePage outline;
 	private ColorManager.ChangeEventListener colorPrefChangeListener;
-
+    private final LispConfiguration config = new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
+    
 	public LispEditor() {
 		super();
-		setSourceViewerConfiguration(new LispConfiguration(this, LispPlugin.getDefault().getColorManager()));
+		setSourceViewerConfiguration(config);
 		setDocumentProvider(new LispDocumentProvider());
 		colorPrefChangeListener = new ColorManager.ChangeEventListener() {
 
@@ -48,6 +60,14 @@ public class LispEditor extends TextEditor {
         
 		//setRangeIndicator(new DefaultRangeIndicator());
 	}
+    
+    public String showParameterHints () {
+        return config.showParameterHints();
+    }
+    
+    public String showContentCompletions () {
+        return config.showContentCompletions();
+    }
 	
 	/**
 	 * Jumps the user to a given position in the given file.
@@ -203,8 +223,9 @@ public class LispEditor extends TextEditor {
 	}
 	
     private class CurrentExpressionHighlightingListener implements KeyListener, MouseListener {
-        private Annotation currentHighlightAnnotation = new Annotation("jasko.tim.lisp.editors.LispEditor.current-sexp",
-        																false, "does this show up anywhere?");
+        private final IDocument doc = getDocument();
+        private final Annotation currentHighlightAnnotation = new Annotation("jasko.tim.lisp.editors.LispEditor.current-sexp",
+        																    false, "does this show up anywhere?");
         private int[] currentHighlightRange;
         
         private void removeHighlight () {
@@ -234,19 +255,24 @@ public class LispEditor extends TextEditor {
             }
         }
         
-        public void keyPressed (KeyEvent e) {
-            // only need to update highlighting for key events that might move us into a different s-expression scope
+        public void keyPressed (KeyEvent e) {// only need to update highlighting for key events that might move us into a different s-expression scope
             switch (e.character) {
                 case '(':
                 case ')':
+                case '\b':
                     updateHighlighting();
                     return;
             }
             switch (e.keyCode) {
-                case SWT.ARROW_DOWN:
                 case SWT.ARROW_RIGHT:
                 case SWT.ARROW_LEFT:
+                case SWT.ARROW_DOWN:
                 case SWT.ARROW_UP:
+                case SWT.HOME:
+                case SWT.END:
+                case SWT.PAGE_DOWN:
+                case SWT.PAGE_UP:
+                case SWT.DEL:
                     updateHighlighting();
             }
         }

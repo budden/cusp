@@ -5,6 +5,8 @@ import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.views.repl.*;
 import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.editors.*;
+import jasko.tim.lisp.editors.actions.ContentAssistAction;
+import jasko.tim.lisp.editors.actions.ParameterHintsAction;
 import jasko.tim.lisp.inspector.InspectorRunnable;
 
 import java.util.*;
@@ -45,7 +47,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	protected Sash replComposite;
 	protected ReplHistory history;
-	protected SourceViewer in;
+	protected ReplEditor in;
 	
 	
 	protected Composite parentControl;
@@ -76,6 +78,30 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected SwankInterface getSwank() {
 		return LispPlugin.getDefault().getSwank();
 	}
+    
+    private class ReplEditor extends SourceViewer implements ILispEditor {
+        private final LispConfiguration config = new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
+        
+        public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
+            super(comp2, ruler, i);
+            setEditable(true);
+            configure(config);
+
+            IDocument doc = new Document();
+            LispDocumentProvider.connectPartitioner(doc);
+            setDocument(doc);
+            showAnnotations(false);
+            showAnnotationsOverview(false);
+        }
+        
+        public String showParameterHints () {
+            return config.showParameterHints();
+        }
+        
+        public String showContentCompletions () {
+            return config.showContentCompletions();
+        }
+    }
 	
 	public void createPartControl(Composite parent) {
 		parentControl = parent;
@@ -159,14 +185,8 @@ public class ReplView extends ViewPart implements SelectionListener {
  		Composite comp2 = new Composite(notButtons, SWT.BORDER);
  		comp2.setLayout(layout);
  		
- 		in = new SourceViewer(comp2, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
- 		in.setEditable(true);
- 		in.configure(new LispConfiguration(null, LispPlugin.getDefault().getColorManager()));
- 		IDocument doc = new Document();
- 		LispDocumentProvider.connectPartitioner(doc);
- 		in.setDocument(doc);
- 		in.showAnnotations(false);
- 		in.showAnnotationsOverview(false);
+ 		in = new ReplEditor(comp2, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
+ 		
  		in.getControl().setLayoutData(gd);
  		in.getTextWidget().setFont(newFont);
  		//in.appendVerifyKeyListener(new PrevCommandsShortcuts());
@@ -181,6 +201,12 @@ public class ReplView extends ViewPart implements SelectionListener {
  		NextREPLCommandAction nextCmdAction = new NextREPLCommandAction(this);
  		nextCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.NextREPLCommandAction");
  		keys.registerAction(nextCmdAction);
+        ContentAssistAction assistAction = new ContentAssistAction(in);
+        assistAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ContentAssistAction");
+        keys.registerAction(assistAction);
+        ParameterHintsAction hintsAction = new ParameterHintsAction(in);
+        hintsAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ParameterHintsAction");
+        keys.registerAction(hintsAction);
  		/*in.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
 				try {

@@ -36,6 +36,15 @@ public class EditorPreferencePage
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
+        addField(new BooleanFieldEditor(
+                    PreferenceConstants.AUTO_POPUP_COMPLETIONS,
+                    "Automatically show content completions and parameter hints",
+                    getFieldEditorParent()));
+        
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.AUTO_INSERT_COMPLETIONS,
+                "Automatically insert single content completion option",
+                getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)

@@ -1,14 +1,20 @@
 package jasko.tim.lisp.editors;
 
 import jasko.tim.lisp.ColorManager;
+import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.assist.*;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import org.eclipse.swt.*;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.contentassist.*;
 import org.eclipse.jface.text.presentation.*;
 import org.eclipse.jface.text.rules.*;
 import org.eclipse.jface.text.source.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.editors.text.*;
 
 
@@ -25,6 +31,17 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 	protected ContentAssistant ca;
 	protected LispEditor editor;
 
+    private final IPropertyChangeListener prefsListener = new IPropertyChangeListener () {
+        public void propertyChange (PropertyChangeEvent event) {
+            String prop = event.getProperty();
+            if (prop.equals(PreferenceConstants.AUTO_POPUP_COMPLETIONS)) {
+                ca.enableAutoActivation((Boolean)event.getNewValue());
+            } else if (prop.equals(PreferenceConstants.AUTO_INSERT_COMPLETIONS)) {
+                ca.enableAutoInsert((Boolean)event.getNewValue());
+            }
+        }
+    };
+    
 	public LispConfiguration(LispEditor editor, ColorManager colorManager) {
 		this.editor = editor;
 		this.colorManager = colorManager;
@@ -32,14 +49,29 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 		ca = new ContentAssistant();
 		ca.setContentAssistProcessor(new ArglistAssistProcessor(editor), 
 			IDocument.DEFAULT_CONTENT_TYPE);
-		
-		ca.enableAutoActivation(true);
+        
+        IPreferenceStore ps = LispPlugin.getDefault().getPreferenceStore();
+		ca.enableAutoActivation(ps.getBoolean(PreferenceConstants.AUTO_POPUP_COMPLETIONS));
+        ca.enableAutoInsert(ps.getBoolean(PreferenceConstants.AUTO_INSERT_COMPLETIONS));
 		ca.setAutoActivationDelay(700);
 		ca.setProposalPopupOrientation(ContentAssistant.CONTEXT_INFO_BELOW);
 		ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_ABOVE);
-		
+        
+        LispPlugin.getDefault().getPreferenceStore().addPropertyChangeListener(prefsListener);
 	}
+    
+    public void finalize () {
+        // is this the right way to do it?  No .dispose on config objects...
+        LispPlugin.getDefault().getPreferenceStore().removePropertyChangeListener(prefsListener);
+    }
 	
+    public String showParameterHints () {
+        return ca.showContextInformation();
+    }
+    
+    public String showContentCompletions () {
+        return ca.showPossibleCompletions();
+    }
 	
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 		return ca;
