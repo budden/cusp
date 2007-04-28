@@ -38,19 +38,18 @@ public class LispIndenter implements IAutoEditStrategy {
 		LispUtil.FunctionInfo prevFunc = LispUtil.getCurrentFunctionInfo(doc, fi.offset);
 		LispUtil.FunctionInfo prev2Func = LispUtil.getCurrentFunctionInfo(doc, prevFunc.offset);
 		
-		System.out.println("***" + fi.name);
-		System.out.println(prevFunc.name);
-		System.out.println(prev2Func.name);
+		//System.out.println("***" + fi.name);
+		//System.out.println(prevFunc.name);
+		//System.out.println(prev2Func.name);
 		
 		try {
 			int funcLine = doc.getLineOfOffset(fi.offset);
 			int funcLineOffset = doc.getLineOffset(funcLine);
 			
 			String indent = "";
-			for (int i=0; i<fi.offset-funcLineOffset; ++i) {
+			for (int i=funcLineOffset; i<fi.offset; ++i) {
 				if (doc.getChar(i) == '\t') {
-					System.out.println("-tab");
-					indent += "        ";
+					indent += "\t";
 				} else {
 					indent += " ";
 				}
@@ -68,14 +67,14 @@ public class LispIndenter implements IAutoEditStrategy {
 					for (int i=fi.offset+fi.name.length()+1; i<doc.getLength(); ++i) {
 						char c = doc.getChar(i);
 						if (!Character.isWhitespace(c)) {
-							System.out.println("*" + i + ":" + fi.offset);
 							for (int j=0; j<i-fi.offset; ++j) {
 								if (c == '\t') {
-									indent += "        ";
+									indent += "\t";
 								} else {
 									indent += " ";
 								}
 							}
+							indent = indent.replace("        ", "\t");
 							return indent;
 						} else if (c == '\n') {
 							break;
@@ -84,7 +83,7 @@ public class LispIndenter implements IAutoEditStrategy {
 					indent += "  ";
 				}
 			}
-			
+			indent = indent.replace("        ", "\t");
 			return indent;
 		} catch (BadLocationException e) {
 			e.printStackTrace();
