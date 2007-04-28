@@ -260,10 +260,13 @@ public class LispEditor extends TextEditor implements ILispEditor {
                 case '(':
                 case ')':
                 case '\b':
+                case '\n':
+                case '\r':
                     updateHighlighting();
                     return;
             }
             switch (e.keyCode) {
+                case SWT.KEYPAD_CR:
                 case SWT.ARROW_RIGHT:
                 case SWT.ARROW_LEFT:
                 case SWT.ARROW_DOWN:
