@@ -24,7 +24,7 @@ public class ColorsPreferencePage extends FieldEditorPreferencePage implements I
 	public ColorsPreferencePage() {
 		super(GRID);
 		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
-		setDescription("Set the colors for Lisp syntax highlighting.");
+		setDescription("Set colors and styles for Lisp code formatting");
 	}
 	
 	/**

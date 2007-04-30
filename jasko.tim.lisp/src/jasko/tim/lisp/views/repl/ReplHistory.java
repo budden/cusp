@@ -2,13 +2,20 @@ package jasko.tim.lisp.views.repl;
 
 import java.util.ArrayList;
 
+import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.ColorManager.ChangeEventListener;
+import jasko.tim.lisp.ColorManager.ColorChangeEvent;
 import jasko.tim.lisp.editors.LispConfiguration;
 import jasko.tim.lisp.inspector.InspectorRunnable;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.source.*;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.events.*;
@@ -18,13 +25,15 @@ import org.eclipse.swt.widgets.*;
 public class ReplHistory extends SourceViewer
 	implements MouseMoveListener, DisposeListener, MouseListener {
 	
-	private ArrayList<Region> regions = new ArrayList<Region>();
-	private ArrayList<String> ids = new ArrayList<String>();
+	private ArrayList<InspectableRegion> regions = new ArrayList<InspectableRegion>();
 	private Cursor hand;
 	private Color inspectableBack;
 	private Color inspectableFore;
+    
+    private boolean applyInspectableStyles;
+    private boolean underlineInspectables;
 	
-	public ReplHistory(Composite parent) {
+	public ReplHistory (Composite parent) {
 		super(parent, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
 		
 		setEditable(false);
@@ -42,8 +51,42 @@ public class ReplHistory extends SourceViewer
  		
  		hand = new Cursor(parent.getDisplay(), SWT.CURSOR_HAND);
  		
- 		inspectableBack = new Color(parent.getDisplay(), new RGB(230, 230, 255));
- 		inspectableFore = new Color(parent.getDisplay(), new RGB(0, 0, 128));
+ 		inspectableBack = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INSP_BG);
+ 		inspectableFore = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INSP_FG);
+        
+        IPreferenceStore ps = LispPlugin.getDefault().getPreferenceStore();
+        applyInspectableStyles = ps.getBoolean(PreferenceConstants.DECORATE_REPL_INSPECTABLES);
+        underlineInspectables = ps.getBoolean(PreferenceConstants.REPL_INSPECTABLE_UNDERLINE);
+        ps.addPropertyChangeListener(new IPropertyChangeListener () {
+            public void propertyChange (PropertyChangeEvent event) {
+                if (event.getProperty().equals(PreferenceConstants.DECORATE_REPL_INSPECTABLES)) {
+                    applyInspectableStyles = (Boolean)event.getNewValue();
+                } else if (event.getProperty().equals(PreferenceConstants.REPL_INSPECTABLE_UNDERLINE)) {
+                    underlineInspectables = (Boolean)event.getNewValue();
+                } else {
+                    return;
+                }
+                
+                // should refresh already-displayed inspectables, but not sure how to get the currently-applied
+                // StyleRanges back to the "normal" syntax highlighted baseline so that the new styles could be applied
+                // as necessary
+            }
+        });
+        LispPlugin.getDefault().getColorManager().addChangeEventListener(new ChangeEventListener () {
+            public void colorPreferenceChanged (ColorChangeEvent event) {
+                if (event.tokenType.equals(ColorManager.TokenType.REPL_INSP_BG)) {
+                    inspectableBack = event.newValue;
+                } else if (event.tokenType.equals(ColorManager.TokenType.REPL_INSP_FG)) {
+                    inspectableFore = event.newValue;
+                } else {
+                    return;
+                }
+                
+                // should refresh already-displayed inspectables, but not sure how to get the currently-applied
+                // StyleRanges back to the "normal" syntax highlighted baseline so that the new styles could be applied
+                // as necessary
+            }
+        });
 	}
 	
 	
@@ -52,7 +95,6 @@ public class ReplHistory extends SourceViewer
 		doc.set("");
 		
 		regions.clear();
-		ids.clear();
 	}
 	
 	public void appendText(String text) {
@@ -68,41 +110,57 @@ public class ReplHistory extends SourceViewer
 		IDocument doc = getDocument();
 		try {
 			int start = doc.getLength();
-			regions.add(new Region(start, start + text.length()));
-			ids.add(id);
+			regions.add(new InspectableRegion(start, text.length(), id));
 			doc.replace(start, 0, text);
 			
-			StyleRange style = new StyleRange();
-			style.underline = true;
-			style.start = start;
-			style.length = text.length();
-			style.background = inspectableBack;
-			style.foreground = inspectableFore;
-			getTextWidget().setStyleRange(style);
+            applyInspectableStyle(start, text.length());
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 	}
+    
+    private void applyInspectableStyle (int start, int length) {
+        if (!applyInspectableStyles) return;
+        
+        StyleRange style = new StyleRange(start, length, inspectableFore, inspectableBack);
+        style.underline = underlineInspectables;
+        getTextWidget().setStyleRange(style);
+    }
+    
+    private void applyInspectableHoverStyle (int start, int length) {
+        // not currently used -- might be nice to allow users to define a :hover style
+        if (!applyInspectableStyles) return;
+        
+        StyleRange style = new StyleRange(start, length, inspectableFore, inspectableBack);
+        style.underline = underlineInspectables;
+        getTextWidget().setStyleRange(style);
+    }
 	
-	private int getRegion(int offset) {
+	private InspectableRegion getRegion (int offset) {
 		for (int i=regions.size()-1; i>=0; --i) {
-			Region r = regions.get(i);
-			if (r.getLength() >= offset) {
+            InspectableRegion r = regions.get(i);
+			if (r.getOffset() + r.getLength() >= offset) {
 				if (r.getOffset() <= offset) {
-					return i;
+					return r;
 				}
 			} else {
-				return -1;
+				return null;
 			}
 		}
 		
-		return -1;
+		return null;
 	}
-
+    
 	public void mouseMove(MouseEvent e) {
 		Point p = new Point(e.x, e.y);
-		int offset = getTextWidget().getOffsetAtLocation(p);
-		if (getRegion(offset)  != -1) {
+        InspectableRegion region = null;
+        try { 
+            region = getRegion(getTextWidget().getOffsetAtLocation(p));
+        } catch (IllegalArgumentException ex) {
+            // no active region
+        }
+         
+		if (region != null) {
 			getTextWidget().setCursor(hand);
 		} else {
 			getTextWidget().setCursor(null);
@@ -111,12 +169,14 @@ public class ReplHistory extends SourceViewer
 
 	public void mouseUp(MouseEvent e) {
 		Point p = new Point(e.x, e.y);
-		int offset = getTextWidget().getOffsetAtLocation(p);
-		int item = getRegion(offset);
-		if (item  != -1) {
-			String id = ids.get(item);
-			sendInspect(id);
-		}
+        int offset;
+        try {
+    		offset = getTextWidget().getOffsetAtLocation(p);
+        } catch (IllegalArgumentException ex) {
+            return;
+        }
+		InspectableRegion region = getRegion(offset);
+		if (region != null) sendInspect(region.id);
 	}
 	
 	protected void sendInspect(String id) {
@@ -125,18 +185,18 @@ public class ReplHistory extends SourceViewer
 
 	public void widgetDisposed(DisposeEvent e) {
 		hand.dispose();
-		inspectableFore.dispose();
-		inspectableBack.dispose();
 	}
-
-
-	public void mouseDoubleClick(MouseEvent e) {
-	}
-
-
-	public void mouseDown(MouseEvent e) {
-	}
-
-
+    
+	public void mouseDoubleClick(MouseEvent e) {}
+	public void mouseDown(MouseEvent e) {}
+    
+    private class InspectableRegion extends Region {
+        public final String id;
+        
+        public InspectableRegion(int offset, int length, String id) {
+            super(offset, length);
+            this.id = id;
+        }
+    }
 
 }

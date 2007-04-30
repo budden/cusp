@@ -57,7 +57,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 		ca.setProposalPopupOrientation(ContentAssistant.CONTEXT_INFO_BELOW);
 		ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_ABOVE);
         
-        LispPlugin.getDefault().getPreferenceStore().addPropertyChangeListener(prefsListener);
+        ps.addPropertyChangeListener(prefsListener);
 	}
     
     public void finalize () {

@@ -29,6 +29,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         DEFAULT_COLOR_MAP.put(COLOR_STRINGS, rgbAsPrefString(ColorManager.DEFAULT_STRING));
         DEFAULT_COLOR_MAP.put(COLOR_SYMBOL, rgbAsPrefString(ColorManager.DEFAULT_SYMBOL));
         DEFAULT_COLOR_MAP.put(COLOR_UCW, rgbAsPrefString(ColorManager.DEFAULT_UCW));
+        
+        DEFAULT_COLOR_MAP.put(REPL_INSPECTABLE_BG_COLOR, rgbAsPrefString(ColorManager.DEFAULT_REPL_INSPECTABLE_BG_COLOR));
+        DEFAULT_COLOR_MAP.put(REPL_INSPECTABLE_FG_COLOR, rgbAsPrefString(ColorManager.DEFAULT_REPL_INSPECTABLE_FG_COLOR));
     }
     
 	/*
@@ -44,6 +47,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         
         store.setDefault(AUTO_POPUP_COMPLETIONS, true);
         store.setDefault(AUTO_INSERT_COMPLETIONS, false);
+        
+        store.setDefault(DECORATE_REPL_INSPECTABLES, true);
+        store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);
 	}
 
 	/**

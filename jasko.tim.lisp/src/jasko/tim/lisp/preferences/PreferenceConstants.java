@@ -22,4 +22,9 @@ public interface PreferenceConstants {
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
 	public static final String AUTO_POPUP_COMPLETIONS = "autoPopupCompletions";
     public static final String AUTO_INSERT_COMPLETIONS = "autoInsertCompletions";
+    
+    public static final String DECORATE_REPL_INSPECTABLES = "decorateREPLInspectables";
+    public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";
+    public static final String REPL_INSPECTABLE_FG_COLOR = "REPLInspectableColorFG";
+    public static final String REPL_INSPECTABLE_UNDERLINE = "REPLInspectableUnderline";
 }

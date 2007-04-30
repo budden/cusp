@@ -1073,6 +1073,11 @@
           name="Editing"/>
     <page
           category="jasko.tim.lisp.preferences.EditorPreferencePage"
+          class="jasko.tim.lisp.preferences.REPLPreferencePage"
+          id="jasko.tim.lisp.preferences.REPLPreferencePage"
+          name="REPL"/>
+    <page
+          category="jasko.tim.lisp.preferences.EditorPreferencePage"
           class="jasko.tim.lisp.preferences.ColorsPreferencePage"
           id="jasko.tim.lisp.preferences.ColorsPreferencePage"
           name="Colors"/>

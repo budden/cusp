@@ -21,8 +21,8 @@ public class ColorManager {
 
 	public static enum TokenType 
 	  { STRING, NUMBER, PAREN, KEYWORD, SYMBOL, PARAMS,
-		COMMENT, DEFAULT, GLOBAL, CONSTANT, SENT_MESSAGE, UCW_TAG };
-	
+		COMMENT, DEFAULT, GLOBAL, CONSTANT, SENT_MESSAGE, UCW_TAG,
+        REPL_INSP_BG, REPL_INSP_FG }
 
 	public static RGB DEFAULT_STRING = new RGB(200, 128, 0);
 	public static RGB DEFAULT_NUMBER = new RGB(0, 128, 128);
@@ -36,6 +36,9 @@ public class ColorManager {
 	public static RGB DEFAULT_CONSTANT = new RGB(128, 0, 128);
 	public static RGB DEFAULT_SENT_MESSAGE = new RGB(220,220,220);
 	public static RGB DEFAULT_UCW = new RGB(200, 50, 0);
+    
+    public static final RGB DEFAULT_REPL_INSPECTABLE_BG_COLOR = new RGB(230, 230, 255);
+    public static final RGB DEFAULT_REPL_INSPECTABLE_FG_COLOR = new RGB(0, 0, 128);
 	
 	protected static Map<String, TokenType> prefTokenTypeMap;
 	public static TokenType preferenceStringToTokenType(String str)
@@ -60,6 +63,8 @@ public class ColorManager {
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_STRINGS,       TokenType.STRING);
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_SYMBOL,       TokenType.SYMBOL);
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_UCW,       TokenType.UCW_TAG);
+            prefTokenTypeMap.put(PreferenceConstants.REPL_INSPECTABLE_BG_COLOR,       TokenType.REPL_INSP_BG);
+            prefTokenTypeMap.put(PreferenceConstants.REPL_INSPECTABLE_FG_COLOR,       TokenType.REPL_INSP_FG);
 		}
 		return prefTokenTypeMap;
 	}
@@ -67,12 +72,11 @@ public class ColorManager {
 	protected Map<RGB, Color> fColorTable = new HashMap<RGB, Color>(10);
 	protected Map<TokenType, Color> tokenColorTable = new HashMap<TokenType, Color>(10);
 	protected LispPlugin plugin;
-	
-
+    protected final Collection<ChangeEventListener> colorChangeListeners = new LinkedList<ChangeEventListener>();
+    
 	protected LispPlugin getPlugin() { return plugin; }
 	
-	protected IPropertyChangeListener colorPrefsChangeListener = new IPropertyChangeListener()
-	{
+	protected IPropertyChangeListener colorPrefsChangeListener = new IPropertyChangeListener() {
 		public void propertyChange(PropertyChangeEvent event) {
 			//get the token type that corresponds to the modified property
 			TokenType toktype = preferenceStringToTokenType(event.getProperty());
@@ -80,29 +84,25 @@ public class ColorManager {
 			String newval = (String)event.getNewValue();
 			RGB rgb = StringConverter.asRGB(newval);
 			Color color = setRGBForTokenType(toktype, rgb);
+            
 			//notify all listeners of the change
-			for (ChangeEventListener listener : getChangeListeners())
-				listener.colorPreferenceChanged(new ColorChangeEvent(null, toktype, color));
+            ColorChangeEvent evt = new ColorChangeEvent(ColorManager.this, toktype, color);
+			for (ChangeEventListener listener : colorChangeListeners) listener.colorPreferenceChanged(evt);
 		}
 	};
 	
-	protected Collection<ChangeEventListener> colorChangeListeners;
-	protected Collection<ChangeEventListener> getChangeListeners() {
-		return colorChangeListeners != null ? colorChangeListeners : new LinkedList<ChangeEventListener>();
+	public void addChangeEventListener(ChangeEventListener listener) {
+        colorChangeListeners.add(listener);
 	}
-	public void addChangeEventListener(ChangeEventListener listener)
-	{
-		getChangeListeners().add(listener);
-	}
-	public void removeChangeEventListener(ChangeEventListener listener)
-	{
-		getChangeListeners().remove(listener);
+	public void removeChangeEventListener(ChangeEventListener listener) {
+        colorChangeListeners.remove(listener);
 	}
 	
 	public class ColorChangeEvent extends EventObject {
-		protected Color newValue;
-		protected Color oldValue;
-		protected TokenType tokenType;
+		public final Color newValue;
+        public final Color oldValue;
+        public final TokenType tokenType;
+        
 		public ColorChangeEvent(ColorManager source, TokenType type, Color newVal) {
 			super(source);
 			this.newValue = newVal;
@@ -164,21 +164,18 @@ public class ColorManager {
 		return color;
 	}
 	
-	protected void beginObservingPreferences()
-	{
-		Preferences prefs = getPlugin().getPluginPreferences();
-		prefs.addPropertyChangeListener(colorPrefsChangeListener);
+	protected void beginObservingPreferences() {
+        getPlugin().getPluginPreferences().addPropertyChangeListener(colorPrefsChangeListener);
 	}
-	protected void stopObservingPreferences()
-	{
+    
+	protected void stopObservingPreferences () {
 		getPlugin().getPluginPreferences().removePropertyChangeListener(colorPrefsChangeListener);
 	}
 
 	public void dispose() {
-		Iterator e = fColorTable.values().iterator();
-		
-		while (e.hasNext())
-			 ((Color) e.next()).dispose();
+        for (Color c : fColorTable.values()) {
+            c.dispose();
+        }
 		
 		stopObservingPreferences();
 	}	
@@ -195,16 +192,11 @@ public class ColorManager {
 	*/
 	
 
-	public Color getColor(TokenType type) {
-		Color color = (Color) tokenColorTable.get(type);
-		if (color == null) {
-			
-		}
-		return color;
+	public Color getColor (TokenType type) {
+		return tokenColorTable.get(type);
 	}
 	
-	public Color getDefaultColor(RGB rgb)
-	{
+	public Color getDefaultColor(RGB rgb) {
 		return new Color(Display.getCurrent(), rgb);
 	}
 }
