@@ -578,6 +578,66 @@
 		</editorContribution>
 	</extension>
 	
+	<!-- Expand Selection -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Expands the selection to the next outer atom/s-expression"
+			id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+			name="Expand Selection"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+Enter"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+				definitionId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+				id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+				label="Expand Selection"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Expand Selection">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Select Current Expression -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Selects the current s-expression"
+			id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+			name="Select Current Expression"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+Shift+Enter"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+				definitionId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+				id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+				label="Select Current Expression"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Select Current Expression">
+			</action>
+		</editorContribution>
+	</extension>
+	
 	<!-- Content Assist -->
 	<extension point="org.eclipse.ui.commands">
 		<command

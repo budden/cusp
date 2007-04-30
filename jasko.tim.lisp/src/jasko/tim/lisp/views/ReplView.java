@@ -6,7 +6,9 @@ import jasko.tim.lisp.views.repl.*;
 import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.editors.*;
 import jasko.tim.lisp.editors.actions.ContentAssistAction;
+import jasko.tim.lisp.editors.actions.ExpandSelectionAction;
 import jasko.tim.lisp.editors.actions.ParameterHintsAction;
+import jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction;
 import jasko.tim.lisp.inspector.InspectorRunnable;
 
 import java.util.*;
@@ -210,6 +212,12 @@ public class ReplView extends ViewPart implements SelectionListener {
         ParameterHintsAction hintsAction = new ParameterHintsAction(in);
         hintsAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ParameterHintsAction");
         keys.registerAction(hintsAction);
+        ExpandSelectionAction expSelAction = new ExpandSelectionAction(in);
+        expSelAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ExpandSelectionAction");
+        keys.registerAction(expSelAction);
+        SelectCurrentExpressionAction selCurrentAction = new SelectCurrentExpressionAction(in);
+        selCurrentAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction");
+        keys.registerAction(selCurrentAction);
  		/*in.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
 				try {

@@ -92,29 +92,51 @@ public class LispUtil {
 		return sb.toString();
 	}
 	
-	public static String getCurrentFullWord(IDocument doc, int offset) {
+	public static int[] getCurrentFullWordRange (IDocument doc, int offset) {
+        int start = -1, end = -1;
 		String source = doc.get();
-		StringBuilder sb = new StringBuilder();
-		for (int i=offset-1; i >=0; --i) {
+
+		for (int i = offset - 1; i >= 0; --i) {
 			char c = source.charAt(i);
 			if (Character.isWhitespace(c) || c == '(' || c ==')') {
 				break;
 			} else {
-				sb.insert(0, c);
+                start = i;
 			}
 		}
-		for (int i=offset; i<source.length(); ++i) {
+        
+		for (int i = offset; i < source.length(); ++i) {
 			char c = source.charAt(i);
 			if (Character.isWhitespace(c) || c == '(' || c ==')') {
-				return sb.toString();
+                break;
 			} else {
-				sb.append(c);
-				//acc = c + acc;
+                end = i + 1;
 			}
 		}
-		
-		return sb.toString();
+        
+        if (start == -1 && end == -1) {
+            return null;
+        } else if (start == -1) {
+            start = offset;
+        } else if (end == -1) {
+            end = offset;
+        }
+        
+        return new int[] { start, end - start };
 	}
+    
+    public static String getCurrentFullWord (IDocument doc, int offset) {
+        int[] range = getCurrentFullWordRange(doc, offset);
+        if (range != null) {
+            try {
+                return doc.get(range[0], range[1]);
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return "";
+    }
 	
 	public static class FunctionInfo {
 		public FunctionInfo(String name, int offset) {
@@ -269,14 +291,22 @@ public class LispUtil {
     
     /**
      * Returns a 2-element integer array indicating the range in the current document of the smallest complete
-     * s-expression that encloses the given.  If no such s-expression is found, this function returns null.
+     * s-expression that encloses the given offset.  If no such s-expression is found, this function returns null.
      */
     public static int[] getCurrentFullExpressionRange (IDocument doc, int offset) {
+        return getCurrentFullExpressionRange(doc, offset, 0);
+    }
+    
+    /**
+     * Returns a 2-element integer array indicating the range in the current document of the smallest complete
+     * s-expression that encloses the given select range.  If no such s-expression is found, this function returns null.
+     */
+    public static int[] getCurrentFullExpressionRange (IDocument doc, int offset, int selectionLength) {
         int begin = findOpenParen(doc, offset);
         if (begin >= 0) {
-            int end = findCloseParen(doc, begin+1);
+            int end = findCloseParen(doc, offset, offset + selectionLength);
             if (end >= 0) {
-                return new int[] { begin, end-begin + 1 };
+                return new int[] { begin, end - begin + 1 };
             }
         }
         
@@ -349,16 +379,20 @@ public class LispUtil {
 		return open - close;
 	}
 	
-	public static int findCloseParen(IDocument doc, int offset) {
+    public static int findCloseParen (IDocument doc, int offset) {
+        return findCloseParen(doc, offset, offset);
+    }
+    
+	public static int findCloseParen (IDocument doc, int offset, int minSearchOffset) {
 		int open = 0;
 		int close = 0;
 		String code = doc.get();
-		for (int i=offset; i<code.length(); ++i) {
+		for (int i = offset; i < code.length(); ++i) {
 			try {
 				char c = code.charAt(i);
 				if (c == ')' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
 					++close;
-					if (close > open) {
+					if (i >= minSearchOffset && close - open == 1) {
 						return i;
 					}
 				} else if (c == '(' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
@@ -391,8 +425,6 @@ public class LispUtil {
     }
 
     public static String getCurrentExpression (IDocument doc, int offset, int selLength) {
-        // todo -- add support for returning the entire selection,
-        //    if the current selection delimits a valid and complete set of s-expressions
         try {
             if (selLength > 0) {
                 if (doParensBalance(doc, offset, offset + selLength)) {
