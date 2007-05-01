@@ -250,20 +250,44 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		}
 	}
 	
-	public void keyPressed(KeyEvent e) {
-		String c = "" + e.character;
-		
-		for (TreeItem node: getTreeViewer().getTree().getItems()) {
-			if (node.getText().startsWith(c)) {
-				getTreeViewer().getTree().setSelection(node);
-				if (node.getData() instanceof OutlineItem) {
-					OutlineItem item = (OutlineItem) node.getData();
-					lastSelection = item;
-					editor.selectAndReveal(item.offset, item.type.length() + 1);
-				}
-				return;
-			}
+	String search = "";
+	
+	private boolean isSearchable(char c) {
+		if ("1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_-=+{}|[]\\:;\"\'<>?,./`~".indexOf(
+				Character.toLowerCase(c)) >= 0) {
+			return true;
+		} else {
+			return false;
 		}
+	}
+	
+	public void keyPressed(KeyEvent e) {
+		System.out.println(search);
+		if (e.keyCode == SWT.ESC) {
+			search = "";
+		} else if (e.character == SWT.BS) {
+			search = search.substring(0, search.length() - 1);
+		} else if (isSearchable(e.character)) {
+			System.out.println(e.character);
+			search += e.character;
+			
+			for (TreeItem node: getTreeViewer().getTree().getItems()) {
+				if (node.getText().startsWith(search)) {
+					getTreeViewer().getTree().setSelection(node);
+					if (node.getData() instanceof OutlineItem) {
+						OutlineItem item = (OutlineItem) node.getData();
+						lastSelection = item;
+						editor.selectAndReveal(item.offset, item.type.length() + 1);
+					}
+					return;
+				}
+			}
+			this.getSite().getShell().getDisplay().beep();
+		}
+	}
+	
+	public void setFocus() {
+		search = "";
 	}
 	
 	

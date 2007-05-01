@@ -38,6 +38,10 @@ public class LispIndenter implements IAutoEditStrategy {
 		LispUtil.FunctionInfo prevFunc = LispUtil.getCurrentFunctionInfo(doc, fi.offset);
 		LispUtil.FunctionInfo prev2Func = LispUtil.getCurrentFunctionInfo(doc, prevFunc.offset);
 		
+		fi.name = fi.name.toLowerCase();
+		prevFunc.name = prevFunc.name.toLowerCase();
+		prev2Func.name = prev2Func.name.toLowerCase();
+		
 		//System.out.println("***" + fi.name);
 		//System.out.println(prevFunc.name);
 		//System.out.println(prev2Func.name);
