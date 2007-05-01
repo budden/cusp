@@ -26,6 +26,8 @@ import org.eclipse.ui.ide.IDE;
  */
 
 public class NewLispFileWizard extends Wizard implements INewWizard {
+	public static final String ID = "jasko.tim.lisp.wizards.NewLispFileWizard";
+	
 	private NewLispFileWizardPage page;
 	private ISelection selection;
 

@@ -35,6 +35,8 @@ import java.lang.reflect.InvocationTargetException;
  */
 
 public class NewProjectWiz extends Wizard implements INewWizard {
+	public static final String ID = "jasko.tim.lisp.wizards.NewProjectWiz";
+	
 	private NewProjectWizPage1 page;
 	private ISelection selection;
 	private IWorkbench workbench;

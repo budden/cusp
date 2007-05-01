@@ -1,7 +1,9 @@
 package jasko.tim.lisp.perspective;
 
+import jasko.tim.lisp.inspector.InspectorView;
 import jasko.tim.lisp.navigator.LispNavigator;
 import jasko.tim.lisp.views.*;
+import jasko.tim.lisp.wizards.*;
 
 import org.eclipse.ui.*;
 
@@ -27,6 +29,18 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		bottom.addView(ReplView.ID);
 		bottom.addView(IPageLayout.ID_PROBLEM_VIEW);
 		bottom.addView(AproposView.ID);
+		bottom.addView(ThreadView.ID);
+		bottom.addView(InspectorView.ID);
+		
+		layout.addShowViewShortcut(ReplView.ID);
+		layout.addShowViewShortcut(IPageLayout.ID_PROBLEM_VIEW);
+		layout.addShowViewShortcut(AproposView.ID);
+		layout.addShowViewShortcut(ThreadView.ID);
+		layout.addShowViewShortcut(InspectorView.ID);
+		layout.addShowViewShortcut(SecondaryReplView.ID);
+		
+		layout.addNewWizardShortcut(NewLispFileWizard.ID);
+		layout.addNewWizardShortcut(NewProjectWiz.ID);
 	}
 
 }
