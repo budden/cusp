@@ -104,12 +104,14 @@ public class SBCLImplementation extends LispImplementation {
 	
 	public Process start(String loadPath) throws IOException
 	{
+		System.out.println("start");
 		if (isValid())
 		{
 			ProcessBuilder pb;
 			String[] commandLine = new String[] {
-					executable.getPath(),
-					"--load", loadPath
+					executable.getPath()
+					//,"--dynamic-space-size", "50000" // simulate the error some windows users get
+					//"--load", loadPath
 			};
 			
 			pb = new ProcessBuilder(commandLine);
@@ -117,5 +119,19 @@ public class SBCLImplementation extends LispImplementation {
 			return pb.start();
 		}
 		return null;
+	}
+	
+	public Process startHarder(String loadPath) throws IOException {
+		System.out.println("startHarder");
+		ProcessBuilder pb;
+		String[] commandLine = new String[] {
+				executable.getPath(),
+				"--dynamic-space-size", "100"
+				//"--load", loadPath
+		};
+		
+		pb = new ProcessBuilder(commandLine);
+		pb.environment().put("SBCL_HOME", path.getPath());
+		return pb.start();
 	}
 }

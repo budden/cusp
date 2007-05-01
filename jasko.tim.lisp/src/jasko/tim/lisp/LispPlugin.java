@@ -40,14 +40,14 @@ public class LispPlugin extends AbstractUIPlugin {
 		
 		try {
 			swank = new SwankInterface();
-            Properties props = new Properties();
-            
-            InputStream in = LispPlugin.class.getResourceAsStream("/cusp.properties");
-            props.load(in);
-            in.close();
-
-            CUSP_VERSION = props.getProperty("cusp.version");
-            RELEASE_DATE = props.getProperty("cusp.release_date");
+			Properties props = new Properties();
+			
+			InputStream in = LispPlugin.class.getResourceAsStream("/cusp.properties");
+			props.load(in);
+			in.close();
+			
+			CUSP_VERSION = props.getProperty("cusp.version");
+			RELEASE_DATE = props.getProperty("cusp.release_date");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -69,10 +69,10 @@ public class LispPlugin extends AbstractUIPlugin {
 	 * This method is called when the plug-in is stopped
 	 */
 	public void stop(BundleContext context) throws Exception {
-		super.stop(context);
 		cm.dispose();
 		getSwank().disconnect();
 		plugin = null;
+		super.stop(context);
 	}
 
 	/**
