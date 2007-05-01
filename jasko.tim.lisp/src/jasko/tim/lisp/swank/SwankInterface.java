@@ -161,24 +161,6 @@ public class SwankInterface {
 	public boolean isConnected() {
 		return connected;
 	}
-	
-	/**
-	 * 
-	 * @return
-	protected Process startAppropriateLispProcess()
-	{
-		Process lispProcess = null;
-		LispImplementation impl = null;
-		//the pecking order of lisps:
-		if (impl == null) impl = SBCLImplementation.findImplementation();
-		if (impl == null) impl = AllegroImplementation.findImplementation();
-		
-		if (impl != null)
-			lispProcess = impl.start("");
-		
-		return lispProcess;
-	}
-	*/
 	  	
 	/** 
 	 * Connects to the swank server.
@@ -186,6 +168,7 @@ public class SwankInterface {
 	 * @return whether connecting was successful
 	*/
 	public boolean connect() {
+		connected = false;
 		currPackage = "COMMON-LISP-USER";
 		//IPreferenceStore store = LispPlugin.getDefault().getPreferenceStore();
 		
@@ -206,6 +189,9 @@ public class SwankInterface {
 
 			String pluginDir = LispPlugin.getDefault().getPluginPath();
 			String slimePath = pluginDir + "slime/swank-loader.lisp";
+			if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+				slimePath = slimePath.replaceFirst("/", "");
+			}
 			if (implementation != null) {
 				try {
 					lispEngine = implementation.start(slimePath);
@@ -223,23 +209,7 @@ public class SwankInterface {
 				}
 			}
 			
-			// it's not happy unless we hook up to clear out the output
-			stdOut = new DisplayListenerThread(lispEngine.getInputStream(), true);
-			stdErr = new DisplayListenerThread(lispEngine.getErrorStream(), true);
-			
-			stdOut.start();
-			stdErr.start();
-			
-			try {
-				commandInterface = new DataOutputStream(lispEngine.getOutputStream());
-				//commandInterface.writeBytes("(progn (swank:create-swank-server " + port + " nil) (quit))\n");
-				commandInterface.writeBytes("(load \"" + slimePath.replace("\\", "\\\\") + "\")\n");
-				commandInterface.writeBytes("(swank:create-server :coding-system \"utf-8\" :port " + port + ")\n");
-				commandInterface.flush();
-				
-			} catch (IOException e2) {
-				e2.printStackTrace();
-			}
+			connectStreams(slimePath);
 			
 			
 			int tries = 7;
@@ -247,7 +217,6 @@ public class SwankInterface {
 				try {
 					echoSocket = new Socket("localhost", port);
 					out = new DataOutputStream(echoSocket.getOutputStream());
-					
 					listener = new ListenerThread(echoSocket.getInputStream());
 					listener.start();
 					tries = 0;
@@ -255,6 +224,19 @@ public class SwankInterface {
 				} catch (UnknownHostException e) {
 					return false;
 				} catch (IOException e) {
+					
+					try {
+						int val = lispEngine.exitValue();
+						System.out.println("exit: " + val);
+						
+						lispEngine = implementation.startHarder(slimePath);
+						connectStreams(slimePath);
+					} catch (IllegalThreadStateException e2) {
+						System.out.println("lisp instance still loading...");
+					} catch (IOException e2) {
+						e.printStackTrace();
+					}
+					
 					System.err.println("Couldn't connect to swank (" + tries + " more tries).");
 					if (tries > 0) {
 						try {
@@ -271,8 +253,38 @@ public class SwankInterface {
 		} // synchronized
 		
 		//sendRaw("(:emacs-rex (swank:connection-info) nil t 1)");
-		connected = true;
-		return true;
+		if (echoSocket != null && echoSocket.isConnected()) {
+			connected = true;
+		} else {
+			connected = false;
+		}
+		return connected;
+	}
+	
+	private void connectStreams(String slimePath) {
+		if (stdOut != null) { // never cross the streams
+			stdOut.running = false;
+		}
+		if (stdErr != null) {
+			stdErr.running = false;
+		}
+		// it's not happy unless we hook up to clear out the output
+		stdOut = new DisplayListenerThread(lispEngine.getInputStream(), true);
+		stdErr = new DisplayListenerThread(lispEngine.getErrorStream(), true);
+		
+		stdOut.start();
+		stdErr.start();
+		
+		try {
+			commandInterface = new DataOutputStream(lispEngine.getOutputStream());
+			//commandInterface.writeBytes("(progn (swank:create-swank-server " + port + " nil) (quit))\n");
+			commandInterface.writeBytes("(load \"" + slimePath.replace("\\", "\\\\") + "\")\n");
+			commandInterface.writeBytes("(swank:create-server :coding-system \"utf-8\" :port " + port + ")\n");
+			commandInterface.flush();
+			
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
 	}
 	
 	public void reconnect() {
@@ -281,13 +293,17 @@ public class SwankInterface {
 	}
 	
 	public void disconnect() {
+		System.out.println("*disconnect");
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			lispEngine.destroy();
+		}
 		
-		try {
+		/*try {
 			commandInterface.writeBytes(implementation.getQuitForm() + "\n");
 			commandInterface.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		try {
 			if (displayListener != null) {
 				displayListener.running = false;
@@ -789,21 +805,25 @@ public class SwankInterface {
 		//message = message + "\n";
 		System.out.println("-->" + message);
 		try {
-			//Messages are prepending by their length, given as a 6-char string
-			// which is a hexadecimal number. Not sure why they do it this way.
-			String hexLen = Integer.toHexString(message.length());
-			
-            switch (hexLen.length()) {
-                case 1: out.write('0');
-                case 2: out.write('0');
-                case 3: out.write('0');
-                case 4: out.write('0');
-                case 5: out.write('0');
+			if (out != null) {
+				//Messages are prepending by their length, given as a 6-char string
+				// which is a hexadecimal number. Not sure why they do it this way.
+				String hexLen = Integer.toHexString(message.length());
+				
+	            switch (hexLen.length()) {
+	                case 1: out.write('0');
+	                case 2: out.write('0');
+	                case 3: out.write('0');
+	                case 4: out.write('0');
+	                case 5: out.write('0');
+				}
+				
+				out.writeBytes(hexLen);
+				out.write(message.getBytes("UTF-8"));
+				out.flush();
+			} else {
+				return false;
 			}
-			
-			out.writeBytes(hexLen);
-			out.write(message.getBytes("UTF-8"));
-			out.flush();
 		} catch (IOException e) {
 			signalListeners(disconnectListeners, new LispNode());
 			e.printStackTrace();

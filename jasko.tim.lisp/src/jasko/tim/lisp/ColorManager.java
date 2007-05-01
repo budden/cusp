@@ -137,7 +137,7 @@ public class ColorManager {
                 try {
                     prefVal = StringConverter.asRGB(PreferenceInitializer.getDefaultColorFor(pref));
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    //ex.printStackTrace();
                 }
 			}
 

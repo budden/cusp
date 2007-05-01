@@ -18,6 +18,16 @@ public abstract class LispImplementation {
 	
 	public String getQuitForm() { return "(quit)"; }
 	
-	
+	/**
+	 * This exists to help work around SBCL's windows problem.
+	 *  If we find ourselves unable to connect to Slime, and we see that the process has terminated on us,
+	 *   call this function, which should have a somewhat better shot at starting.
+	 * @param loadPath
+	 * @return
+	 * @throws IOException
+	 */
+	public Process startHarder(String loadPath) throws IOException {
+		return start(loadPath);
+	}
 
 }

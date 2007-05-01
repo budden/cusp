@@ -119,7 +119,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		swank = getSwank();
 		
-		if (swank == null) {
+		if (swank == null || !swank.isConnected()) {
 			// We weren't able to connect to Lisp. If you don't catch this,
 			// Eclipse shows the backtrace where the Repl should be, and then people
 			// email you asking what's going on. This is the much better solution.
@@ -128,6 +128,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			
 			return;
 		}
+		System.out.println("**connected:" + swank.isConnected());
 		// layout controllers we need in a few places
 		GridData gd = new GridData();
 		gd.horizontalAlignment = GridData.FILL;
@@ -300,7 +301,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  		fillToolBar(parent);
  		fillMenu(parent);
  		
- 		if (swank != null) {
+ 		if (swank != null && swank.isConnected()) {
  			swank.sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
                     "\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
  		}
