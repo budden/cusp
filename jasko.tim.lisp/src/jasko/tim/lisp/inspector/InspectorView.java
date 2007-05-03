@@ -58,6 +58,9 @@ public class InspectorView extends ViewPart {
 		output = new InspectorGadget(comp);
 		output.setEditable(false);
 		output.getControl().setLayoutData(gd);
+		
+		output.appendText("You're not currently inspecting anything.\n");
+		output.appendText("Click on underlined objects in the REPL to inspect them.\n");
 	}
 	
 	

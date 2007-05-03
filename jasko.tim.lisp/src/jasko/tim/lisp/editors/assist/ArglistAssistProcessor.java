@@ -219,11 +219,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 
 		public boolean updatePresentation(int offset, TextPresentation pres) {
 			String display = info.getInformationDisplayString();
-			int endOfLine = display.indexOf('\n');
-			if (endOfLine < 0) {
-				endOfLine = display.length();
-			}
-			pres.addStyleRange(new StyleRange(0, endOfLine, null, null, SWT.BOLD));
+			LispNode stuff = LispParser.parse(display);
+			pres.addStyleRange(new StyleRange(0, stuff.get(0).endOffset, null, null, SWT.BOLD));
 			return true;
 		}
 	}

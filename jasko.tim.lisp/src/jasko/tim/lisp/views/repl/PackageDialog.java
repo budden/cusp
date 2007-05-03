@@ -4,10 +4,7 @@ package jasko.tim.lisp.views.repl;
 import java.util.*;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.widgets.*;
