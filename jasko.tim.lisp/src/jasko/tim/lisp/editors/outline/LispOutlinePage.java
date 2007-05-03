@@ -209,6 +209,8 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 				return LispImages.getImage(LispImages.DEFVAR);
 			} else if (type.endsWith("type")) {
 				return LispImages.getImage(LispImages.DEFTYPE);
+			} else if (type.endsWith("condition")) {
+				return LispImages.getImage(LispImages.DEFINE_CONDITION);
 			} else { // Well, they're probably defining *something*
 				return LispImages.getImage(LispImages.DEFOTHER);
 			}

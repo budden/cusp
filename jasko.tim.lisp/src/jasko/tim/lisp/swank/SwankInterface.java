@@ -968,6 +968,7 @@ public class SwankInterface {
 				try {
 					char c = (char)in.read();
 					if (c == '\n') {
+						acc.append(c);
 						// Things are much faster display-wise if we grab several lines at a time
 						if (lines > 5 || !in.ready()) {
 							synchronized(acc) {
@@ -975,7 +976,10 @@ public class SwankInterface {
 								if (echo) {
 									for (int i=0; i<displayListeners.size(); ++i) {
 										SwankRunnable runnable = displayListeners.get(i).clone();
-										runnable.result = new LispNode(curr);
+										LispNode result = new LispNode();
+										result.params.add(new LispNode(":write-string"));
+										result.params.add(new LispNode(curr));
+										runnable.result = result;
 										Display.getDefault().asyncExec(runnable);
 									}
 								}
@@ -986,7 +990,6 @@ public class SwankInterface {
 							}
 							lines = 0;
 						} else {
-							acc.append(c);
 							lines += 1;
 						}
 						

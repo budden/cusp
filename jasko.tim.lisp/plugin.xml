@@ -244,7 +244,7 @@
 		<!-- Inspector view -->
 		<view
 			name="Inspector"
-			icon="icons/apropos.gif"
+			icon="icons/inspector.gif"
 			category="jasko.tim.lisp"
 			class="jasko.tim.lisp.inspector.InspectorView"
 			id="jasko.tim.lisp.inspector.InspectorView" />

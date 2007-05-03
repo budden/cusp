@@ -38,6 +38,7 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		layout.addShowViewShortcut(ThreadView.ID);
 		layout.addShowViewShortcut(InspectorView.ID);
 		layout.addShowViewShortcut(SecondaryReplView.ID);
+		layout.addShowViewShortcut(IPageLayout.ID_OUTLINE);
 		
 		layout.addNewWizardShortcut(NewLispFileWizard.ID);
 		layout.addNewWizardShortcut(NewProjectWiz.ID);

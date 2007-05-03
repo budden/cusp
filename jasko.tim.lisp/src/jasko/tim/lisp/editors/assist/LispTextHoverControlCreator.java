@@ -1,5 +1,8 @@
 package jasko.tim.lisp.editors.assist;
 
+import jasko.tim.lisp.swank.LispNode;
+import jasko.tim.lisp.swank.LispParser;
+
 import org.eclipse.jface.text.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
@@ -22,11 +25,13 @@ public class LispTextHoverControlCreator implements IInformationControlCreator {
 	
 	public class InfoPresenter implements DefaultInformationControl.IInformationPresenter {
 		public String updatePresentation(Display display, String hoverInfo, TextPresentation pres, int maxWidth, int maxHeight) {
-			int endOfLine = hoverInfo.indexOf('\n');
+			/*int endOfLine = hoverInfo.indexOf('\n');
 			if (endOfLine < 0) {
 				endOfLine = hoverInfo.length();
 			}
-			pres.addStyleRange(new StyleRange(0, endOfLine, null, null, SWT.BOLD));
+			pres.addStyleRange(new StyleRange(0, endOfLine, null, null, SWT.BOLD));*/
+			LispNode stuff = LispParser.parse(hoverInfo);
+			pres.addStyleRange(new StyleRange(0, stuff.get(0).endOffset, null, null, SWT.BOLD));
 			return hoverInfo;
 		}
 		

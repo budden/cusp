@@ -23,6 +23,7 @@ public class LispImages {
 	public static final String DEFUN = "defun";
 	public static final String DEFACTION = "defaction";
 	public static final String DEFVAR = "defvar";
+	public static final String DEFINE_CONDITION = "define-condition";
 	public static final String IN_PACKAGE = "in-package";
 	public static final String OTHER = "other";
 	public static final String SORT_ALPHA = "sort-alpha";
@@ -53,6 +54,7 @@ public class LispImages {
 		imageReg.put(LispImages.DEFACTION, loadImageDescriptor("defaction.gif"));
 		imageReg.put(LispImages.DEFVAR, loadImageDescriptor("defvar.gif"));
 		imageReg.put(LispImages.DEFTYPE, loadImageDescriptor("deftype.gif"));
+		imageReg.put(LispImages.DEFINE_CONDITION, loadImageDescriptor("define-condition.gif"));
 		imageReg.put(LispImages.IN_PACKAGE, loadImageDescriptor("in-package.gif"));
 		imageReg.put(LispImages.OTHER, loadImageDescriptor("other.gif"));
 		
