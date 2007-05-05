@@ -3,8 +3,6 @@ package jasko.tim.lisp.editors.actions;
 import org.eclipse.swt.widgets.Display;
 
 import jasko.tim.lisp.editors.LispEditor;
-import jasko.tim.lisp.swank.LispNode;
-import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.util.LispUtil;
 
 public class EvalFileAction extends LispAction {
@@ -22,20 +20,21 @@ public class EvalFileAction extends LispAction {
             return;
         }
         
-        getSwank().sendEval(editor.getDocument().get(), new SwankRunnable() {
+        getSwank().sendEval(editor.getDocument().get(), null);
+        /*new SwankRunnable() {
             public void run() {
                 LispNode res = this.result.getf(":return").getf(":ok").getf(":present");
-                /*  this used to display the result of the evaluation -- that already goes to the repl now,
-                 * and this value is always an empty string -- maybe a swank api change?
+                //  this used to display the result of the evaluation -- that already goes to the repl now,
+                // and this value is always an empty string -- maybe a swank api change?
                 String display = "";
                 for (LispNode kid: res.params) {
                     display += kid.get(0).value + "\n";
                 }
                 display = display.trim();
                 editor.showPopupInfo("=> " + display);
-                */
+                
             }
-        });
+        });*/
         
     }
 

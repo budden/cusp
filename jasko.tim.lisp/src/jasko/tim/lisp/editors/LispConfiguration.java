@@ -7,7 +7,6 @@ import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import org.eclipse.swt.*;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.contentassist.*;
 import org.eclipse.jface.text.presentation.*;
