@@ -11,7 +11,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.views.contentoutline.*;
 
@@ -166,13 +165,13 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 					currType = item.type;
 					category = new TreeItem(tree, SWT.NONE);
 					category.setText(currType);
-					category.setImage(getImageForType(currType));
+					category.setImage(LispImages.getImageForType(currType));
 					category.setData("");
 				}
 				temp = new TreeItem(category, SWT.NONE);
 			}
 			
-			temp.setImage(getImageForType(item.type));
+			temp.setImage(LispImages.getImageForType(item.type));
 			temp.setText(item.name);
 			temp.setData(item);
 			
@@ -181,45 +180,6 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		getControl().setRedraw(true);
 	}
 	
-	private Image getImageForType(String type) {
-		if (type.startsWith("def")) {
-			if (type.endsWith("class") || type.endsWith("component")) {
-				return LispImages.getImage(LispImages.DEFCLASS);
-			} else if (type.endsWith("constant")) {
-				return LispImages.getImage(LispImages.DEFCONSTANT);
-			} else if (type.endsWith("generic")) {
-				return LispImages.getImage(LispImages.DEFGENERIC);
-			} else if (type.endsWith("macro")) {
-				return LispImages.getImage(LispImages.DEFMACRO);
-			} else if (type.endsWith("method")) {
-				return LispImages.getImage(LispImages.DEFMETHOD);
-			} else if (type.endsWith("package")) {
-				return LispImages.getImage(LispImages.DEFPACKAGE);
-			} else if (type.endsWith("system")) {
-				return LispImages.getImage(LispImages.DEFSYSTEM);
-			} else if (type.endsWith("parameter")) {
-				return LispImages.getImage(LispImages.DEFPARAMETER);
-			} else if (type.endsWith("struct")) {
-				return LispImages.getImage(LispImages.DEFSTRUCT);
-			} else if (type.endsWith("fun")) {
-				return LispImages.getImage(LispImages.DEFUN);
-			} else if (type.endsWith("action")) {
-				return LispImages.getImage(LispImages.DEFACTION);
-			} else if (type.endsWith("var")) {
-				return LispImages.getImage(LispImages.DEFVAR);
-			} else if (type.endsWith("type")) {
-				return LispImages.getImage(LispImages.DEFTYPE);
-			} else if (type.endsWith("condition")) {
-				return LispImages.getImage(LispImages.DEFINE_CONDITION);
-			} else { // Well, they're probably defining *something*
-				return LispImages.getImage(LispImages.DEFOTHER);
-			}
-		} else if (type.equals("in-package")) {
-			return LispImages.getImage(LispImages.IN_PACKAGE);
-		} else {
-			return LispImages.getImage(LispImages.OTHER);
-		}
-	}
 	
 	private OutlineItem lastSelection;
 	
@@ -270,7 +230,6 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		} else if (e.character == SWT.BS) {
 			search = search.substring(0, search.length() - 1);
 		} else if (isSearchable(e.character)) {
-			System.out.println(e.character);
 			search += e.character;
 			
 			for (TreeItem node: getTreeViewer().getTree().getItems()) {

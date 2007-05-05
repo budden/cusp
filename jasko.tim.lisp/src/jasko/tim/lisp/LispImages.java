@@ -24,6 +24,10 @@ public class LispImages {
 	public static final String DEFACTION = "defaction";
 	public static final String DEFVAR = "defvar";
 	public static final String DEFINE_CONDITION = "define-condition";
+	public static final String DEFINE_ALIEN_ROUTINE = "define-alien-routine";
+	public static final String DEFINE_ALIEN_VARIABLE = "define-alien-variable";
+	public static final String DEFINE_ALIEN_TYPE = "define-alien-type";
+	public static final String LAMBDA = "lambda";
 	public static final String IN_PACKAGE = "in-package";
 	public static final String OTHER = "other";
 	public static final String SORT_ALPHA = "sort-alpha";
@@ -55,6 +59,11 @@ public class LispImages {
 		imageReg.put(LispImages.DEFVAR, loadImageDescriptor("defvar.gif"));
 		imageReg.put(LispImages.DEFTYPE, loadImageDescriptor("deftype.gif"));
 		imageReg.put(LispImages.DEFINE_CONDITION, loadImageDescriptor("define-condition.gif"));
+		imageReg.put(LispImages.DEFINE_ALIEN_ROUTINE, loadImageDescriptor("define-alien-routine.gif"));
+		imageReg.put(LispImages.DEFINE_ALIEN_VARIABLE, loadImageDescriptor("define-alien-variable.gif"));
+		imageReg.put(LispImages.DEFINE_ALIEN_TYPE, loadImageDescriptor("define-alien-type.gif"));
+		imageReg.put(LispImages.LAMBDA, loadImageDescriptor("lispNature.gif"));
+		
 		imageReg.put(LispImages.IN_PACKAGE, loadImageDescriptor("in-package.gif"));
 		imageReg.put(LispImages.OTHER, loadImageDescriptor("other.gif"));
 		
@@ -74,6 +83,58 @@ public class LispImages {
 		imageReg.put(LispImages.REFRESH, loadImageDescriptor("refresh.gif"));
 		
 	}
+	
+	
+	public static Image getImageForType(String type) {
+		type = type.replace("(", "").toLowerCase();
+		if (type.startsWith("def")) {
+			if (type.endsWith("class") || type.endsWith("component")) {
+				return LispImages.getImage(LispImages.DEFCLASS);
+			} else if (type.endsWith("constant")) {
+				return LispImages.getImage(LispImages.DEFCONSTANT);
+			} else if (type.endsWith("generic")) {
+				return LispImages.getImage(LispImages.DEFGENERIC);
+			} else if (type.endsWith("macro")) {
+				return LispImages.getImage(LispImages.DEFMACRO);
+			} else if (type.endsWith("method")) {
+				return LispImages.getImage(LispImages.DEFMETHOD);
+			} else if (type.endsWith("package")) {
+				return LispImages.getImage(LispImages.DEFPACKAGE);
+			} else if (type.endsWith("system")) {
+				return LispImages.getImage(LispImages.DEFSYSTEM);
+			} else if (type.endsWith("parameter")) {
+				return LispImages.getImage(LispImages.DEFPARAMETER);
+			} else if (type.endsWith("struct")) {
+				return LispImages.getImage(LispImages.DEFSTRUCT);
+			} else if (type.endsWith("fun")) {
+				return LispImages.getImage(LispImages.DEFUN);
+			} else if (type.endsWith("action")) {
+				return LispImages.getImage(LispImages.DEFACTION);
+			} else if (type.endsWith("var")) {
+				return LispImages.getImage(LispImages.DEFVAR);
+			} else if (type.endsWith("condition")) {
+				return LispImages.getImage(LispImages.DEFINE_CONDITION);
+			} else if (type.equals("define-alien-routine")) {
+				return LispImages.getImage(LispImages.DEFINE_ALIEN_ROUTINE);
+			} else if (type.equals("define-alien-variable")) {
+				return LispImages.getImage(LispImages.DEFINE_ALIEN_VARIABLE);
+			} else if (type.equals("define-alien-type")) {
+				return LispImages.getImage(LispImages.DEFINE_ALIEN_TYPE);
+			} else if (type.endsWith("type")) {
+				return LispImages.getImage(LispImages.DEFTYPE);
+			} else { // Well, they're probably defining *something*
+				return LispImages.getImage(LispImages.DEFOTHER);
+			}
+		} else if (type.equals("lambda")) {
+			return LispImages.getImage(LispImages.LAMBDA);
+		} else if (type.equals("in-package")) {
+			return LispImages.getImage(LispImages.IN_PACKAGE);
+		} else {
+			return LispImages.getImage(LispImages.OTHER);
+		}
+	}
+	
+	
 	
 	public static Image getImage(String id) {
 		ImageRegistry ir = LispPlugin.getDefault().getImageRegistry(); 

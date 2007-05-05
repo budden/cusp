@@ -5,7 +5,6 @@ import org.eclipse.jface.text.rules.ICharacterScanner;
 
 public class CharacterDetector implements IWordDetector {
 
-	private int index = 0;
 	private boolean inWord = false;
 	
 	public CharacterDetector() {

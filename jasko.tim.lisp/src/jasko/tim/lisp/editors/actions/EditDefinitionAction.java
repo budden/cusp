@@ -73,7 +73,7 @@ public class EditDefinitionAction extends LispAction {
 					return;
 				}
 			}
-			
+			System.out.println("*chosen: " +  chosen);
 			LispNode location = chosen.get(1);
 			System.out.println(location);
 			if (location.get(0).value.equals(":error")) {

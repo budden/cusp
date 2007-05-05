@@ -11,10 +11,14 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.List;
 
 
-public class PackageDialog extends Dialog {
+public class PackageDialog extends Dialog implements KeyListener {
 	ArrayList<String> packages;
 	String result = "";
 	String currPackage;
+
+	private List lstEnums;
+	private Label lblSearch;
+	private String search = "";
 	
 	public PackageDialog(Shell parentShell, ArrayList<String> packages, String currPackage) {
 		super(parentShell);
@@ -23,7 +27,6 @@ public class PackageDialog extends Dialog {
 		Collections.sort(this.packages);
 	}
 	
-	List lstEnums;
 	
 	public String getPackage() {
 		return result;
@@ -32,6 +35,7 @@ public class PackageDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite comp = (Composite)super.createDialogArea(parent);
 	
+		
 		comp.setLayout(new GridLayout());
 	
 		GridData gridData;
@@ -70,7 +74,8 @@ public class PackageDialog extends Dialog {
 			public void mouseUp(MouseEvent e) {
 			}
 		});
-		lstEnums.addKeyListener(new KeyListener() {
+		lstEnums.addKeyListener(this);
+		/*lstEnums.addKeyListener(new KeyListener() {
 
 			private String acc = "";
 			
@@ -95,7 +100,15 @@ public class PackageDialog extends Dialog {
 			public void keyReleased(KeyEvent e) {
 			}
 			
-		});
+		});*/
+		
+		lblSearch = new Label(grpEnum, SWT.SHADOW_IN);
+		gridData = new GridData();
+		gridData.grabExcessHorizontalSpace = true;
+		gridData.grabExcessVerticalSpace = false;
+		gridData.horizontalAlignment = GridData.FILL;
+		lblSearch.setLayoutData(gridData);
+		lblSearch.setVisible(false);
 		
 		Composite grpButtons = new Composite(grpEnum, SWT.SHADOW_NONE);
 		GridLayout layButtons = new GridLayout();
@@ -119,5 +132,50 @@ public class PackageDialog extends Dialog {
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText("Change Package");
+	}
+	
+	private boolean isSearchable(char c) {
+		if ("1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_-=+{}|[]\\:;\"\'<>?,./`~".indexOf(
+				Character.toLowerCase(c)) >= 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public void keyPressed(KeyEvent e) {
+		if (e.keyCode == SWT.ESC) {
+			if (search.equals("")) {
+				this.cancelPressed();
+				return;
+			} else {
+				search = "";
+				lblSearch.setText(search);
+				lblSearch.setVisible(false);
+				return;
+			}
+		} else if (e.keyCode == SWT.TRAVERSE_RETURN) {
+			this.okPressed();
+			return;
+		} else if (e.character == SWT.BS) {
+			search = search.substring(0, search.length() - 1);
+		} else if (isSearchable(e.character)) {
+			search += Character.toLowerCase(e.character);
+		} else {
+			return;
+		}
+		lblSearch.setText(search);
+		lblSearch.setVisible(true);
+		for (String option: lstEnums.getItems()) {
+			if (option.toLowerCase().startsWith(search)) {
+				lstEnums.setSelection(new String[] { option });
+				return;
+			}
+		}
+		this.getShell().getDisplay().beep();
+	}
+
+	public void keyReleased(KeyEvent e) {
+		
 	}
 }
