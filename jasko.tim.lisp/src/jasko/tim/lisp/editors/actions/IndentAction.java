@@ -1,6 +1,5 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.editors.LispPartitionScanner;
 import jasko.tim.lisp.editors.assist.*;
@@ -44,9 +43,8 @@ public class IndentAction extends LispAction {
                 if (doc.getContentType(lineInfo.getOffset()).equals(LispPartitionScanner.LISP_STRING) &&
                         !doc.get(lineInfo.getOffset(), lineInfo.getLength()).trim().startsWith("\"")) continue;
                 
-				LispUtil.FunctionInfo fi = LispUtil.getCurrentFunctionInfo(doc, lineInfo.getOffset());
 				
-				String indent = LispIndenter.calculateIndent(fi, doc);
+				String indent = LispIndenter.calculateIndent(lineInfo.getOffset(), doc);
 				String line = doc.get(lineInfo.getOffset(), lineInfo.getLength());
 				
 				String newLine = indent + line.trim();

@@ -28,8 +28,8 @@ public class LispParser {
 		
 		StringBuilder sb = new StringBuilder();
 		int length = code.length();
-		
-		for (int i=start; i<length; ++i) {
+		int i = 0;
+		for (i=start; i<length; ++i) {
 			char c = code.charAt(i);
 			if (c == '(') {
 				++parenBalance;
@@ -124,6 +124,18 @@ public class LispParser {
 			}
 			
 		} // for
+		// Make sure we get the endOffset set on everyone even when our sexps are incomplete
+		// This is important for LispUtil.getParameterNumber, and thus for LispIndenter
+		if (curr.endOffset == 0) {
+			curr.endOffset = i;
+		}
+		while (!s.empty()) {
+			curr = s.peek();
+			if (curr.endOffset == 0) {
+				curr.endOffset = i;
+			}
+			s.pop();
+		}
 		return ret;
 	}
 	

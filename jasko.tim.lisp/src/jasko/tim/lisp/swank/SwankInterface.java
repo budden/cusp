@@ -108,48 +108,64 @@ public class SwankInterface {
 		connect();
 	}
 	
-	public Hashtable<String, String> indents;
+	public Hashtable<String, String> specialIndents;
 	public Hashtable<String, String> fletIndents;
+	public Hashtable<String, Integer> indents;
+	public Hashtable<String, String> handlerCaseIndents;
 
 	/**
 	 * TODO: Indentation is very dumb right now, and needs to be made smarter.
 	 *
 	 */
 	private void initIndents() {
+		// for forms that get indented like flet
 		fletIndents = new Hashtable<String, String>();
 		fletIndents.put("flet",			"  ");
 		fletIndents.put("labels",		"  ");
 		fletIndents.put("macrolet",		"  ");
 		
-		indents = new Hashtable<String, String>();
+		// for forms that get indented like handler-case
+		handlerCaseIndents = new Hashtable<String, String>();
+		handlerCaseIndents.put("handler-case", "  ");
 		
-		indents.put("",				" ");
-		indents.put("if",			"    ");
-		indents.put("when",			"  ");
-		indents.put("unless",		"  ");
-		indents.put("let",			"  ");
-		indents.put("let*",			"  ");
-		indents.put("flet",			"  ");
-		indents.put("labels",		"  ");
-		indents.put("macrolet",		"  ");
-		indents.put("do",			"  ");
-		indents.put("dolist",		"  ");
-		indents.put("dotimes",		"  ");
-		indents.put("lambda",		"  ");
-		indents.put("defun",		"  ");
-		indents.put("defvar",		"  ");
-		indents.put("defparameter",	"  ");
-		indents.put("eval-when",	"  ");
-		indents.put("multiple-value-bind", "  ");
-		indents.put("unwind-protect", "  ");
-		indents.put("block", "  ");
+		// forms that always get indented a certain number of spaces
+		// Why are flet, labels, etc here as well as in fletIndents?
+		//  specialIndents controls how you get indented as a result of your parent form
+		//  The indenting we do for fletIndents happens when those forms are the great-grandparents
+		specialIndents = new Hashtable<String, String>();
+		specialIndents.put("",				" ");
+		specialIndents.put("if",			"    ");
+		specialIndents.put("when",			"  ");
+		specialIndents.put("unless",		"  ");
+		specialIndents.put("let",			"  ");
+		specialIndents.put("let*",			"  ");
+		specialIndents.put("dolist",		"  ");
+		specialIndents.put("flet",			"  ");
+		specialIndents.put("labels",		"  ");
+		specialIndents.put("macrolet",		"  ");
+		specialIndents.put("dotimes",		"  ");
+		specialIndents.put("lambda",		"  ");
+		specialIndents.put("defun",			"  ");
+		specialIndents.put("defvar",		"  ");
+		specialIndents.put("defparameter",	"  ");
+		specialIndents.put("eval-when",		"  ");
+		specialIndents.put("multiple-value-bind", "  ");
+		specialIndents.put("unwind-protect","  ");
+		specialIndents.put("block",			"  ");
+		
+		// All additional custom indents will go here
+		indents = new Hashtable<String, Integer>();
+		indents.put("do", 2);
 		
 		addIndentationListener(new SwankRunnable() {
 			public void run() {
 				LispNode updates = result.get(1);
 				for (LispNode update : updates.params) {
 					String symbol = update.get(0).value;
-					indents.put(symbol, "  ");
+					// The LispParser doesn't understand dotted lists,
+					//  and just sees the dot as another element
+					int paramNum = update.get(2).asInt();
+					indents.put(symbol, paramNum);
 				}
 			
 			}
@@ -443,6 +459,34 @@ public class SwankInterface {
 		//(swank:arglist-for-echo-area (quote ((:make-instance "some-class" "make-instance"))))
 		String msg = "(swank:arglist-for-echo-area (quote ((:make-instance \""
 			+ formatCode(className) + "\" \"make-instance\"))))";
+		
+		try {
+			synchronized (callBack) {
+				if (emacsRex(msg, pkg)) {
+		
+					callBack.wait(timeout);
+					return callBack.result.getf(":return").getf(":ok").value;
+				} else {
+					return "";
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+	
+	public synchronized String getSpecialArglist(String function, String arg0, long timeout) {
+		return getSpecialArglist(function, arg0, currPackage, timeout);
+	}
+	
+	public synchronized String getSpecialArglist(String function, String arg0, String pkg, long timeout) {
+		SyncCallback callBack = new SyncCallback();
+		++messageNum;
+		syncJobs.put(new Integer(messageNum).toString(), callBack);
+		//(swank:arglist-for-echo-area (quote ((:make-instance "some-class" "make-instance"))))
+		String msg = "(swank:arglist-for-echo-area (quote ((:" + formatCode(function) + " \""
+			+ formatCode(arg0) + "\" ))))";
 		
 		try {
 			synchronized (callBack) {

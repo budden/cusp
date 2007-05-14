@@ -21,9 +21,8 @@ public class LispIndenter implements IAutoEditStrategy {
 		try {
 			if ((comm.text.endsWith("\n") || comm.text.endsWith("\r"))
 					&& doc.getContentType(comm.offset) != LispPartitionScanner.LISP_STRING) {
-				LispUtil.FunctionInfo fi = LispUtil.getCurrentFunctionInfo(doc, comm.offset);
 				
-				comm.text += calculateIndent(fi, doc);
+				comm.text += calculateIndent(comm.offset, doc);
 				
 			}
 		} catch (BadLocationException e) {
@@ -31,7 +30,8 @@ public class LispIndenter implements IAutoEditStrategy {
 		}
 	}
 	
-	public static String calculateIndent(LispUtil.FunctionInfo fi, IDocument doc) {
+	public static String calculateIndent(int offset, IDocument doc) {
+		LispUtil.FunctionInfo fi = LispUtil.getCurrentFunctionInfo(doc, offset);
 		if (fi.offset < 0) {
 			return "";
 		}
@@ -60,10 +60,24 @@ public class LispIndenter implements IAutoEditStrategy {
 			}
 			
 			SwankInterface swank = LispPlugin.getDefault().getSwank();
-			if (swank.fletIndents.containsKey(prev2Func.name)) {
-				indent += swank.fletIndents.get(prev2Func.name);
+			//System.out.println("*prev2: " + prev2Func.name + "," +  LispUtil.getParameterNumber(doc, offset, prev2Func));
+			//System.out.println("*prev: " + prevFunc.name + "," + LispUtil.getParameterNumber(doc, offset, prevFunc));
+			//System.out.println("*fi: " + fi.name + "," +  LispUtil.getParameterNumber(doc, offset, fi));
+			if (swank.specialIndents.containsKey(fi.name)) {
+				indent += swank.specialIndents.get(fi.name);
+			} else if (swank.fletIndents.containsKey(prev2Func.name)
+					&& LispUtil.getParameterNumber(doc, offset, prev2Func) == 1) {
+				indent += "  ";
 			} else if (swank.indents.containsKey(fi.name)) {
-				indent += swank.indents.get(fi.name);
+				int paramNum = LispUtil.getParameterNumber(doc, offset, fi);
+				if (paramNum <= swank.indents.get(fi.name)) {
+					indent += "    ";
+				} else {
+					indent += "  ";
+				}
+			} else if (swank.handlerCaseIndents.containsKey(prevFunc.name)
+					&& LispUtil.getParameterNumber(doc, offset, prevFunc) > 1) {
+				indent += "  ";
 			} else {
 				if (fi.name.startsWith("def") || fi.name.startsWith(":")) {
 					indent += "  ";
@@ -78,7 +92,7 @@ public class LispIndenter implements IAutoEditStrategy {
 									indent += " ";
 								}
 							}
-							indent = indent.replace("        ", "\t");
+							//indent = indent.replace("        ", "\t");
 							return indent;
 						} else if (c == '\n') {
 							break;
@@ -87,7 +101,7 @@ public class LispIndenter implements IAutoEditStrategy {
 					indent += "  ";
 				}
 			}
-			indent = indent.replace("        ", "\t");
+			//indent = indent.replace("        ", "\t");
 			return indent;
 		} catch (BadLocationException e) {
 			e.printStackTrace();
