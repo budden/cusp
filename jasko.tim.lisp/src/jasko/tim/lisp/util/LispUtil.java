@@ -2,6 +2,8 @@ package jasko.tim.lisp.util;
 
 
 import jasko.tim.lisp.editors.*;
+import jasko.tim.lisp.swank.LispNode;
+import jasko.tim.lisp.swank.LispParser;
 
 import java.util.*;
 
@@ -137,6 +139,32 @@ public class LispUtil {
         
         return "";
     }
+    
+    public static int getParameterNumber(IDocument doc, int offset, FunctionInfo fi) {
+    	try {
+    		//System.out.println("offsets " + fi.name + ":" + fi.offset + "," + (offset - fi.offset) );
+    		if (fi.offset <= 0) {
+    			return 0;
+    		}
+    		
+    		offset = offset - fi.offset;
+			String current = doc.get(fi.offset, offset);
+			LispNode node = LispParser.parse(current).get(0);
+			//System.out.println("-node:" + node);
+			for (int i=0; i < node.params.size(); ++i) {
+				LispNode param = node.params.get(i);
+				if (param.offset <= offset && param.endOffset >= offset) {
+					return i;
+				} else if (param.offset > offset) {
+					return i-1;
+				}
+			}
+			return node.params.size();
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return 0;
+		}
+    }
 	
 	public static class FunctionInfo {
 		public FunctionInfo(String name, int offset) {
@@ -148,14 +176,7 @@ public class LispUtil {
 	}
 	
 	public static FunctionInfo getCurrentFunctionInfo(IDocument doc, int offset) {
-		String source = "";
-		if (offset < 0) {
-			return new FunctionInfo("", -1);
-		}
-		try {
-			source = doc.get(0, offset);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
+		if (offset <= 0) {
 			return new FunctionInfo("", -1);
 		}
 		StringBuilder sb = new StringBuilder();
@@ -163,8 +184,8 @@ public class LispUtil {
 		int open = 0;
 		int close = 0;
 		try {
-			for (int i=source.length()-1; i >=0; --i) {
-				char c = source.charAt(i);
+			for (int i=offset-1; i >=0; --i) {
+				char c = doc.getChar(i);
 				if (c == ')' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
 					++close;
 					sb = new StringBuilder();

@@ -106,6 +106,7 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 	 *  make-instance special tooltip
 	 */
 	protected boolean makeInstanceInfoFound = false;
+	protected boolean defmethodInfoFound = false;
 
 	public IContextInformation[] computeContextInformation(ITextViewer viewer,
 			int offset) {
@@ -132,12 +133,27 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 						.getMakeInstanceArglist(className, TIMEOUT);
 				}
 				makeInstanceInfoFound = true;
+			}
+		} else if (function.equals("defmethod")) {
+			LispNode exp = LispParser.parse(LispUtil.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
+			if (exp.get(0).params.size() >= 2) {
+				String arg0 = exp.get(0).params.get(1).value;
+				
+				if (editor != null) {
+					info = LispPlugin.getDefault().getSwank()
+						.getSpecialArglist("defmethod", arg0, editor.getPackage(), TIMEOUT);
+				} else {
+					info = LispPlugin.getDefault().getSwank()
+						.getSpecialArglist("defmethod", arg0, TIMEOUT);
+				}
+				defmethodInfoFound = true;
 				System.out.println("info:" + info);
 			}
 		}
 		
 		if (info.equals("")) {
 			makeInstanceInfoFound = false;
+			defmethodInfoFound = false;
 			if (editor == null) {
 				info = swank.getArglist(function, 3000);
 			} else {
@@ -158,7 +174,7 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 		}
 		if (info != null && !info.equals("") && !info.equals("nil")) {
 			return new IContextInformation[] {
-					new ContextInformation(info, info)
+				new ContextInformation(info, info)
 			};
 		}
 		return null;
@@ -207,6 +223,10 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				}
 				if (!makeInstanceInfoFound && Character.isWhitespace(c) &&
 						LispUtil.getCurrentFunction(viewer.getDocument(), offset).equals("make-instance")) {
+					return false;
+				}
+				if (!defmethodInfoFound && Character.isWhitespace(c) &&
+						LispUtil.getCurrentFunction(viewer.getDocument(), offset).equals("defmethod")) {
 					return false;
 				}
 			} catch (BadLocationException e) {

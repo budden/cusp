@@ -28,7 +28,9 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 	public String getHoverInfo(ITextViewer textViewer, IRegion hoverRegion) {
 		IDocument doc = textViewer.getDocument();
 		String function = LispUtil.getCurrentFullWord(doc, hoverRegion.getOffset());
-		if (function.equals(prev)) {
+		if (function.equals("")) {
+			return null;
+		} else if (function.equals(prev)) {
 			return prevResult;
 		}
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
