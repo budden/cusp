@@ -3,6 +3,10 @@ package jasko.tim.lisp.swank;
 import java.io.IOException;
 
 public abstract class LispImplementation {
+	protected String flispType = ""; //possible values SBCL, CLISP etc.
+	protected boolean hasthreads = true; 
+	public String lispType(){ return flispType; }
+	public boolean hasThreads(){ return hasthreads; }
 	/**
 	 * @return whether this instance is valid (ie can roll off a process) 
 	 */

@@ -1,5 +1,8 @@
 package jasko.tim.lisp.editors;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.ColorManager.ColorChangeEvent;
@@ -8,16 +11,19 @@ import jasko.tim.lisp.editors.assist.LispInformationControlManager;
 import jasko.tim.lisp.editors.outline.LispOutlinePage;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
+import jasko.tim.lisp.util.LispUtil;
 
+import java.util.Iterator;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
@@ -28,6 +34,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.*;
+import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
@@ -61,7 +68,28 @@ public class LispEditor extends TextEditor implements ILispEditor {
     public String showContentCompletions () {
         return config.showContentCompletions();
     }
-	
+
+    public void callUrl(String url) {
+    	//TODO: this code is almost duplicated in ReplView
+		ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
+		int offset = ts.getOffset();
+		IDocument doc = getDocumentProvider().getDocument(getEditorInput());
+		
+		String identifier = LispUtil.getCurrentFullWord(doc, offset);
+		identifier = identifier.replace("'", "");
+		identifier = identifier.replace("`", "");
+		
+		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
+		try {
+			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
+					url.replace("%s", identifier)));
+		} catch (PartInitException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+    }
+
 	/**
 	 * Jumps the user to a given position in the given file.
 	 * If an editor is not open for this file, one is opened.
@@ -176,14 +204,17 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		ProjectionViewer viewer = (ProjectionViewer) getSourceViewer();
 		projectionSupport = new ProjectionSupport(viewer, getAnnotationAccess(),
 				getSharedColors());
+		projectionSupport.addSummarizableAnnotationType(
+				"org.eclipse.ui.workbench.texteditor.error");
+		projectionSupport.addSummarizableAnnotationType(
+				"org.eclipse.ui.workbench.texteditor.warning");
 		projectionSupport.install();
+		
 		viewer.doOperation(ProjectionViewer.TOGGLE);
 		projectionAnnotationModel = viewer.getProjectionAnnotationModel();
 
 		licm = new LispInformationControlManager(this);
 		licm.install(this.getSourceViewer().getTextWidget());
-		
-		initFolding();
 	}
 	
 	
@@ -192,7 +223,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 				getOverviewRuler(), isOverviewRulerVisible(), styles);
 		// ensure decoration support has been created and configured.
 		getSourceViewerDecorationSupport(viewer);
-        
         highlighter.install(viewer);
 		
 		return viewer;
@@ -303,82 +333,72 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			IDocument doc = getDocument();
 			LispNode contents = LispParser.parse(doc.get() + "\n)");
 			outline.update(contents);
-			updateFolding(contents);
+			//updateFolding(contents);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	private void initFolding() {
-		IDocument doc = getDocument();
-		LispNode contents = LispParser.parse(doc.get() + "\n)");
-		updateFolding(contents);
-	}
-	
-	private Annotation[] prevAnnotations;
-	
-	// TODO: make it so we don't over-write folds that haven't changed.
-	private void updateFolding(LispNode contents) {
-		IDocument doc = getDocument();
-		HashMap<ProjectionAnnotation, Position> newAnnotations = new HashMap<ProjectionAnnotation, Position>();
-		Annotation[] annotations = new Annotation[contents.params.size()]; 
-		for (int i=0; i<contents.params.size()-1; ++i) {
-			LispNode sexp = contents.params.get(i);
-			//LispNode nextp = contents.params.get(i+1);
-			
-			ProjectionAnnotation annotation = new ProjectionAnnotation();
-			
-			/* Let's all take this moment to poo-poo the Eclipse designers who decided to use
-			 *  the Position class here, when it is not in fact a position that is being asked
-			 *  for. You've even got a perfectly good Region class, kids!
-			 *  
-			 *  Don't poo-poo too hard, though. They're probably still smarter than you.
-			 */
-			if (sexp.endOffset > sexp.offset) {
-				//System.out.println("***end offset was useful!");
-				try {
-					int startLine = doc.getLineOfOffset(sexp.offset);
-					int endLine = doc.getLineOfOffset(sexp.endOffset);
-					if (endLine > startLine) {
-						int startOffset = doc.getLineOffset(startLine);
-						int endOffset = doc.getLineOffset(endLine) + doc.getLineLength(endLine);
-						newAnnotations.put(annotation, new Position(startOffset, endOffset - startOffset));
-					} else { //single line. No point in folding it.
-					}
-				} catch (BadLocationException e) {
-					e.printStackTrace();
-					newAnnotations.put(annotation, new Position(sexp.offset, sexp.endOffset - sexp.offset));
-				}
-				
-			} else {
-				//newAnnotations.put(annotation, new Position(sexp.offset, nextp.offset - sexp.offset));
-			}
-			
-			annotations[i] = annotation;
-			
-			
-			//Check the package of this file while we're at it.
-			if (sexp.get(0).value.equals("in-package")) {
-				inPackage = sexp.get(1).value;
+
+	public void updateFoldingStructure(HashSet<Position> positions, 
+			Position lastSection)
+	{
+		// these hold mapping between oldannotations and their positions
+		HashSet<Position> oldPositions = new HashSet<Position>();
+		HashMap<Position,ProjectionAnnotation> hashAnnotations = 
+			new HashMap<Position, ProjectionAnnotation>();
+
+		// prepare data structures
+		{
+			Iterator it = projectionAnnotationModel.getAnnotationIterator();
+			while(it.hasNext()){
+				ProjectionAnnotation a = (ProjectionAnnotation)it.next();
+				Position p = projectionAnnotationModel.getPosition(a);
+				oldPositions.add(p);
+				hashAnnotations.put(p, a);
 			}
 		}
-        
-		if (contents.params.size() > 0) {
-			LispNode last = contents.params.get(contents.params.size()-1);
-			ProjectionAnnotation annotation = new ProjectionAnnotation();
-			newAnnotations.put(annotation, new Position(last.offset, doc.getLength() - last.offset));
-			
-			annotations[contents.params.size()-1] = annotation;	
-			
-			if (projectionAnnotationModel != null) {
-                // there are times when the annotation model is null, such as when one opens a lisp file from disk
-                // that is not part of a project.  I don't know how to really fix this, but it seems that it's better
-                // to show the editor than to fail because we can't get folding to work.  - Chas
-    			projectionAnnotationModel.modifyAnnotations(prevAnnotations, newAnnotations, null);
-    			prevAnnotations = annotations;
-            }
+		
+		//get removed annotations
+		HashSet<Position> remPositions = new HashSet<Position>();
+		remPositions.addAll(oldPositions);
+		remPositions.removeAll(positions);
+		Annotation[] remAnnotations = new Annotation[remPositions.size()];
+		{
+			Iterator it = remPositions.iterator();
+			int i = 0;
+			while(it.hasNext()){
+				remAnnotations[i] = hashAnnotations.get(it.next());
+				++i;
+			}
+		}
+		
+		//get new annotations
+		HashMap<ProjectionAnnotation, Position> newAnnotations = 
+			new HashMap<ProjectionAnnotation, Position>();
+
+		positions.removeAll(oldPositions);
+		{
+			Iterator it = positions.iterator();
+			while(it.hasNext()){
+				newAnnotations.put(new ProjectionAnnotation(), (Position)it.next());
+			}
+		}
+		
+		//deal with possible garbage in last section when it is collapsed
+		ProjectionAnnotation lastSectionAnnotation = hashAnnotations.get(lastSection);
+		boolean lastSectionCollapsed = false;
+		if (lastSectionAnnotation != null ) {
+			lastSectionCollapsed = lastSectionAnnotation.isCollapsed();
+			projectionAnnotationModel.expand(lastSectionAnnotation);
+		}
+		
+		projectionAnnotationModel.modifyAnnotations(remAnnotations,newAnnotations,null);
+		
+		if ( lastSectionCollapsed ) {
+			projectionAnnotationModel.collapse(lastSectionAnnotation);
 		}
 	}
+	
 	
     public void dispose () {
         super.dispose();
@@ -392,9 +412,29 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		return getDocumentProvider().getDocument(getEditorInput());
 	}
 	
-	private String inPackage = "nil";
+	private String inPackage = ")"; //impossible
+	
+	// updated by LispReconcilingStrategy
+	public void setPackage(String str){
+		inPackage = str;
+	}
 	
 	public String getPackage() {
+		if ( inPackage.equals(")") ) {
+			LispNode contents = LispParser.parse(getDocument().get() + "\n");
+			for (int i=0; i<contents.params.size(); ++i) {
+				LispNode sexp = contents.params.get(i);
+				
+				if (sexp.get(0).value.equalsIgnoreCase("in-package") ||
+						sexp.get(0).value.equalsIgnoreCase("defpackage")) {
+					inPackage = sexp.get(1).value;
+				}
+			}
+		}
+		if ( inPackage.equals(")") ) {
+			inPackage = "";
+		}
+
 		return inPackage;
 	}
 	

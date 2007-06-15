@@ -9,8 +9,10 @@ public interface ILispEditor {
     public String showParameterHints ();
     
     public String showContentCompletions ();
+    
+    public void callUrl(String url);
 
     public ISelectionProvider getSelectionProvider ();
-
+    
     public IDocument getDocument ();
 }

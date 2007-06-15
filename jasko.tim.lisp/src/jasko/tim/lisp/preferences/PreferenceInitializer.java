@@ -47,6 +47,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         
         store.setDefault(AUTO_POPUP_COMPLETIONS, true);
         store.setDefault(AUTO_INSERT_COMPLETIONS, false);
+        store.setDefault(AUTO_FUZZY_COMPLETIONS, false);
+        store.setDefault(DOCS_IN_COMPLETIONS, true);
+        store.setDefault(DOCS_IN_COMPLETIONS_TLIMIT, 200);
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
         store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);

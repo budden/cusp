@@ -18,7 +18,7 @@
  */
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.editors.ILispEditor;
 
 
 public class HyperSpecAction extends CallUrlAction {
@@ -27,7 +27,7 @@ public class HyperSpecAction extends CallUrlAction {
 		super(null, "http://www.xach.com/clhs?q=%s");
 	}
 	
-	public HyperSpecAction(LispEditor editor) {
+	public HyperSpecAction(ILispEditor editor) {
 		super(editor, "http://www.xach.com/clhs?q=%s");
 	}
 

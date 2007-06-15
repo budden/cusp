@@ -32,6 +32,7 @@ public class LispImages {
 	public static final String OTHER = "other";
 	public static final String SORT_ALPHA = "sort-alpha";
 	public static final String SORT_TYPE = "sort-type";
+	public static final String SORT_POSITION = "sort-position";
 	public static final String ERROR = "error";
 	public static final String WARNING = "warning";
 	public static final String RECONNECT = "reconnect";
@@ -69,6 +70,7 @@ public class LispImages {
 		
 		imageReg.put(LispImages.SORT_ALPHA, loadImageDescriptor("sort-alpha.gif"));
 		imageReg.put(LispImages.SORT_TYPE, loadImageDescriptor("sort-type.gif"));
+		imageReg.put(LispImages.SORT_POSITION, loadImageDescriptor("sort-position.gif"));
 		
 		imageReg.put(LispImages.ERROR, loadImageDescriptor("error.gif"));
 		imageReg.put(LispImages.WARNING, loadImageDescriptor("warning.gif"));

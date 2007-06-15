@@ -1,18 +1,28 @@
 package jasko.tim.lisp.builder;
 
+import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.preferences.PreferenceConstants;
+import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
+import jasko.tim.lisp.swank.SwankInterface;
+import jasko.tim.lisp.swank.SwankRunnable;
+import jasko.tim.lisp.editors.actions.FileCompiler;
+
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.ui.texteditor.MarkerUtilities;
 
 public class LispBuilder extends IncrementalProjectBuilder {
 
 	public static final String BUILDER_ID = "jasko.tim.lisp.lispBuilder";
 	public static final String MARKER_TYPE = "jasko.tim.lisp.lispProblem";
+	public static final String TASK_MARKER_TYPE = "jasko.tim.lisp.lispTask";
 	
 
 	class SampleDeltaVisitor implements IResourceDeltaVisitor {
@@ -49,8 +59,19 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
-	
 
+	public static void addTask(IFile file, String message, int lineNumber) {
+		try {
+			IMarker marker = file.createMarker(IMarker.TASK);
+			marker.setAttribute(IMarker.MESSAGE, message);
+			if (lineNumber == -1) {
+				lineNumber = 1;
+			}
+			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+	}
 
 
 	public static void addMarker(IFile file, String message, int lineNumber,
@@ -69,7 +90,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			e.printStackTrace();
 		}
 	}
-
+	
 	protected IProject[] build(int kind, Map args, IProgressMonitor monitor)
 			throws CoreException {
 		if (kind == FULL_BUILD) {
@@ -85,6 +106,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		return null;
 	}
 
+	
 	void checkLisp(IResource resource) {
 		if (resource instanceof IFile && 
 				(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")
@@ -93,6 +115,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			try {
 				IFile file = (IFile) resource;
 				deleteMarkers(file);
+				deleteTasks(file);
 				System.out.println("*builder");
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(file.getContents()));
@@ -100,6 +123,13 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				String line = reader.readLine();
 				int numLines = 0;
 				while (line != null) {
+					//process todo items
+					if ( line.matches(".*;.*TODO:.*") ){
+						String[] strs = line.split("TODO:");
+						for ( int i = 1; i < strs.length; ++i ) {
+							addTask(file,"TODO:" + strs[i],numLines+1);
+						}
+					}
 					sb.append(line);
 					sb.append('\n');
 					line = reader.readLine();
@@ -114,6 +144,12 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				} else if (parser.parenBalance < 0) {
 					addMarker(file, -parser.parenBalance + " more opening parentheses needed.",
 							numLines, IMarker.SEVERITY_ERROR);
+				} else {
+					//compile file
+					//SwankInterface swank = LispPlugin.getDefault().getSwank();
+					//swank.sendCompileFile(file.getLocation().toString(), 
+					//		new FileCompiler.CompileListener(file));
+					//System.out.printf("Compiling %s\n", file.getLocation().toString());
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -191,6 +227,14 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	private void deleteMarkers(IFile file) {
 		try {
 			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
+			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
+		} catch (CoreException ce) {
+		}
+	}
+
+	private void deleteTasks(IFile file) {
+		try {
+			file.deleteMarkers(IMarker.TASK, false, IResource.DEPTH_ZERO);
 			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
 		} catch (CoreException ce) {
 		}

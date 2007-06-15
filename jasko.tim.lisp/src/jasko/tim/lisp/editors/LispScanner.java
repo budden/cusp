@@ -14,7 +14,7 @@ public class LispScanner extends RuleBasedScanner {
 		
 		IToken number = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.NUMBER), background, SWT.NORMAL));
-		rules[0] = new NumberRule(number);
+		rules[0] = new LispNumberRule(number);
 		
 		IToken comment = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.COMMENT), background, SWT.NORMAL));

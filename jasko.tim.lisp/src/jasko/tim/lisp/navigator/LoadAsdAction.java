@@ -3,6 +3,7 @@ package jasko.tim.lisp.navigator;
 
 import jasko.tim.lisp.*;
 import jasko.tim.lisp.swank.*;
+import jasko.tim.lisp.editors.actions.FileCompiler;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.action.IAction;
@@ -28,12 +29,14 @@ public class LoadAsdAction implements IActionDelegate {
 			Object obj = ssel.getFirstElement();
 			if (obj instanceof IFile) {
 				IFile file = (IFile) obj;
+				/*
 				String filePath = file.getLocation().toOSString().replace("\\", "\\\\");
 				String asdName = file.getName().replace(".asd", "");
 				String command = "(progn (load \"" + filePath + "\") (asdf:oos 'asdf:load-op \"" + asdName + "\"))";
-			
+				*/
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				swank.sendEval(command, null);
+				//swank.sendEval(command, null);
+				swank.sendLoadASDF(file.getLocation().toString(), new FileCompiler.CompileListener(null));
 			}
 		}
 	}

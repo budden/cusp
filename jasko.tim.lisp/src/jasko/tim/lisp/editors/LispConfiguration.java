@@ -5,17 +5,20 @@ import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.assist.*;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
+import org.eclipse.jface.text.hyperlink.URLHyperlinkDetector;
 import org.eclipse.swt.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.contentassist.*;
+import org.eclipse.jface.text.hyperlink.IHyperlinkDetector;
 import org.eclipse.jface.text.presentation.*;
+import org.eclipse.jface.text.reconciler.IReconciler;
+import org.eclipse.jface.text.reconciler.MonoReconciler;
 import org.eclipse.jface.text.rules.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.editors.text.*;
-
 
 /**
  * Eclipse uses this class to do the majority of the customization that makes our Lisp
@@ -26,11 +29,20 @@ import org.eclipse.ui.editors.text.*;
 public class LispConfiguration extends TextSourceViewerConfiguration {
 	protected RuleBasedScanner tagScanner;
 	
+	private ITextDoubleClickStrategy doubleClickStrategy;
 	protected ColorManager colorManager;
 	protected ContentAssistant ca;
 	protected LispEditor editor;
 
-    private final IPropertyChangeListener prefsListener = new IPropertyChangeListener () {
+	public ITextDoubleClickStrategy getDoubleClickStrategy(
+			ISourceViewer sourceViewer,
+			String contentType) {
+			if (doubleClickStrategy == null)
+				doubleClickStrategy = new LispDoubleClickStrategy();
+			return doubleClickStrategy;
+		}
+
+	private final IPropertyChangeListener prefsListener = new IPropertyChangeListener () {
         public void propertyChange (PropertyChangeEvent event) {
             String prop = event.getProperty();
             if (prop.equals(PreferenceConstants.AUTO_POPUP_COMPLETIONS)) {
@@ -73,6 +85,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
     }
 	
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
+		ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
 		return ca;
 	}
 	
@@ -151,7 +164,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 	}
 	
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
-		return new IAutoEditStrategy[] {new LispIndenter() };
+		return new IAutoEditStrategy[] {new LispIndenter(), new PairAutoEdit() };
 	}
 	
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer,
@@ -162,4 +175,21 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 	public int getTabWidth(ISourceViewer sourceViewer) {
 		return 8; // Seems to match emacs defaults. Or at least the defaults on our particular build.
 	}
+
+	public IHyperlinkDetector[] getHyperlinkDetectors(ISourceViewer sourceViewer) {
+		return new IHyperlinkDetector[] { new LispHyperlinkDetector(editor), new URLHyperlinkDetector() };
+	}
+
+    /* (non-Javadoc)
+     * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getReconciler(org.eclipse.jface.text.source.ISourceViewer)
+     */
+    public IReconciler getReconciler(ISourceViewer sourceViewer)
+    {
+        LispReconcilingStrategy strategy = new LispReconcilingStrategy();
+        strategy.setEditor(editor);
+        
+        MonoReconciler reconciler = new MonoReconciler(strategy,false);
+        
+        return reconciler;
+    }
 }

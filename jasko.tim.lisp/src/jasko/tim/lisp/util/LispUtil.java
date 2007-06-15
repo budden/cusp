@@ -94,6 +94,8 @@ public class LispUtil {
 		return sb.toString();
 	}
 	
+//	public static int[] getCurrentFullWordRange 
+	                  
 	public static int[] getCurrentFullWordRange (IDocument doc, int offset) {
         int start = -1, end = -1;
 		String source = doc.get();

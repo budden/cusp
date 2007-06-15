@@ -22,25 +22,31 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import jasko.tim.lisp.*;
-import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.editors.*;
 
+import org.eclipse.jface.action.IAction;
 import org.eclipse.ui.*;
 import org.eclipse.ui.browser.*;
 
 public class CallUrlAction extends LispAction {
 	private String url;
+	private ILispEditor editor;
 	
 	public CallUrlAction() {
 	}
 	
-	public CallUrlAction(LispEditor editor, String url) {
-		super(editor);
+	public CallUrlAction(ILispEditor editor, String url) {
+		this.editor = editor;
 		this.url = url;
 	}
 
+	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
+         editor = (ILispEditor)targetEditor;
+     }
 	
 	public void run() {
-		String identifier = getSymbol();
+		editor.callUrl(url);
+		/*String identifier = getSymbol();
 		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
 		try {
 			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
@@ -49,7 +55,7 @@ public class CallUrlAction extends LispAction {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 	}
 }

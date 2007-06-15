@@ -82,7 +82,7 @@ public class AproposView extends ViewPart implements KeyListener {
 				
 				
 				
-				if (val.equals(":not-documented")) {
+				if (val.equalsIgnoreCase(":not-documented")) {
 					output.append("(Not documented)");
 				} else {
 					output.append(val);

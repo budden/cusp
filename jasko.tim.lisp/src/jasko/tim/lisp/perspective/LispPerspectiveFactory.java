@@ -28,12 +28,14 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		IFolderLayout bottom = layout.createFolder("bottom", IPageLayout.BOTTOM, 0.60f, editorArea);
 		bottom.addView(ReplView.ID);
 		bottom.addView(IPageLayout.ID_PROBLEM_VIEW);
+		bottom.addView(IPageLayout.ID_TASK_LIST);
 		bottom.addView(AproposView.ID);
 		bottom.addView(ThreadView.ID);
 		bottom.addView(InspectorView.ID);
 		
 		layout.addShowViewShortcut(ReplView.ID);
 		layout.addShowViewShortcut(IPageLayout.ID_PROBLEM_VIEW);
+		layout.addShowViewShortcut(IPageLayout.ID_TASK_LIST);
 		layout.addShowViewShortcut(AproposView.ID);
 		layout.addShowViewShortcut(ThreadView.ID);
 		layout.addShowViewShortcut(InspectorView.ID);
