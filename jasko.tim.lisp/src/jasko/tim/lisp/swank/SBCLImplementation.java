@@ -98,6 +98,10 @@ public class SBCLImplementation extends LispImplementation {
 	{
 		this.executable = executable;
 		this.path = sbclDirectory;
+		flispType = "SBCL";
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			hasthreads = false;
+		}
 	}
 
 	public boolean isValid() { return executable != null && path != null; }
@@ -105,6 +109,7 @@ public class SBCLImplementation extends LispImplementation {
 	public Process start(String loadPath) throws IOException
 	{
 		System.out.println("start");
+		
 		if (isValid())
 		{
 			ProcessBuilder pb;

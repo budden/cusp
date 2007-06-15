@@ -42,7 +42,12 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 		}
 		
 		if (!result.contains("not available") && !result.equals("nil")) {
-			String docString = swank.getDocumentation(function, 1000);
+			String docString = "";
+			if (editor != null) {
+ 				docString = swank.getDocumentation(function, editor.getPackage(), 1000);
+ 			} else {
+ 				docString = swank.getDocumentation(function, 1000);
+ 			}
 			if (!docString.equals("")) {
 				result += "\n" + docString;
 			}

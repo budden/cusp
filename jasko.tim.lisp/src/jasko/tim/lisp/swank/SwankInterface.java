@@ -1,11 +1,13 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
 
 /*
@@ -177,6 +179,18 @@ public class SwankInterface {
 	public boolean isConnected() {
 		return connected;
 	}
+	
+ 	public void runAfterLispStart() {
+ 		if( isConnected() ){			
+ 			String str = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.LISP_INI);
+ 			if( str != "")	{
+ 				str = str.replaceAll("\\\\", "/");
+ 				sendEval("(when (probe-file \""+str+"\") (load \""+str+"\"))\n", null);
+ 			}
+ 			sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
+ 					"\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
+ 		}
+ 	}
 	  	
 	/** 
 	 * Connects to the swank server.
@@ -389,6 +403,33 @@ public class SwankInterface {
 		currPackage = newPackage;
 	}
 	
+	
+	private synchronized boolean haveDefinitionsPkg(String symbol, String pkg, long timeout) {
+		SyncCallback callBack = new SyncCallback();
+		++messageNum;
+		syncJobs.put(new Integer(messageNum).toString(), callBack);
+
+		String code = formatCode(symbol);
+		String pkgstring = pkg;
+		if( !pkg.equals("") && pkg.startsWith(":")) {
+			pkgstring = pkg.substring(1);
+		}
+		if( !pkgstring.equals("") ) {
+			pkgstring += "::";
+		}
+		String msg = "(handler-case (swank:find-definitions-for-emacs \""+pkgstring+code
+			+"\") (simple-type-error () nil))";
+		if( implementation.lispType().equalsIgnoreCase("SBCL") ) { //quiet compilation warnings
+			msg = "(locally (declare (sb-ext:muffle-conditions sb-ext:compiler-note)) "
+				+ msg + ")";
+		}
+		return (!sendEvalAndGrab(msg,2000).equalsIgnoreCase("nil"));
+	}
+
+	public synchronized boolean haveDefinitions(String symbol, String pkg, long timeout) {
+		return (haveDefinitionsPkg(symbol,pkg,timeout) || haveDefinitionsPkg(symbol,"",timeout));
+	}
+	
 	public synchronized String[] getCompletions(String start, long timeout) {
 		return getCompletions(start, currPackage, timeout);
 	}
@@ -398,7 +439,20 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		
-		String msg = "(swank:completions \"" + start + "\" " + cleanPackage(pkg) + ")";
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+ 		String msg = "";
+ 		boolean usefuzzy = prefs.getBoolean(PreferenceConstants.AUTO_FUZZY_COMPLETIONS);
+ 		if ( usefuzzy ){
+ 			String tlimit = prefs.getString(PreferenceConstants.AUTO_FUZZY_COMPLETIONS_TLIMIT);
+ 			if (!tlimit.matches("\\d+")) {
+ 				tlimit = "0";
+ 			}
+ 			msg = "(swank:fuzzy-completions \"" + start + "\" " + cleanPackage(pkg) 
+ 				+ " :limit " + tlimit + ")";			
+ 		} else {
+ 			msg = "(swank:completions \"" + start + "\" " + cleanPackage(pkg) + ")";			
+ 		}
+		  		
 		
 		try {
 			synchronized (callBack) {
@@ -406,9 +460,15 @@ public class SwankInterface {
 					callBack.wait(timeout);
 					LispNode results = callBack.result.cadr().cadr().car();
 					String[] ret = new String[results.params.size()];
-					for (int i=0; i<results.params.size(); ++i) {
-						ret[i] = results.get(i).value;
-					} // for
+					if ( usefuzzy ) {
+ 						for (int i=0; i<results.params.size(); ++i) {
+ 							ret[i] = results.get(i).car().value;
+ 						} // for												
+ 					} else {
+ 						for (int i=0; i<results.params.size(); ++i) {
+ 							ret[i] = results.get(i).value;
+ 						} // for						
+ 					}
 					return ret;
 				} else {
 					return null;
@@ -434,7 +494,7 @@ public class SwankInterface {
 		
 		try {
 			synchronized (callBack) {
-				if (emacsRex(msg)) {
+				if (emacsRex(msg,currPackage)) {
 		
 					callBack.wait(timeout);
 					return callBack.result.cadr().cadr().value;
@@ -505,6 +565,10 @@ public class SwankInterface {
 	}
 	
 	public synchronized String getDocumentation(String function, long timeout) {
+ 		return getDocumentation(function,currPackage,timeout);
+ 	}
+ 	
+ 	public synchronized String getDocumentation(String function, String pkg, long timeout) {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
@@ -513,7 +577,7 @@ public class SwankInterface {
 		
 		try {
 			synchronized (callBack) {
-				if (emacsRex(msg)) {
+				if (emacsRex(msg, pkg)) {
 		
 					callBack.wait(timeout);
 					String result = callBack.result.getf(":return").getf(":ok").value;
@@ -544,10 +608,54 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	public synchronized String sendEvalAndGrab(String message, long timeout) {
+		SyncCallback callBack = new SyncCallback();
+		++messageNum;
+		syncJobs.put(new Integer(messageNum).toString(), callBack);
+
+		String msg = "(swank:eval-and-grab-output \"" + formatCode(message) + "\")";
+
+		try {
+			synchronized (callBack) {
+				if (emacsRex(msg)) {
+					callBack.wait(timeout);					
+					return (callBack.result.getf(":return").getf(":ok").params.get(1).value);
+				} else {
+					return "";
+				}
+			} // sync
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+		} // catch
+	}
+	
+		
 	public synchronized void sendDebug(String commandNum, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:invoke-nth-restart-for-emacs 1 "
 			+ commandNum + ")";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendAbortDebug(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:sdbl-abort)";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendContinueDebug(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:sdbl-continue)";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendQuitDebug(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:throw-to-toplevel)";
 		
 		emacsRex(msg);
 	}
@@ -692,7 +800,7 @@ public class SwankInterface {
 			+ formatCode(expr) + "\" \""
 			+ formatCode(dir + file) + "\" " + (offset+1) + " \"" + formatCode(dir)
 			+ "\")";
-		if (pckg.equals("nil")) {
+		if (pckg.equalsIgnoreCase("nil")) {
 			emacsRex(msg);
 		} else {
 			emacsRex(msg, pckg);
@@ -708,6 +816,17 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	public synchronized void sendLoadASDF(String fileFullPath, SwankRunnable callBack) {
+ 		fileFullPath = fileFullPath.replace('\\', '/');
+ 		String[] fpathparts = fileFullPath.split("/");  
+ 		if( fpathparts.length > 0 && fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
+ 			/*String tmp = */sendEvalAndGrab("(load \"" + fileFullPath + "\")",2000);
+ 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
+ 			registerCallback(new CompileRunnable(callBack));
+ 			String msg = "(swank:operate-on-system-for-emacs \"" + asdName + "\" \"LOAD-OP\")";
+ 			emacsRex(msg);			
+ 		}
+ 	}
 	
 	
 	private class CompileRunnable extends SwankRunnable {
@@ -826,7 +945,7 @@ public class SwankInterface {
 	
 	
 	private String cleanPackage(String pkg) {
-		if (pkg.equals("") || pkg.equals("nil")) {
+		if (pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
 			return "nil";
 		} else {
 			return "\"" + formatCode(pkg) + "\"";
@@ -837,6 +956,10 @@ public class SwankInterface {
 		String msg = "(:emacs-rex " + message + " nil :repl-thread " + messageNum + ")";
 		
 		return sendRaw(msg);
+	}
+	
+	public synchronized void sync() {
+		return;
 	}
 	
 	public synchronized boolean emacsRex(String message, String pkg) {
@@ -906,13 +1029,13 @@ public class SwankInterface {
 		
 		private void handle(LispNode node) {
 			try {
-				if (node.car().value.equals(":debug")) {
+				if (node.car().value.equalsIgnoreCase(":debug")) {
 					signalListeners(debugListeners, node);
-				} else if (node.car().value.equals(":read-string")) {
+				} else if (node.car().value.equalsIgnoreCase(":read-string")) {
 					signalListeners(readListeners, node);
-				} else if (node.car().value.equals(":write-string")) {
+				} else if (node.car().value.equalsIgnoreCase(":write-string")) {
 					signalListeners(displayListeners, node);
-				} else if (node.car().value.equals(":indentation-update")) {
+				} else if (node.car().value.equalsIgnoreCase(":indentation-update")) {
 					signalListeners(indentationListeners, node);
 				} else {
 					signalResponse(node);

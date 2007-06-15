@@ -6,7 +6,7 @@ import jasko.tim.lisp.swank.*;
 public class InspectorRunnable extends SwankRunnable {
 
 	public void run() {
-		if (! result.getf(":return").get(0).value.equals(":abort")) {
+		if (! result.getf(":return").get(0).value.equalsIgnoreCase(":abort")) {
 			LispNode ret = getReturn();
 			
 			String title = ret.getf(":title").value;

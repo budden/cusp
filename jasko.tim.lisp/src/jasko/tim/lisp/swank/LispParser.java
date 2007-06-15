@@ -18,6 +18,7 @@ public class LispParser {
 	
 	public LispNode parseCode(String code) {
 		int start = 0;
+		parenBalance = 0;
 		
 		//System.out.println("*parsing:" + code.charAt(0));
 		LispNode ret = new LispNode(0);
@@ -78,22 +79,30 @@ public class LispParser {
 				str.isString = true;
 				curr.params.add(str);
 				sb = new StringBuilder();
-			} else if (c == ';') {
-				char lit = ';';
-				do {
-					++i;
-					lit = code.charAt(i);
-				} while (lit != '\n' && i<length);
+			}  else if (c == ';') {
+ 				int i0 = i;
+  				char lit = ';';
+ 				StringBuilder sbtmp = new StringBuilder();
+  				do {
+ 					sbtmp.append(lit);
+  					++i;
+  					lit = code.charAt(i);
+  				} while (lit != '\n' && i<length);
+ 				ret.addComment(sbtmp.toString(),i0,i-1);
 				if (i >= length) {
 					--i;
 				}
 			} else if (c == '#') {
 				if (i < length-1) {
 					if (code.charAt(i+1) == '|' && i < length-2) {
-						++i;
-						char lit;
-						boolean done = false;
-						do {
+ 						int i0 = i;
+ 						StringBuilder sbtmp = new StringBuilder();
+ 						sbtmp.append('#');
+  						++i;
+ 						char lit = '|';
+  						boolean done = false;
+  						do {
+ 							sbtmp.append(lit);
 							++i;
 							lit = code.charAt(i);
 							if (lit == '|' && i<length-1) {
@@ -103,6 +112,7 @@ public class LispParser {
 								}
 							}
 						} while (!done && i<length-1);
+  						ret.addComment(sbtmp.toString(),i0,i-1);
 						
 					} else if (code.charAt(i+1) == '\\' && i < length-2) {
 						int offset = i;
@@ -139,6 +149,21 @@ public class LispParser {
 		return ret;
 	}
 	
+	
+	public class LispComment {
+ 		public int offset = 0;
+ 		public int endOffset = 0;
+ 		public String value = "";
+ 		
+ 		public LispComment() {
+ 		}
+ 		
+ 		public LispComment(String val, int offset,int endOffset) {
+ 			value = val;
+ 			this.offset = offset;
+ 			this.endOffset = endOffset;
+ 		}		
+ 	}
 
 	
 }

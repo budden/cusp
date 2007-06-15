@@ -45,6 +45,24 @@ public class EditorPreferencePage
                 PreferenceConstants.AUTO_INSERT_COMPLETIONS,
                 "Automatically insert single content completion option",
                 getFieldEditorParent()));
+
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.AUTO_FUZZY_COMPLETIONS,
+                "Use fuzzy mode for autocompletions",
+                getFieldEditorParent()));
+
+		addField(new StringFieldEditor(PreferenceConstants.AUTO_FUZZY_COMPLETIONS_TLIMIT, 
+				"&Time limit for fuzzy search (ms). 0 or empty if no limit:", getFieldEditorParent()) );
+
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.DOCS_IN_COMPLETIONS,
+                "Show quick documentation with auto completions list",
+                getFieldEditorParent()));
+
+        addField(new StringFieldEditor(
+                PreferenceConstants.DOCS_IN_COMPLETIONS_TLIMIT,
+                "Maximum time (ms) to use to populate docs for completion list",
+                getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)

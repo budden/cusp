@@ -117,6 +117,14 @@ public class ThreadView extends ViewPart {
 	private void refreshThreads() {
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
 		
+		if ( !swank.implementation.hasThreads() ){
+			threadTree.removeAll();
+			TreeItem item = new TreeItem(threadTree,0);
+			item.setText(new String[] {"","This CL implementation does not support threads",""});
+			item.setData(0);
+			return;
+		}
+		
 		swank.sendListThreads(new SwankRunnable() {
 			public void run() {
 				threadTree.removeAll();

@@ -21,7 +21,7 @@ public class DisassembleAction extends LispAction {
 				new SwankRunnable() {
 			public void run() {
 				String assembly = result.getf(":return").getf(":ok").value;
-				if (assembly.equals("nil")) {
+				if (assembly.equalsIgnoreCase("nil")) {
 					editor.showPopupInfo("Function not found.");
 				} else {
 					editor.showPopupInfo(assembly);

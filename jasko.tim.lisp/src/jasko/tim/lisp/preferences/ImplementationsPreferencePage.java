@@ -43,6 +43,9 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 
 		addField(new FileFieldEditor(PreferenceConstants.LISP_EXE, 
 				"&Lisp Executable:", getFieldEditorParent()));
+
+		addField(new FileFieldEditor(PreferenceConstants.LISP_INI, 
+				"&Initialization File:", getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)

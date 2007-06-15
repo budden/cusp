@@ -5,12 +5,12 @@ import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.views.repl.*;
 import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.editors.*;
-import jasko.tim.lisp.editors.actions.ContentAssistAction;
-import jasko.tim.lisp.editors.actions.ExpandSelectionAction;
-import jasko.tim.lisp.editors.actions.ParameterHintsAction;
-import jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction;
+import jasko.tim.lisp.editors.actions.*;
 import jasko.tim.lisp.inspector.InspectorRunnable;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 import org.eclipse.swt.*;
@@ -31,6 +31,7 @@ import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.part.ViewPart;
 
 
@@ -81,6 +82,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 		return LispPlugin.getDefault().getSwank();
 	}
     
+	public void callUrl(String url) {
+		in.callUrl(url);		
+	}
+	
     private class ReplEditor extends SourceViewer implements ILispEditor {
         private final LispConfiguration config = new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
         private final CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
@@ -105,6 +110,27 @@ public class ReplView extends ViewPart implements SelectionListener {
         
         public String showContentCompletions () {
             return config.showContentCompletions();
+        }
+        
+        public void callUrl(String url) {
+        	// TODO: this code is almost duplicated in ReplView
+    		ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
+    		int offset = ts.getOffset();
+    		IDocument doc = getDocument();
+    		
+    		String identifier = LispUtil.getCurrentFullWord(doc, offset);
+    		identifier = identifier.replace("'", "");
+    		identifier = identifier.replace("`", "");
+    		
+    		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
+    		try {
+    			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
+    					url.replace("%s", identifier)));
+    		} catch (PartInitException e) {
+    			e.printStackTrace();
+    		} catch (MalformedURLException e) {
+    			e.printStackTrace();
+    		}
         }
     }
 	
@@ -201,6 +227,12 @@ public class ReplView extends ViewPart implements SelectionListener {
         
  		IKeyBindingService keys = this.getSite().getKeyBindingService();
  		keys.setScopes(new String[] { "jasko.tim.lisp.context1" });
+ 		HyperSpecAction hsAction = new HyperSpecAction(in);
+ 		hsAction.setActionDefinitionId("jasko.tim.lisp.actions.HyperSpecAction");
+ 		keys.registerAction(hsAction); 		
+ 		LispDocAction ldAction = new LispDocAction(in);
+ 		ldAction.setActionDefinitionId("jasko.tim.lisp.actions.LispDocAction");
+ 		keys.registerAction(ldAction); 
  		PreviousREPLCommandAction prevCmdAction = new PreviousREPLCommandAction(this);
  		prevCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.PreviousREPLCommandAction");
  		keys.registerAction(prevCmdAction);
@@ -302,8 +334,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  		fillMenu(parent);
  		
  		if (swank != null && swank.isConnected()) {
- 			swank.sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
-                    "\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
+ 			swank.runAfterLispStart();
  		}
  		
  		parentControl.layout(false);
@@ -552,7 +583,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	 */
 	private void checkSwitchPackage (String replCmd) {
 		LispNode n = LispParser.parse(replCmd);
-		if (n.car().car().value.toUpperCase().equals("IN-PACKAGE")) {
+		if (n.car().car().value.toUpperCase().equalsIgnoreCase("IN-PACKAGE")) {
 			String packageName = n.car().cadr().value.toUpperCase();
 			if (packageName.startsWith(":")) packageName = packageName.substring(1);
 			if (!packageName.equals(swank.getPackage())) {
@@ -736,8 +767,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		state.activate();
 	}
-	
-	
+		
 	protected void pushEvalState() {
 		pushState(new EvalState());
 	}
@@ -835,10 +865,13 @@ public class ReplView extends ViewPart implements SelectionListener {
 
 		public void activate() {
 			debugLabel.setText(desc.car().value + "\n" + desc.cadr().value);
+			debugLabel.setToolTipText(debugLabel.getText());
 			debugTree.removeAll();
 			
 			appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
 			
+			TreeItem quickOption = null;
+			TreeItem firstItem = null;
 			for (int i=0; i<options.params.size(); ++i) {
 				LispNode option = options.get(i);
 				appendText("\t" + i + ": [" + option.car().value + "] "
@@ -846,6 +879,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 				TreeItem item = new TreeItem(debugTree, 0);
 				item.setText(i + ": [" + option.car().value + "] " + option.cadr().value);
 				item.setData(i);
+				if ( i == 0) {
+					firstItem = item;
+				}
+				if ( i == 0 || option.cadr().value.equalsIgnoreCase("Return to SLIME's top level.") ) {
+					quickOption = item;
+				}
 			} // for
 			
 			scrollDown();
@@ -877,12 +916,50 @@ public class ReplView extends ViewPart implements SelectionListener {
 			hideFrame(mainView);
 			showFrame(debugView);
 			debugTree.setFocus();
+			
+			// scroll to top of the tree
+			debugTree.setSelection(firstItem);
+			//select most often used (by me?) option
+			debugTree.setSelection(quickOption);
 		}
 		
 		public void choose(Integer choice) {
 			swank.sendDebug(choice.toString(), null);
 			
 			appendText("]> " + choice + "\n");
+			scrollDown();
+			
+			debugTree.removeSelectionListener(this);
+			debugTree.removeTreeListener(this);
+			debugTree.removeMouseListener(this);
+			debugTree.removeKeyListener(this);
+			debugView.removeKeyListener(this);
+			
+			hideFrame(debugView);
+			showFrame(mainView);
+			popState();
+			in.getControl().setFocus();
+		}
+		
+		public void chooseRestart(char c) {
+			switch (c) {
+			// a and c crash? sbcl under windows. I don't know about other distrs.
+/*			case 'a': 
+				swank.sendAbortDebug(null);
+				appendText("]> Abort debug\n");
+				break;
+			case 'c':
+				swank.sendContinueDebug(null);
+				appendText("]> Continue debug\n");
+				break; */
+			case 'q':
+				swank.sendQuitDebug(null);				
+				appendText("]> Quit debug\n");
+				break;
+			default :
+				return;
+			}
+			
 			scrollDown();
 			
 			debugTree.removeSelectionListener(this);
@@ -934,10 +1011,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 				getSwank().sendGetFrameSourceLocation(frame.toString(), new SwankRunnable() {
 					public void run() {
 						LispNode res = result.getf(":return").getf(":ok");
-						if (!res.car().value.equals(":error")) {
+						if (!res.car().value.equalsIgnoreCase(":error")) {
 							String file = res.getf(":file").value;
 							int pos = res.getf(":position").asInt();
 							String snippet = res.getf(":snippet").value;
+					swank.runAfterLispStart();
 							LispEditor.jumpToDefinition(file, pos, snippet);
 							setFocus();
 						}
@@ -994,10 +1072,14 @@ public class ReplView extends ViewPart implements SelectionListener {
 			} else {
 				Character c = new Character(e.character);
 				try {
-					int choice = Integer.parseInt(c.toString());
-					if (choice >=0 && choice < options.params.size()) {
-						choose(choice);
-					}
+					if( c.toString().matches("\\D") ){
+ 						chooseRestart(c);
+ 					} else {
+						int choice = Integer.parseInt(c.toString());
+						if (choice >=0 && choice < options.params.size()) {
+							choose(choice);
+						}
+ 					}
 				} catch (NumberFormatException ex) {
 				}
 			}
@@ -1014,3 +1096,4 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 	}
 }
+		

@@ -19,9 +19,14 @@ public interface PreferenceConstants {
 	public static final String COLOR_UCW        = "colorUcw";
 
 	public static final String LISP_EXE = "lispExecutable";
+	public static final String LISP_INI = "lispIni";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
 	public static final String AUTO_POPUP_COMPLETIONS = "autoPopupCompletions";
     public static final String AUTO_INSERT_COMPLETIONS = "autoInsertCompletions";
+    public static final String AUTO_FUZZY_COMPLETIONS = "autoFuzzyCompletions";
+    public static final String AUTO_FUZZY_COMPLETIONS_TLIMIT = "autoFuzzyCompletionsTLimit";
+    public static final String DOCS_IN_COMPLETIONS = "docsInCompletions";
+    public static final String DOCS_IN_COMPLETIONS_TLIMIT = "docsInCompletionsTLimit";
     
     public static final String DECORATE_REPL_INSPECTABLES = "decorateREPLInspectables";
     public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";

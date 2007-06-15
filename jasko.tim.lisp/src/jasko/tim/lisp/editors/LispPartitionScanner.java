@@ -14,12 +14,11 @@ public class LispPartitionScanner extends RuleBasedPartitionScanner {
 
 	public LispPartitionScanner() {
 
-		IToken lispComment = new Token(LISP_COMMENT);
-
 		IPredicateRule[] rules = new IPredicateRule[8];
 
-		rules[0] = new EndOfLineRule(";", lispComment);
-		rules[1] = new MultiLineRule("#|", "|#", lispComment);
+		IToken lispComment = new Token(LISP_COMMENT);
+		rules[0] = new MultiLineRule("#|", "|#", lispComment);
+		rules[1] = new EndOfLineRule(";", lispComment);
 
 		IToken lispCharacter = new Token(LISP_CHARACTER);
 		rules[2] = new WordPatternRule(new CharacterDetector(), "#\\", "\"", lispCharacter);

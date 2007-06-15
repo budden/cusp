@@ -13,6 +13,7 @@ public class LispNode {
 	public int endOffset = 0;
 	public String value = "";
 	public ArrayList<LispNode> params = new ArrayList<LispNode>();
+	public ArrayList<LispComment> comments = new ArrayList<LispComment>(); //keep comments inside a file only in root LispNode
 	
 	public boolean isString = false;
 	
@@ -90,11 +91,11 @@ public class LispNode {
 	public LispNode getf(String key) {
 		for (int i=0; i<params.size(); ++i) {
 			LispNode kid = params.get(i);
-			if (kid.value.equals(key)) {
+			if (kid.value.equalsIgnoreCase(key)) {
 				return this.get(i+1);
 			} else if (kid.params.size() > 0) {
 				LispNode grandKid = kid.get(0);
-				if (grandKid.value.equals(key)) {
+				if (grandKid.value.equalsIgnoreCase(key)) {
 					return kid.get(1);
 				}
 			}
@@ -139,5 +140,54 @@ public class LispNode {
 	
 	public boolean equals(LispNode other) {
 		return this.toLisp().equals(other.toLisp());
+	}
+
+	public void clearComments(){
+		comments.clear();
+	}
+	
+	public void addComment(String val, int offset, int endOffset){
+		comments.add(new LispComment(val,offset,endOffset));
+	}
+	
+	public int getNumberOfComments() {
+		int ret = 0;
+		for( LispComment comment: comments ) {
+			if( comment.isSectionComment() ) {
+				++ret;
+			}
+		}
+		return ret;
+	}
+	
+	public class LispComment {
+		public int offset = 0;
+		public int endOffset = 0;
+		public String value = "";
+		public final static String SECTION_START = ";;;;<";
+		public final static String SECTION_END = "\\>";
+		public final int SECTION_START_LENGTH = SECTION_START.length(); 
+		
+		public LispComment() {
+		}
+		
+		public LispComment(String val, int offset,int endOffset) {
+			value = val;
+			this.offset = offset;
+			this.endOffset = endOffset;
+		}		
+
+		public boolean isSectionComment() {
+			return value.startsWith(SECTION_START);
+		}
+		
+		public String SectionName() {
+			if ( isSectionComment() )
+			{
+				return value.substring(SECTION_START_LENGTH,value.length()).split(SECTION_END)[0];
+			} else {
+				return "";
+			}
+		}		
 	}
 }

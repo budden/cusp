@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.ui.*;
 import org.eclipse.ui.part.*;
 import org.eclipse.ui.texteditor.*;
+import org.eclipse.core.runtime.Path;
 
 public class FileCompiler {
 	public static final String COMPILE_PROBLEM_MARKER = "jasko.tim.lisp.lispCompile";
@@ -36,7 +37,8 @@ public class FileCompiler {
 			SwankInterface swank = LispPlugin.getDefault().getSwank();
 			String fileName = file.getName();
 			String filePath = file.getPath().toString().replace(fileName, "");
-			swank.sendCompileString(exp, fileName, filePath, topLevelOffset, editor.getPackage(), new CompileListener(editor));
+			swank.sendCompileString(exp, fileName, filePath, topLevelOffset, editor.getPackage(), 
+					new CompileListener(((FileEditorInput)editor.getEditorInput()).getFile()));
 			
 			if (switchToRepl) {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -54,6 +56,7 @@ public class FileCompiler {
 	       mbox.open();
 		}
 	}
+	
 	
 	public static void compileFile(AbstractTextEditor editor, boolean switchToRepl) {
 		editor.doSave(null);
@@ -65,7 +68,8 @@ public class FileCompiler {
 			FileEditorInput file = (FileEditorInput)editor.getEditorInput();
 			
 			SwankInterface swank = LispPlugin.getDefault().getSwank();
-			swank.sendCompileFile(file.getPath().toString(), new CompileListener(editor));
+			swank.sendCompileFile(file.getPath().toString(), 
+					new CompileListener(((FileEditorInput)editor.getEditorInput()).getFile()));
 			
 			if (switchToRepl) {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -86,27 +90,26 @@ public class FileCompiler {
 	
 	
 	
-	private static class CompileListener extends SwankRunnable {
-		AbstractTextEditor editor;
-		
-		public CompileListener(AbstractTextEditor editor) {
-			this.editor = editor;
-		}
-		
-		public void run() {
-			IFile file = ((FileEditorInput)editor.getEditorInput()).getFile();
-			try {
-				file.deleteMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
-			} catch (CoreException e1) {
-				e1.printStackTrace();
-			}
-			
-			LispNode guts = result.getf(":return").getf(":ok");
-			if (! guts.value.equals("nil")) {
-				
-				IDocument doc = editor.getDocumentProvider().getDocument(
-						  editor.getEditorInput());
-				
+	public static class CompileListener extends SwankRunnable {
+ 		IFile file;
+  		
+ 		public CompileListener(IFile file) {
+ 			this.file = file;
+  		}
+  		
+  		public void run() {
+ 			ArrayList<String> files = new ArrayList<String>(); 
+ 			if ( file != null ){
+ 				try {
+ 					file.deleteMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
+ 				} catch (CoreException e1) {
+ 					e1.printStackTrace();
+ 				}				
+  			}
+  			
+  			LispNode guts = result.getf(":return").getf(":ok");
+ 			if (! guts.value.equalsIgnoreCase("nil")) {
+ 				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
 				for (LispNode error: guts.params) {
 					String msg = error.getf(":message").value;
 					String severity = error.getf(":severity").value;
@@ -120,35 +123,43 @@ public class FileCompiler {
 					}
 					
 					int sev = IMarker.SEVERITY_WARNING;
-					if (severity.equals(":error")) {
-						sev = IMarker.SEVERITY_ERROR;
-					}
-					
-					FileEditorInput input = (FileEditorInput)editor.getEditorInput(); 
-					if (input.getPath().toString().replace("\\", "/").equals(fileName)
-							|| input.getName().equals(buffer)) {
-						Map<String, Object> attr = new HashMap<String, Object>();
-						try {
-							attr.put(IMarker.LINE_NUMBER, new Integer(doc.getLineOfOffset(offset) + 1));
-						} catch (BadLocationException e1) {
-							// This shouldn't ever happen, but just in case
-							attr.put(IMarker.CHAR_START, new Integer(offset));
-							attr.put(IMarker.CHAR_END, new Integer(offset+1));
-							e1.printStackTrace();
-						}
-						
-						attr.put(IMarker.MESSAGE, msg);
-						attr.put(IMarker.SEVERITY, sev);
-						
-						try {
-							MarkerUtilities.createMarker(file, attr, COMPILE_PROBLEM_MARKER);
-						} catch (CoreException e) {
-							System.out.println(e);
-						}
-						//LispBuilder.addMarker(file, msg, line, sev);
-					} else {
-						System.out.println(((FileEditorInput)editor.getEditorInput()).getPath().toString() + ":" + fileName);
-					}
+					if (severity.equalsIgnoreCase(":error")) {
+  						sev = IMarker.SEVERITY_ERROR;
+  					}
+  					
+ 					Map<String, Object> attr = new HashMap<String, Object>();
+ 					attr.put(IMarker.CHAR_START, new Integer(offset));
+ 					attr.put(IMarker.CHAR_END, new Integer(offset+1));
+ 					
+ 					attr.put(IMarker.MESSAGE, msg);
+ 					attr.put(IMarker.SEVERITY, sev);
+ 					if ( file == null && !fileName.equals("")){
+ 						IResource fl = wk.findMember(new Path(fileName.replace(wk.getLocation().toString(), "")));
+ 						if ( fl != null ) {
+ 							if ( !files.contains(fileName) ){
+ 								files.add(fileName);
+ 								try {
+ 									fl.deleteMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
+ 								} catch (CoreException e1) {
+ 									e1.printStackTrace();
+ 								}											
+ 							}
+ 							try {
+ 								MarkerUtilities.createMarker(fl, attr, COMPILE_PROBLEM_MARKER);
+ 							} catch (CoreException e) {
+ 								System.out.println(e);
+ 							}							
+  						}
+ 					} else if (file.getLocation().toString().replace("\\", "/").equals(fileName)
+ 							|| file.getName().equals(buffer)) {						
+  						try {
+  							MarkerUtilities.createMarker(file, attr, COMPILE_PROBLEM_MARKER);
+  						} catch (CoreException e) {
+  							System.out.println(e);
+  						}
+  					} else {
+ 						System.out.println(file.getLocation().toString());
+  					}
 					
 				}
 			}

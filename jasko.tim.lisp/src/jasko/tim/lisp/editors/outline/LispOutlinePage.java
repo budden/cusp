@@ -24,12 +24,14 @@ import org.eclipse.ui.views.contentoutline.*;
  */
 public class LispOutlinePage extends ContentOutlinePage implements MouseListener, KeyListener {
 	private enum Sort {
+		Position,
 		Alpha,
 		Type
 	}
-	Sort sort = Sort.Alpha;
+	Sort sort = Sort.Position;
 	IAction sortType;
 	IAction sortAlpha;
+	IAction sortPosition;
 	
 	LispEditor editor;
 	private ArrayList<OutlineItem> items = new ArrayList<OutlineItem>();
@@ -48,13 +50,14 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 				sort = Sort.Alpha;
 				this.setChecked(true);
 				sortType.setChecked(false);
+				sortPosition.setChecked(false);
 				sortItems();
 				redoTree();
 			}
 		};
 		sortAlpha.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.SORT_ALPHA));
-		sortAlpha.setChecked(true);
+		sortAlpha.setChecked(false);
 		sortAlpha.setToolTipText("Sort by name");
 		
 		
@@ -63,6 +66,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 				sort = Sort.Type;
 				this.setChecked(true);
 				sortAlpha.setChecked(false);
+				sortPosition.setChecked(false);
 				sortItems();
 				redoTree();
 			}
@@ -72,6 +76,22 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		sortType.setChecked(false);
 		sortType.setToolTipText("Sort by type");
 		
+		sortPosition = new Action("Sort by position") {
+			public void run() {
+				sort = Sort.Position;
+				this.setChecked(true);
+				sortType.setChecked(false);
+				sortAlpha.setChecked(false);
+				sortItems();
+				redoTree();
+			}
+		};
+		sortPosition.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.SORT_POSITION));
+		sortPosition.setChecked(true);
+		sortPosition.setToolTipText("Sort by position");
+
+		toolBarMgr.add(sortPosition);
 		toolBarMgr.add(sortAlpha);
 		toolBarMgr.add(sortType);
 	}
@@ -100,17 +120,17 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			item.offset = exp.offset;
 			if (! item.type.startsWith("def")) {
 				item.name = item.type;
-				if (item.type.equals("in-package")) {
+				if (item.type.equalsIgnoreCase("in-package")) {
 					item.name = "in-package " + exp.get(1).toLisp(); 
 				}
-			} else if (item.type.equals("defstruct")) {
+			} else if (item.type.equalsIgnoreCase("defstruct")) {
 				LispNode name = exp.get(1); 
 				if (!name.value.equals("")) {
 					item.name = name.value;
 				} else {
 					item.name = name.get(0).value;
 				}
-			} else if (item.type.equals("defmethod")) {
+			} else if (item.type.equalsIgnoreCase("defmethod")) {
 				String name = exp.get(2).toLisp();
 				if (name.startsWith(":")) {
 					item.name += " " + name + " " + exp.get(3).toLisp();
@@ -134,6 +154,20 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			}
 		}
 		
+		// add section comments
+		for ( LispNode.LispComment comment: file.comments ) {
+			if ( comment.isSectionComment() ) {
+				OutlineItem item = new OutlineItem();
+				
+				item.type = "section";
+				item.name = comment.SectionName();
+				item.offset = comment.offset + LispNode.LispComment.SECTION_START.length();
+				if (! item.name.equals("")) {
+					items.add(item);
+				}
+			}
+		}
+		
 		sortItems();
 		
 		redoTree();
@@ -144,6 +178,8 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			Collections.<OutlineItem>sort(items);
 		} else if (sort == Sort.Type) {
 			Collections.<OutlineItem>sort(items, new TypeComparator());
+		} else if (sort == Sort.Position) {
+			Collections.<OutlineItem>sort(items, new PositionComparator());
 		} else { // Really shouldn't ever happen
 			Collections.<OutlineItem>sort(items);
 		}
@@ -160,6 +196,20 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			TreeItem temp;
 			if (sort == Sort.Alpha) {
 				temp = new TreeItem(tree, SWT.NONE);
+			} else if ( sort == Sort.Position ) {
+				if(category == null) {
+					temp = new TreeItem(tree, SWT.NONE);
+					if ( item.type.equals("section") ) {
+						category = temp;
+					}
+				} else {
+					if ( item.type.equals("section")){
+						temp = new TreeItem(tree, SWT.NONE);
+						category = temp;
+					} else {
+						temp = new TreeItem(category, SWT.NONE);
+					}
+				}
 			} else { // sort by type
 				if (!item.type.equals(currType)) {
 					currType = item.type;
@@ -192,7 +242,11 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 					OutlineItem item = (OutlineItem) sel.getFirstElement();
 					if (item != lastSelection) {
 						lastSelection = item;
-						editor.selectAndReveal(item.offset, item.type.length() + 1);
+						if ( item.type.equals("section") ) {
+ 							editor.selectAndReveal(item.offset, item.name.length());							
+ 						} else {
+ 							editor.selectAndReveal(item.offset, item.type.length() + 1);							
+ 						}
 					}
 				}
 			}
@@ -207,7 +261,11 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			if (sel.getFirstElement() instanceof OutlineItem) {
 				OutlineItem item = (OutlineItem) sel.getFirstElement();
 				lastSelection = item;
-				editor.selectAndReveal(item.offset, item.type.length() + 1);
+				if ( item.type.equals("section") ) {
+					editor.selectAndReveal(item.offset, item.name.length());							
+				} else {
+					editor.selectAndReveal(item.offset, item.type.length() + 1);							
+				}
 			}
 		}
 	}
@@ -238,7 +296,11 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 					if (node.getData() instanceof OutlineItem) {
 						OutlineItem item = (OutlineItem) node.getData();
 						lastSelection = item;
-						editor.selectAndReveal(item.offset, item.type.length() + 1);
+						if ( item.type.equals("section") ) {
+ 							editor.selectAndReveal(item.offset, item.name.length());							
+ 						} else {
+ 							editor.selectAndReveal(item.offset, item.type.length() + 1);							
+ 						}
 					}
 					return;
 				}
@@ -277,6 +339,12 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			return arg0.type.toLowerCase().compareTo(arg1.type.toLowerCase());
 		}
 	}
+	
+	private class PositionComparator implements Comparator<OutlineItem> {
+ 		public int compare(OutlineItem arg0, OutlineItem arg1) {
+ 			return arg0.offset - arg1.offset;
+ 		}
+ 	} 		
 	
 	
 

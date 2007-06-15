@@ -41,7 +41,7 @@ public class EditDefinitionAction extends LispAction {
 				String name = possibility.get(0).value;
 				names.add(name);
 				data.add(possibility);
-				if (possibility.get(1).get(0).value.equals(":error")) {
+				if (possibility.get(1).get(0).value.equalsIgnoreCase(":error")) {
 					tips.add(possibility.get(1).get(1).value);
 				} else {
 					tips.add(possibility.get(1).getf(":file").value);
@@ -76,7 +76,7 @@ public class EditDefinitionAction extends LispAction {
 			System.out.println("*chosen: " +  chosen);
 			LispNode location = chosen.get(1);
 			System.out.println(location);
-			if (location.get(0).value.equals(":error")) {
+			if (location.get(0).value.equalsIgnoreCase(":error")) {
 				editor.showPopupInfo(location.getf(":error").value);
 				return;
 			}
