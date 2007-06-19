@@ -92,7 +92,11 @@ public class LispNode {
 		for (int i=0; i<params.size(); ++i) {
 			LispNode kid = params.get(i);
 			if (kid.value.equalsIgnoreCase(key)) {
-				return this.get(i+1);
+				LispNode res = this.get(i+1);
+				if( res.value.equals("'")){
+					res = this.get(i+2);
+				}
+				return res;
 			} else if (kid.params.size() > 0) {
 				LispNode grandKid = kid.get(0);
 				if (grandKid.value.equalsIgnoreCase(key)) {

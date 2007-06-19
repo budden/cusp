@@ -45,11 +45,17 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 			store.setDefault((String)e.getKey(), (String)e.getValue());
 		}
         
+		store.setDefault(MANAGE_PACKAGES, true);
+
+        store.setDefault(PAIR_EDIT_BRACKETS, false);
+        store.setDefault(PAIR_EDIT_QUOTES, false);
+        store.setDefault(PAIR_EDIT_COMMENTS, false);
         store.setDefault(AUTO_POPUP_COMPLETIONS, true);
+        store.setDefault(AUTO_POPUP_COMPLETIONS_DELAY, 700);
         store.setDefault(AUTO_INSERT_COMPLETIONS, false);
         store.setDefault(AUTO_FUZZY_COMPLETIONS, false);
-        store.setDefault(DOCS_IN_COMPLETIONS, true);
-        store.setDefault(DOCS_IN_COMPLETIONS_TLIMIT, 200);
+        store.setDefault(DOCS_IN_COMPLETIONS, false);
+        store.setDefault(MAX_HINT_LINES, 2);
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
         store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);

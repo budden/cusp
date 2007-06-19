@@ -37,31 +37,54 @@ public class EditorPreferencePage
 	 */
 	public void createFieldEditors() {
         addField(new BooleanFieldEditor(
+                PreferenceConstants.PAIR_EDIT_BRACKETS,
+                "Automatically close '('",
+                getFieldEditorParent()));
+    
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.PAIR_EDIT_QUOTES,
+                "Automatically close '\"'",
+                getFieldEditorParent()));
+    
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.PAIR_EDIT_COMMENTS,
+                "Automatically close '#|'",
+                getFieldEditorParent()));
+    
+        addField(new BooleanFieldEditor(
                     PreferenceConstants.AUTO_POPUP_COMPLETIONS,
                     "Automatically show content completions and parameter hints",
                     getFieldEditorParent()));
         
+        addField(new StringFieldEditor(
+                PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY,
+                "Delay before completions are shown and quick doc updated \n(requires Eclipse restart):",
+                getFieldEditorParent()));
+        //TODO: actually should listen for change in this variable and perform operation similar to
+        // LispConfiguration.java: 		ca.setAutoActivationDelay(ps.getInt(PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY));
+
+        
+        addField(new StringFieldEditor(
+                PreferenceConstants.MAX_HINT_LINES,
+                "Maximum number of lines in documentation hints:",
+                getFieldEditorParent()));
+
         addField(new BooleanFieldEditor(
                 PreferenceConstants.AUTO_INSERT_COMPLETIONS,
                 "Automatically insert single content completion option",
                 getFieldEditorParent()));
+
+		addField(new StringFieldEditor(PreferenceConstants.AUTO_COMPLETIONS_NLIMIT, 
+				"Max size of completion list. 0 or empty if no limit:", getFieldEditorParent()) );
 
         addField(new BooleanFieldEditor(
                 PreferenceConstants.AUTO_FUZZY_COMPLETIONS,
                 "Use fuzzy mode for autocompletions",
                 getFieldEditorParent()));
 
-		addField(new StringFieldEditor(PreferenceConstants.AUTO_FUZZY_COMPLETIONS_TLIMIT, 
-				"&Time limit for fuzzy search (ms). 0 or empty if no limit:", getFieldEditorParent()) );
-
         addField(new BooleanFieldEditor(
                 PreferenceConstants.DOCS_IN_COMPLETIONS,
                 "Show quick documentation with auto completions list",
-                getFieldEditorParent()));
-
-        addField(new StringFieldEditor(
-                PreferenceConstants.DOCS_IN_COMPLETIONS_TLIMIT,
-                "Maximum time (ms) to use to populate docs for completion list",
                 getFieldEditorParent()));
 	}
 

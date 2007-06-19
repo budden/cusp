@@ -18,6 +18,7 @@
 		<import plugin="org.eclipse.ui.browser"/>
 		<import plugin="org.eclipse.ui.ide"/>
 		<import plugin="org.eclipse.ui.workbench.texteditor"/>
+		<import plugin="org.eclipse.ui.console"/>
 		<import plugin="org.eclipse.debug.core"/>
 		<import plugin="org.eclipse.core.resources"/>
 	</requires>
@@ -185,8 +186,6 @@
 		<persistent value="true"/>
 	</extension>
 	 
-	 
-	 
 	<!-- Preference Page -->
 	<!--<extension point="org.eclipse.ui.preferencePages">
 		<page
@@ -309,7 +308,7 @@
 			id="jasko.tim.lisp.menus">
 			<menu
 				id="Lisp"
-				label="&amp;Lisp">
+				label="L&amp;isp">
 				<separator name="grpDoc"/>
 				<separator name="grpMacro"/>
 				<separator name="grpAssist"/>
@@ -331,7 +330,7 @@
 			</menu>
 		</editorContribution>
 	</extension>
-	
+
 	<!-- The Lisp editing context -->
 	<extension point="org.eclipse.ui.contexts">
 		<context
@@ -353,7 +352,7 @@
 			parentId="org.eclipse.ui.contexts.window"/>
 	</extension>
 	-->
-	
+
 	<!-- last/next previous REPL command history -->
 	<extension point="org.eclipse.ui.commands">
 		<command
@@ -949,7 +948,7 @@
 	<extension point="org.eclipse.ui.commands">
 		<command
 			categoryId="jasko.tim.lisp.category1"
-			description="Looks up the symbol in LispDoc."
+			description="Looks up the symbol in HyperSpec."
 			id="jasko.tim.lisp.actions.HyperSpecAction"
 			name="HyperSpec lookup"/>
 	</extension>

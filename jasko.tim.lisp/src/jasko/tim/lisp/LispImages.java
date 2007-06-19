@@ -16,6 +16,7 @@ public class LispImages {
 	public static final String DEFMETHOD = "defmethod";
 	public static final String DEFOTHER = "defother";
 	public static final String DEFPACKAGE = "defpackage";
+	public static final String LOAD_PACKAGE = "load-package";
 	public static final String DEFSYSTEM = "defsystem";
 	public static final String DEFPARAMETER = "defparameter";
 	public static final String DEFSTRUCT = "defstruct";
@@ -52,6 +53,7 @@ public class LispImages {
 		imageReg.put(LispImages.DEFMETHOD, loadImageDescriptor("defmethod.gif"));
 		imageReg.put(LispImages.DEFOTHER, loadImageDescriptor("defother.gif"));
 		imageReg.put(LispImages.DEFPACKAGE, loadImageDescriptor("defpackage.gif"));
+		imageReg.put(LispImages.LOAD_PACKAGE, loadImageDescriptor("load-package.gif"));
 		imageReg.put(LispImages.DEFSYSTEM, loadImageDescriptor("defsystem.gif"));
 		imageReg.put(LispImages.DEFPARAMETER, loadImageDescriptor("defparameter.gif"));
 		imageReg.put(LispImages.DEFSTRUCT, loadImageDescriptor("defstruct.gif"));

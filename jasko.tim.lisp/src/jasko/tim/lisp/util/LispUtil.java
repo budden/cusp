@@ -465,4 +465,23 @@ public class LispUtil {
         
         return "";
     }
+
+    //take different presentations of pkg (i.e. ":mypack", "'mypack", "MYPACK", "\"MYPACK\""
+    //and formats it into form "MYPACK" - same format as in return of swank.getAvailablePackages
+    //the pkg string should be valid package string, no checks for validity are made
+    public static String formatPackage(String pkg){
+    	if("".equals(pkg) || pkg == null) {
+    		return "";
+    	}
+    	String res = pkg;
+    	char ch0 = pkg.charAt(0);
+    	if('\'' == ch0 || ':' == ch0){
+    		res = pkg.substring(1).toUpperCase();
+    	} else if (pkg.startsWith("\"") && pkg.endsWith("\"") && pkg.length() > 4){
+    		res = pkg.substring(2, pkg.length()-3).toUpperCase();
+    	} else {
+    		res = pkg.toUpperCase();
+    	}
+    	return res;
+    }
 }

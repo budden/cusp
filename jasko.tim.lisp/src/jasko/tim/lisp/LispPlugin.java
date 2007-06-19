@@ -6,6 +6,11 @@ import java.util.Properties;
 
 import jasko.tim.lisp.swank.*;
 
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.MessageConsole;
+import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.plugin.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -17,12 +22,14 @@ import org.osgi.framework.BundleContext;
 public class LispPlugin extends AbstractUIPlugin {
 	
 	private SwankInterface swank; 
-
+	
 	//The shared instance.
 	private static LispPlugin plugin;
     
     private static String CUSP_VERSION = "0.0.0";
     private static String RELEASE_DATE = "0000.00.00";
+    
+    private static String CONSOLE_NAME = "jasko.tim.lisp.console";
 	
 	/**
 	 * The constructor.
@@ -65,6 +72,31 @@ public class LispPlugin extends AbstractUIPlugin {
         return RELEASE_DATE;
     }
 
+	private MessageConsole getConsole() {
+		ConsolePlugin plugin = ConsolePlugin.getDefault();
+		IConsoleManager conMan = plugin.getConsoleManager();
+		IConsole[] existing = conMan.getConsoles();
+		for (int i = 0; i < existing.length; i++){
+			if (CONSOLE_NAME.equals(existing[i].getName())){
+				return (MessageConsole) existing[i];				
+			}
+		}
+		//no console found, so create a new one
+		MessageConsole myConsole = new MessageConsole(CONSOLE_NAME, null);
+		conMan.addConsoles(new IConsole[]{myConsole});
+		return myConsole;
+	}
+	
+	/**
+	 * Put string to console.
+	 * @param str
+	 */
+	public void out(String str){
+			MessageConsole myConsole = getConsole();
+			MessageConsoleStream out = myConsole.newMessageStream();
+			out.println(str);					
+	}
+	    
 	/**
 	 * This method is called when the plug-in is stopped
 	 */
@@ -101,11 +133,16 @@ public class LispPlugin extends AbstractUIPlugin {
 	
 	public String getPluginPath() {
 		try {
-			return FileLocator.resolve(Platform.getBundle("jasko.tim.lisp").getEntry("/") ).getFile();
+			String path = FileLocator.resolve(Platform.getBundle("jasko.tim.lisp").getEntry("/") ).getFile();
+			if (System.getProperty("os.name").toLowerCase().contains("windows")){
+				if(path.matches("/\\w:/.*")){
+					path = path.substring(1);
+				}
+			}
+			return path;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return "";
 	}
-	
 }

@@ -100,22 +100,27 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 	 * validator, it is useful.
 	 */
 	protected void calculatePositions() {
-		fPositions.clear();
-		finPackage = "";
-		try {
-			//System.out.printf("%s\n", editor.getDocument().get(fOffset, fRangeEnd - fOffset)	+ "\n");
-			LispNode contents = 
-				LispParser.parse(editor.getDocument().get(fOffset, fRangeEnd - fOffset)	+ "\n");
-			finPackage = getTokens(contents,fOffset,fRangeEnd);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
+		if(editor != null){
+			fPositions.clear();
+			finPackage = "";
+			try {
+				//System.out.printf("%s\n", editor.getDocument().get(fOffset, fRangeEnd - fOffset)	+ "\n");
+				LispNode contents = 
+					LispParser.parse(editor.getDocument().get(fOffset, fRangeEnd - fOffset)	+ "\n");
+				finPackage = getTokens(contents,fOffset,fRangeEnd);
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+			// Collections.sort(fPositions, new RangeTokenComparator());			
 		}
-		// Collections.sort(fPositions, new RangeTokenComparator());
+
 
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				editor.updateFoldingStructure(fPositions,fLastSection);
-				editor.setPackage(finPackage);
+				if(editor != null){
+					editor.updateFoldingStructure(fPositions,fLastSection);
+					editor.setPackage(finPackage);					
+				}
 			}
 		});
 	}
