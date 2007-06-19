@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
@@ -33,6 +34,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 
 
 /**
@@ -328,14 +331,14 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		pushEvalState();
  		
- 		registerSwankListeners();
- 		
  		fillToolBar(parent);
  		fillMenu(parent);
  		
- 		if (swank != null && swank.isConnected()) {
+ 		if (swank != null ) {
  			swank.runAfterLispStart();
  		}
+ 		
+ 		registerSwankListeners();
  		
  		parentControl.layout(false);
  		
@@ -359,6 +362,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 				}
 			}
 		});*/
+		if ( LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG)){
+			LispPlugin.getDefault().out("Lisp compiler log:");			
+		}
 	}
 	
 	private void hideFrame(Composite control) {
@@ -419,15 +425,45 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	private Action connectButton;
+	private Action loadPackageButton;
 	
 	protected void fillToolBar(Composite parent) {
 		IToolBarManager tbm = this.getViewSite().getActionBars().getToolBarManager();
 		
-		
+		loadPackageButton = new Action("Load Package") {
+			public void run() {
+				this.setToolTipText("Load Installed Package");
+				ArrayList<String> installedPkgs = swank.getInstalledPackages(2000);
+				ArrayList<String> loadedPkgs = swank.getAvailablePackages(2000);
+				ArrayList<String> pkgs = new ArrayList<String>();
+				
+				if(installedPkgs != null){
+					for( String pkg: installedPkgs ){
+						if(!loadedPkgs.contains(pkg.toUpperCase())){
+							pkgs.add(pkg);
+						}
+					}					
+				}
+				
+				PackageDialog pd = new PackageDialog(ReplView.this.getSite().getShell(),
+						pkgs, swank.getPackage(),true);
+				if (pd.open() == Dialog.OK) {
+					String pkg = pd.getPackage();
+					swank.sendLoadPackage(pd.getPackage());
+					appendText("Loaded package "+pkg);
+				}
+			}
+		};
+		loadPackageButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.LOAD_PACKAGE));
+		loadPackageButton.setToolTipText("Load Installed Package");
+				
 		connectButton = new Action("Reconnect") {
 			public void run() {
 				if (MessageDialog.openQuestion(ReplView.this.getSite().getShell(),
 						"Reconnect", "Are you sure you want to restart your Lisp session?")) {
+					this.setImageDescriptor(
+							LispImages.getImageDescriptor(LispImages.DISCONNECTED));										
 					appendText("Reconnecting...");
 					swank.reconnect();
 					appendText("done.\n");
@@ -435,6 +471,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 					
 					this.setImageDescriptor(
 							LispImages.getImageDescriptor(LispImages.RECONNECT));
+					swank.runAfterLispStart();
+					loadPackageButton.setEnabled(swank.managePackages);
+					
 				}
 			}
 		};
@@ -445,7 +484,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		Action packageButton = new Action("Change Package") {
 			public void run() {
 				PackageDialog pd = new PackageDialog(ReplView.this.getSite().getShell(),
-						swank.getAvailablePackages(5000), swank.getPackage());
+						swank.getAvailablePackages(5000), swank.getPackage(),false);
 				if (pd.open() == Dialog.OK) {
 					switchPackage(pd.getPackage());
 				}
@@ -475,6 +514,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		tbm.add(clearButton);
 		tbm.add(pauseButton);
 		tbm.add(packageButton);
+		tbm.add(loadPackageButton);
 		tbm.add(connectButton);
 	}
 	
@@ -488,9 +528,26 @@ public class ReplView extends ViewPart implements SelectionListener {
 			LispPlugin.getDefault().getSwank().sendInspectInspectedPart(partNum, new InspectorRunnable());
 		}
 	}
-	
-	protected void appendText(String text) {
-		history.appendText(text);
+
+	protected void appendText(String text) {		
+		if(LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))
+		{
+			String strs[] = text.split("\\n");
+			String replStr = "";
+			String consoleStr = "";
+			for(String str : strs){
+				if( str.startsWith(";") || str.equals("")){ //this works for SBCL
+					consoleStr = consoleStr + str + "\n";
+				} else {
+					replStr = replStr + str + "\n";  										
+					consoleStr = consoleStr + str + "\n";
+				}
+			}
+			history.appendText(replStr);
+			LispPlugin.getDefault().out(consoleStr);
+		} else {
+			history.appendText(text);
+		}
 	}
 	
 	public void appendInspectable(String text, String id) {
@@ -531,8 +588,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		swank.addDisconnectCallback(new SwankRunnable() {
 			public void run() {
-				connectButton.setImageDescriptor(
-						LispImages.getImageDescriptor(LispImages.DISCONNECTED));
+				if( !swank.isConnected() ){
+					connectButton.setImageDescriptor(
+							LispImages.getImageDescriptor(LispImages.DISCONNECTED));					
+				}
 			}
 		});
 		

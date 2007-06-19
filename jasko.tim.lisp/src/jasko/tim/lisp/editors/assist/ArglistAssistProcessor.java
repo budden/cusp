@@ -4,6 +4,7 @@ import java.util.*;
 
 import jasko.tim.lisp.*;
 import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.util.*;
 
@@ -11,6 +12,7 @@ import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.contentassist.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.jface.preference.IPreferenceStore; 
 
 /**
  * One of the more important parts of an IDE, IMO.
@@ -25,11 +27,21 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 	private String lastCompletionVariable = ")"; // impossible variable name
 	private String[] lastCompletionResults;
 	private LispEditor editor;
-	
+	private String[] lastCompletionResultsInfo;
+
+	private static String NO_DOC_STRING = "No additional information is available";
 	public ArglistAssistProcessor(LispEditor editor) {
 		this.editor = editor;
 	}
 
+	private IContextInformation getContextInfo(String info){
+		if( info != null && !info.equals("") && !info.equals(NO_DOC_STRING)){
+			return new ContextInformation(info, info);
+		} else {
+			return null;
+		}
+	}
+	
 	public ICompletionProposal[] computeCompletionProposals(ITextViewer viewer,
 			int offset) {
 		
@@ -39,15 +51,35 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 			return null;
 		}
 		
-		// Optimization! Save us lots of swanking
-		if (variable.startsWith(lastCompletionVariable) && !variable.contains(":")) {
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+		int nn = prefs.getInt(PreferenceConstants.AUTO_COMPLETIONS_NLIMIT);
+		boolean doGetDocs = prefs.getBoolean(PreferenceConstants.DOCS_IN_COMPLETIONS);
+		
+		// Optimization! Save us lots of swanking (when completion is not fuzzy)
+		if (variable.startsWith(lastCompletionVariable) && !variable.contains(":") 
+				&& !prefs.getBoolean(PreferenceConstants.AUTO_FUZZY_COMPLETIONS)) {
+			if(0 == nn){
+				nn = lastCompletionResults.length;
+			} else {
+				nn = Math.min(nn, lastCompletionResults.length);
+			}
 			ArrayList<ICompletionProposal> temp
-				= new ArrayList<ICompletionProposal>(lastCompletionResults.length);
+				= new ArrayList<ICompletionProposal>(nn);
 			int rStart = offset - variable.length();
-			for (String comp: lastCompletionResults) {
+			for (int i = 0; i < lastCompletionResults.length; ++i) {
+				String comp = lastCompletionResults[i];
 				if (comp.startsWith(variable)) {
+					String info = null;
+					IContextInformation ci = null;
+					if( doGetDocs && lastCompletionResultsInfo != null ){
+						info = lastCompletionResultsInfo[i];
+						ci = getContextInfo(info);																				
+					}
 					temp.add(new CompletionProposal(comp, rStart,
-							variable.length(), comp.length()));
+							variable.length(), comp.length(), null, null, ci ,info));
+					if(temp.size() >= nn){
+						break;
+					}
 				}
 			}
 			
@@ -64,29 +96,74 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 			}
 			return ret;
 		} else {
-			//System.out.println("*asking swank");
-			String[] results = (editor != null ?
-					LispPlugin.getDefault().getSwank().getCompletions(variable, editor.getPackage(), TIMEOUT) :
-					LispPlugin.getDefault().getSwank().getCompletions(variable, TIMEOUT));
-			//System.out.println("*results received");
-			// Displaying a completion for something that is already complete is dumb.
-			if (results.length == 1) {
-				if (results[0].equals(variable)) {
-					return null;
+			SwankInterface swank = LispPlugin.getDefault().getSwank();
+			if ( doGetDocs ){
+				String usepkg = null;
+				if(editor != null){
+					usepkg = editor.getPackage();
 				}
+				String[][] results = swank.getCompletionsAndDocs(variable, usepkg, TIMEOUT, nn);
+				if (results[0].length == 1) {
+					if (results[0][0].equals(variable)) {
+						return null;
+					}
+				}
+				if(0 == nn){
+					nn = results[0].length;
+				} else {
+					nn = Math.min(nn, results[0].length);
+				}
+				
+				ICompletionProposal[] ret = new ICompletionProposal[nn];
+				int rStart = offset - variable.length();
+				lastCompletionResultsInfo = results[1];
+				lastCompletionVariable = variable;
+				lastCompletionResults = results[0];
+				for (int j=0; j<results[0].length; ++j) {
+					String info = results[1][j];
+					if(info.equals("")){
+						lastCompletionResultsInfo[j] = NO_DOC_STRING;
+					} else {
+						lastCompletionResultsInfo[j] = info;
+					}
+					if(j<nn){
+						IContextInformation ci = getContextInfo(info);
+						ret[j] = new CompletionProposal(results[0][j].toLowerCase(), rStart,
+								variable.length(), results[0][j].length(), null, null, ci,lastCompletionResultsInfo[j]);						
+					}
+				}
+				return ret;
+				
+			} else {
+				String[] results = (editor != null ?
+						LispPlugin.getDefault().getSwank().getCompletions(variable, editor.getPackage(), TIMEOUT) :
+						LispPlugin.getDefault().getSwank().getCompletions(variable, TIMEOUT));
+				//System.out.println("*results received");
+				// Displaying a completion for something that is already complete is dumb.
+				if (results.length == 1) {
+					if (results[0].equals(variable)) {
+						return null;
+					}
+				}
+				
+				if(0 == nn){
+					nn = results.length;
+				} else {
+					nn = Math.min(nn, results.length);
+				}
+				
+				ICompletionProposal[] ret = new ICompletionProposal[nn];
+				int rStart = offset - variable.length();
+				for (int j=0; j<nn; ++j) {
+					ret[j] = new CompletionProposal(results[j].toLowerCase(), rStart,
+							variable.length(), results[j].length());
+				}				
+				
+				lastCompletionVariable = variable;
+				lastCompletionResults = results;
+				return ret;				
 			}
-			ICompletionProposal[] ret = new ICompletionProposal[results.length];
-			int rStart = offset - variable.length();
-			for (int j=0; j<results.length; ++j) {
-				ret[j] = new CompletionProposal(results[j].toLowerCase(), rStart,
-						variable.length(), results[j].length());
-			}
-			//System.out.println("*proposals made");
-			
-			lastCompletionVariable = variable;
-			lastCompletionResults = results;
-			return ret;
-		}
+		}	
 	}
 	
 	
@@ -154,16 +231,19 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 		if (info.equals("")) {
 			makeInstanceInfoFound = false;
 			defmethodInfoFound = false;
+			String docString = "";
 			if (editor == null) {
 				info = swank.getArglist(function, 3000);
+				docString = swank.getDocumentation(function, 1000);
 			} else {
 				info = swank.getArglist(function, 3000, editor.getPackage());
+				docString = swank.getDocumentation(function, editor.getPackage(), 1000);
 			}
-			String docString = swank.getDocumentation(function, 1000);
 			if (!docString.equals("")) {
 				String[] lines = docString.split("\n");
-				if (lines.length > 2) {
-					for (int i=0; i<2; ++i) {
+				int maxlines = LispPlugin.getDefault().getPreferenceStore().getInt(PreferenceConstants.MAX_HINT_LINES);
+				if (lines.length > maxlines) {
+					for (int i=0; i<maxlines; ++i) {
 						info += "\n" + lines[i];
 					}
 					info += "...";

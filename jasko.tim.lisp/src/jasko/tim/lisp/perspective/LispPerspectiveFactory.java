@@ -6,7 +6,7 @@ import jasko.tim.lisp.views.*;
 import jasko.tim.lisp.wizards.*;
 
 import org.eclipse.ui.*;
-
+import org.eclipse.ui.console.IConsoleConstants;
 
 public class LispPerspectiveFactory implements IPerspectiveFactory {
 
@@ -32,6 +32,7 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		bottom.addView(AproposView.ID);
 		bottom.addView(ThreadView.ID);
 		bottom.addView(InspectorView.ID);
+		bottom.addView(IConsoleConstants.ID_CONSOLE_VIEW);
 		
 		layout.addShowViewShortcut(ReplView.ID);
 		layout.addShowViewShortcut(IPageLayout.ID_PROBLEM_VIEW);
@@ -40,6 +41,7 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		layout.addShowViewShortcut(ThreadView.ID);
 		layout.addShowViewShortcut(InspectorView.ID);
 		layout.addShowViewShortcut(SecondaryReplView.ID);
+		layout.addShowViewShortcut(IConsoleConstants.ID_CONSOLE_VIEW);
 		layout.addShowViewShortcut(IPageLayout.ID_OUTLINE);
 		
 		layout.addNewWizardShortcut(NewLispFileWizard.ID);

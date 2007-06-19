@@ -21,12 +21,20 @@ public interface PreferenceConstants {
 	public static final String LISP_EXE = "lispExecutable";
 	public static final String LISP_INI = "lispIni";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
+	public static final String MANAGE_PACKAGES = "managePackages";
+	public static final String CONSOLE_COMPILER_LOG = "consoleCompilerLog";
+	public static final String SYSTEMS_PATH = "systemsPath";
+
+	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";	
+	public static final String PAIR_EDIT_QUOTES = "pairEditQuotes";	
+	public static final String PAIR_EDIT_COMMENTS = "pairEditComments";	
 	public static final String AUTO_POPUP_COMPLETIONS = "autoPopupCompletions";
+	public static final String AUTO_POPUP_COMPLETIONS_DELAY = "autoPopupCompletionsDelay";
     public static final String AUTO_INSERT_COMPLETIONS = "autoInsertCompletions";
     public static final String AUTO_FUZZY_COMPLETIONS = "autoFuzzyCompletions";
-    public static final String AUTO_FUZZY_COMPLETIONS_TLIMIT = "autoFuzzyCompletionsTLimit";
+    public static final String AUTO_COMPLETIONS_NLIMIT = "autoCompletionsNLimit";
     public static final String DOCS_IN_COMPLETIONS = "docsInCompletions";
-    public static final String DOCS_IN_COMPLETIONS_TLIMIT = "docsInCompletionsTLimit";
+    public static final String MAX_HINT_LINES = "maxHintLines";
     
     public static final String DECORATE_REPL_INSPECTABLES = "decorateREPLInspectables";
     public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";

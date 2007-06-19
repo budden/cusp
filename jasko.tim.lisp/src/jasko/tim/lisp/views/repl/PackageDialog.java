@@ -15,15 +15,24 @@ public class PackageDialog extends Dialog implements KeyListener {
 	ArrayList<String> packages;
 	String result = "";
 	String currPackage;
+	String title = "";
+	String groupTitle = "";
 
 	private List lstEnums;
 	private Label lblSearch;
 	private String search = "";
 	
-	public PackageDialog(Shell parentShell, ArrayList<String> packages, String currPackage) {
+	public PackageDialog(Shell parentShell, ArrayList<String> packages, String currPackage, boolean loadDialog) {
 		super(parentShell);
 		this.currPackage = currPackage;
 		this.packages = packages;
+		if(loadDialog){
+			title = "Load package";
+			groupTitle = "Installed packages";
+		} else {
+			groupTitle = "Current Package: " + currPackage;
+			title = "Change Package";
+		}
 		Collections.sort(this.packages);
 	}
 	
@@ -41,7 +50,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 		GridData gridData;
 
 		Group grpEnum = new Group(comp, SWT.SHADOW_ETCHED_IN);
-		grpEnum.setText("Current Package: " + currPackage);
+		grpEnum.setText(groupTitle);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 1;
 		
@@ -131,7 +140,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 	
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("Change Package");
+		newShell.setText(title);
 	}
 	
 	private boolean isSearchable(char c) {

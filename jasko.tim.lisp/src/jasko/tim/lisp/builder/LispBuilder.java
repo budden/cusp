@@ -7,11 +7,13 @@ import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.editors.actions.FileCompiler;
+import jasko.tim.lisp.util.LispUtil;
 
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
 
 
 import org.eclipse.core.resources.*;
@@ -107,6 +109,20 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	}
 
 	
+	private void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd, String pkg){
+		Map<String, Object> attr = new HashMap<String, Object>();
+		attr.put(IMarker.CHAR_START, offsetStart);
+		attr.put(IMarker.CHAR_END, offsetEnd);
+		
+		attr.put(IMarker.MESSAGE, "Package "+ pkg + " is not loaded");
+		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
+		try {
+			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	void checkLisp(IResource resource) {
 		if (resource instanceof IFile && 
 				(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")
@@ -136,7 +152,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					++numLines;
 				}
 				LispParser parser = new LispParser();
-				parser.parseCode(sb.toString());
+				LispNode code = parser.parseCode(sb.toString());
+				boolean cancompile = true;
+				// check parens
 				System.out.println("*parens:" + parser.parenBalance);
 				if (parser.parenBalance > 0) {
 					addMarker(file, parser.parenBalance + " more closing parentheses needed.",
@@ -144,12 +162,101 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				} else if (parser.parenBalance < 0) {
 					addMarker(file, -parser.parenBalance + " more opening parentheses needed.",
 							numLines, IMarker.SEVERITY_ERROR);
-				} else {
+				}
+
+				// check if package dependence is satisfied: (TODO: need to add this also to FileCompiler, refactor this all!)
+				ArrayList<String> pkgs = LispPlugin.getDefault().getSwank().getAvailablePackages(2000);
+				for( LispNode node: code.params ){
+					String nodetype = node.car().value.toLowerCase();
+					// == defpackage
+					if( nodetype.equals("defpackage") ){
+						pkgs.add(LispUtil.formatPackage(node.cadr().value));
+						for( LispNode subnode: node.params){
+							String subtype = subnode.car().value.toLowerCase();
+							//process nicknames
+							if(subtype.equals(":nicknames")){
+								for(int i = 1; i < subnode.params.size(); ++i){
+									pkgs.add(LispUtil.formatPackage(subnode.get(i).value));
+								}
+							//process :use	
+							} else if (subtype.equals(":use")) {
+								for(int i = 1; i < subnode.params.size(); ++i){
+									LispNode usepkg = subnode.params.get(i);
+									if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
+										addBadPackageMarker(file,usepkg.offset,
+												usepkg.endOffset+1,
+												LispUtil.formatPackage(usepkg.value));
+										cancompile = false;
+									}									
+								}
+							//process :shadowing-import-from and :import-from dependence	
+							} else if (subtype.equals(":shadowing-import-from") ||
+									    subtype.equals(":import-from")) {
+								LispNode usepkg = subnode.cadr();
+								if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
+									if (usepkg.offset == 0) {
+										addBadPackageMarker(file,subnode.offset,
+												subnode.offset + subtype.length(),
+												LispUtil.formatPackage(usepkg.value));										
+									} else {
+										addBadPackageMarker(file,usepkg.offset,
+												usepkg.endOffset,
+												LispUtil.formatPackage(usepkg.value));										
+									}
+									cancompile = false;
+								}
+							}
+						}
+					// == make-package
+					} else if (nodetype.equals("make-package")) {
+						pkgs.add(LispUtil.formatPackage(node.cadr().value));
+						LispNode nicks = node.getf(":nicknames");
+						if(nicks != null){
+							for(LispNode nick: nicks.params){
+								pkgs.add(LispUtil.formatPackage(nick.value));
+							}
+						}
+						LispNode uses = node.getf(":use");
+						if(uses != null){
+							for(LispNode usepkg: uses.params){
+								if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
+									if (usepkg.offset == 0) {
+										addBadPackageMarker(file,node.offset,
+												node.offset + nodetype.length(),
+												LispUtil.formatPackage(usepkg.value));										
+									} else {
+										addBadPackageMarker(file,usepkg.offset,
+												usepkg.endOffset,
+												LispUtil.formatPackage(usepkg.value));										
+									}
+									cancompile = false;									
+								}
+							}
+						}
+					} else if (nodetype.equals("in-package")){
+						LispNode pkgnode = node.cadr();
+						if(!pkgs.contains(LispUtil.formatPackage(pkgnode.value))){
+							if (pkgnode.offset == 0) {
+								addBadPackageMarker(file,node.offset,
+										node.offset + nodetype.length(),
+										LispUtil.formatPackage(pkgnode.value));										
+							} else {
+								addBadPackageMarker(file,pkgnode.offset,
+										pkgnode.endOffset,
+										LispUtil.formatPackage(pkgnode.value));										
+							}
+							cancompile = false;							
+						}
+					}
+				}
+
+				
+				if (cancompile) {
 					//compile file
-					//SwankInterface swank = LispPlugin.getDefault().getSwank();
-					//swank.sendCompileFile(file.getLocation().toString(), 
-					//		new FileCompiler.CompileListener(file));
-					//System.out.printf("Compiling %s\n", file.getLocation().toString());
+					SwankInterface swank = LispPlugin.getDefault().getSwank();
+					swank.sendCompileFile(file.getLocation().toString(), 
+							new FileCompiler.CompileListener(file));
+					System.out.printf("Compiling %s\n", file.getLocation().toString());
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

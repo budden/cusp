@@ -64,7 +64,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
         IPreferenceStore ps = LispPlugin.getDefault().getPreferenceStore();
 		ca.enableAutoActivation(ps.getBoolean(PreferenceConstants.AUTO_POPUP_COMPLETIONS));
         ca.enableAutoInsert(ps.getBoolean(PreferenceConstants.AUTO_INSERT_COMPLETIONS));
-		ca.setAutoActivationDelay(700);
+		ca.setAutoActivationDelay(ps.getInt(PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY));
 		ca.setProposalPopupOrientation(ContentAssistant.CONTEXT_INFO_BELOW);
 		ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_ABOVE);
         
@@ -85,7 +85,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
     }
 	
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
-		ca.setInformationControlCreator(getInformationControlCreator(sourceViewer));
+		ca.setInformationControlCreator(new LispTextHoverControlCreator());
 		return ca;
 	}
 	

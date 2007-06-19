@@ -46,6 +46,21 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 
 		addField(new FileFieldEditor(PreferenceConstants.LISP_INI, 
 				"&Initialization File:", getFieldEditorParent()));
+
+
+		StringFieldEditor strf = new StringFieldEditor(PreferenceConstants.SYSTEMS_PATH, 
+				"Path to system definitions:", getFieldEditorParent());
+		String strfTipString = "Top levels. Package manager will search subdirectories.\n Separate directories by ;\n Requires Lisp restart";
+		strf.getLabelControl(getFieldEditorParent()).setToolTipText(strfTipString);
+		strf.getTextControl(getFieldEditorParent()).setToolTipText(strfTipString);
+		
+		addField(strf);
+		
+		addField(new BooleanFieldEditor(PreferenceConstants.MANAGE_PACKAGES, 
+				"Use Cusp to Manage Packages (requires Lisp restart)", getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(PreferenceConstants.CONSOLE_COMPILER_LOG, 
+				"Write compiler log to Console", getFieldEditorParent()));		
 	}
 
 	/* (non-Javadoc)

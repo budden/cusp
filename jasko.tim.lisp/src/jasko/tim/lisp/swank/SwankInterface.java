@@ -56,6 +56,10 @@ public class SwankInterface {
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
 	
+	public String getCurrPackage(){
+		return currPackage;
+	}
+	
 	private ListenerThread listener;
 	private DisplayListenerThread displayListener;
 	
@@ -180,18 +184,42 @@ public class SwankInterface {
 		return connected;
 	}
 	
- 	public void runAfterLispStart() {
- 		if( isConnected() ){			
- 			String str = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.LISP_INI);
- 			if( str != "")	{
- 				str = str.replaceAll("\\\\", "/");
- 				sendEval("(when (probe-file \""+str+"\") (load \""+str+"\"))\n", null);
- 			}
- 			sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
- 					"\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
- 		}
- 	}
-	  	
+
+	public boolean managePackages = false;
+	
+	
+	public void runAfterLispStart() {
+		if( isConnected() ){
+			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+			managePackages = prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
+			if( managePackages){
+				String asdfext = LispPlugin.getDefault().getPluginPath() 
+					+ "asdf-extensions/asdf-extensions.lisp";
+				System.out.printf("asdf path: %s\n", asdfext);
+				String dir = LispPlugin.getDefault().getPluginPath()
+					+ "sbcl/site-systems";
+				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
+				sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
+						+ dir +"\")",1000);
+				String sysdirs[] = prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
+				for(String sysdir: sysdirs){
+					if(!sysdir.equals("")){
+						sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
+								+ sysdir.replace('\\', '/') +"\")",1000);						
+					}
+				}
+			}
+			
+			String str = prefs.getString(PreferenceConstants.LISP_INI);
+			if( str != "")	{
+				str = str.replaceAll("\\\\", "/");
+				sendEvalAndGrab("(when (probe-file \""+str+"\") (load \""+str+"\"))\n", 3000);
+			}
+			sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
+					"\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
+		}
+	}
+	
 	/** 
 	 * Connects to the swank server.
 	 * 
@@ -219,9 +247,6 @@ public class SwankInterface {
 
 			String pluginDir = LispPlugin.getDefault().getPluginPath();
 			String slimePath = pluginDir + "slime/swank-loader.lisp";
-			if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-				slimePath = slimePath.replaceFirst("/", "");
-			}
 			if (implementation != null) {
 				try {
 					lispEngine = implementation.start(slimePath);
@@ -403,7 +428,7 @@ public class SwankInterface {
 		currPackage = newPackage;
 	}
 	
-	
+	//finds definitions in package pkg
 	private synchronized boolean haveDefinitionsPkg(String symbol, String pkg, long timeout) {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
@@ -426,8 +451,85 @@ public class SwankInterface {
 		return (!sendEvalAndGrab(msg,2000).equalsIgnoreCase("nil"));
 	}
 
+	//finds definitions in package pkg or global context
 	public synchronized boolean haveDefinitions(String symbol, String pkg, long timeout) {
 		return (haveDefinitionsPkg(symbol,pkg,timeout) || haveDefinitionsPkg(symbol,"",timeout));
+	}
+	
+	/**
+	 * 
+	 * @param start of the string
+	 * @param pkg current package (if null, then swank.currPackage)
+	 * @param timeout timeout for swank call
+	 * @param n number of completions to get: 0 if no limit (limit works only for fuzzy completions)
+	 * @return string[2][n] : string[0] - completions, string[1] - arglists + docs 
+	 */
+	public synchronized String[][] getCompletionsAndDocs(String start, String pkg, long timeout, int n){
+		SyncCallback callBack = new SyncCallback();
+		++messageNum;
+		syncJobs.put(new Integer(messageNum).toString(), callBack);
+
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+		boolean usefuzzy = prefs.getBoolean(PreferenceConstants.AUTO_FUZZY_COMPLETIONS);
+
+		String msg = "";
+		String usepkg = currPackage;
+
+		if(usefuzzy){
+			msg = "(let ((lst (mapcar #'first (first (swank:fuzzy-completions ";
+		} else {
+			msg = "(let ((lst (first (swank:completions ";
+		}
+		msg += "\"" + start + "\" ";
+		if( pkg == null ){
+			msg += cleanPackage(currPackage)+" ";				
+		} else {
+			msg += cleanPackage(pkg)+" ";
+			usepkg = pkg;
+		}
+		if( usefuzzy && n > 0 ){
+			msg += ":limit " + n;
+		}
+		msg += "))))";
+		if(usefuzzy){
+			msg += ")";
+		}
+		msg += "(list lst (mapcar #'(lambda (x) (swank:arglist-for-echo-area (cons x nil))) lst) (mapcar #'(lambda (x) (swank:documentation-symbol x)) lst)))";
+
+		LispNode resNode = LispParser.parse(sendEvalAndGrab(msg, usepkg, timeout));
+		LispNode compl = resNode.car().get(0);
+		LispNode args = resNode.car().get(1);
+		LispNode docs = resNode.car().get(2);
+		int nn = compl.params.size();
+		String[][] res = new String[2][nn];
+		if (false ){
+			return res;			
+		}
+
+		for( int i = 0; i < nn; ++i ){
+			String info = args.get(i).value;
+			if (info.equalsIgnoreCase("nil") || info.contains("not available")){
+				info = "";
+			}
+			String docString = docs.get(i).value;
+			if (!docString.equals("") && !docString.equalsIgnoreCase("nil")) {
+				String[] lines = docString.split("\n");
+				int maxlines = prefs.getInt(PreferenceConstants.MAX_HINT_LINES);
+				if ( maxlines == 0 ) maxlines = 2;
+				if (lines.length > maxlines) {
+					for (int j=0; j<maxlines; ++j) {
+						info += "\n" + lines[j];
+					}
+					info += "...";
+				} else {
+					info += "\n" + docString;
+				}
+			}
+			res[0][i] = compl.get(i).value;
+			res[1][i] = info;
+		}
+		return res;
+		
 	}
 	
 	public synchronized String[] getCompletions(String start, long timeout) {
@@ -438,21 +540,25 @@ public class SwankInterface {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
-		
+
 		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
- 		String msg = "";
- 		boolean usefuzzy = prefs.getBoolean(PreferenceConstants.AUTO_FUZZY_COMPLETIONS);
- 		if ( usefuzzy ){
- 			String tlimit = prefs.getString(PreferenceConstants.AUTO_FUZZY_COMPLETIONS_TLIMIT);
- 			if (!tlimit.matches("\\d+")) {
- 				tlimit = "0";
- 			}
- 			msg = "(swank:fuzzy-completions \"" + start + "\" " + cleanPackage(pkg) 
- 				+ " :limit " + tlimit + ")";			
- 		} else {
- 			msg = "(swank:completions \"" + start + "\" " + cleanPackage(pkg) + ")";			
- 		}
-		  		
+		String msg = "";
+		int nlim = 0;
+		
+		boolean usefuzzy = prefs.getBoolean(PreferenceConstants.AUTO_FUZZY_COMPLETIONS);
+		if ( usefuzzy ){
+			String tlimit = "50";
+			String nlimit = prefs.getString(PreferenceConstants.AUTO_COMPLETIONS_NLIMIT);
+			if (!nlimit.matches("\\d+")) {
+				nlimit = "0";
+			} else {
+				nlim = prefs.getInt(PreferenceConstants.AUTO_COMPLETIONS_NLIMIT);
+			}
+			msg = "(swank:fuzzy-completions \"" + start + "\" " + cleanPackage(pkg) 
+				+ " :limit " + nlimit + " :time-limit-in-msec "+ tlimit + ")";			
+		} else {
+			msg = "(swank:completions \"" + start + "\" " + cleanPackage(pkg) + ")";			
+		}
 		
 		try {
 			synchronized (callBack) {
@@ -461,14 +567,20 @@ public class SwankInterface {
 					LispNode results = callBack.result.cadr().cadr().car();
 					String[] ret = new String[results.params.size()];
 					if ( usefuzzy ) {
- 						for (int i=0; i<results.params.size(); ++i) {
- 							ret[i] = results.get(i).car().value;
- 						} // for												
- 					} else {
- 						for (int i=0; i<results.params.size(); ++i) {
- 							ret[i] = results.get(i).value;
- 						} // for						
- 					}
+						int nn = nlim;
+						if( nn == 0 ){
+							nn = results.params.size();
+						} else {
+							nn = Math.min(results.params.size(),nn);
+						}
+						for (int i=0; i<nn; ++i) {
+							ret[i] = results.get(i).car().value;
+						} // for												
+					} else {
+						for (int i=0; i<results.params.size(); ++i) {
+							ret[i] = results.get(i).value;
+						} // for						
+					}
 					return ret;
 				} else {
 					return null;
@@ -607,8 +719,12 @@ public class SwankInterface {
 		
 		emacsRex(msg);
 	}
-	
+
 	public synchronized String sendEvalAndGrab(String message, long timeout) {
+		return sendEvalAndGrab(message,"nil", timeout);
+	}
+	
+	public synchronized String sendEvalAndGrab(String message,  String pkg, long timeout) {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
@@ -617,9 +733,14 @@ public class SwankInterface {
 
 		try {
 			synchronized (callBack) {
-				if (emacsRex(msg)) {
-					callBack.wait(timeout);					
-					return (callBack.result.getf(":return").getf(":ok").params.get(1).value);
+				if (emacsRex(msg,pkg)) {
+					callBack.wait(timeout);
+					LispNode res = callBack.result.getf(":return").getf(":ok");
+					if ( res.params.size() > 0 ) {
+						return (res.params.get(1).value);						
+					} else {
+						return "";
+					}
 				} else {
 					return "";
 				}
@@ -827,6 +948,10 @@ public class SwankInterface {
  			emacsRex(msg);			
  		}
  	}
+		
+	public synchronized void sendLoadPackage(String pkg) {
+		sendEvalAndGrab("(asdf:operate 'asdf:load-op :"+pkg+")",3000);
+	}		
 	
 	
 	private class CompileRunnable extends SwankRunnable {
@@ -844,13 +969,6 @@ public class SwankInterface {
 	protected synchronized void sendCompileCheck(SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:compiler-notes-for-emacs)";
-		
-		emacsRex(msg);
-	}
-	
-	public synchronized void sendGetPackages(SwankRunnable callBack) {
-		registerCallback(callBack);
-		String msg = "(swank:list-all-package-names t)";
 		
 		emacsRex(msg);
 	}
@@ -880,6 +998,33 @@ public class SwankInterface {
 		return packageNames;
 	}
 	
+	public synchronized ArrayList<String> getInstalledPackages(long timeout) {
+		if ( managePackages ){
+			
+			SyncCallback callback = new SyncCallback();
+			++messageNum;
+			syncJobs.put(new Integer(messageNum).toString(), callback);
+
+			java.util.ArrayList<String> packageNames = new java.util.ArrayList<String>();
+
+			String res = sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:get-installed-packages)",3000);
+			String[] packages = res.replaceAll("[()\"]", "").split(" ");
+			
+			if(packages.length == 1 && packages[0].equalsIgnoreCase("nil")){
+				return null;
+			}
+			
+			for(String pkg : packages){
+				if( !packageNames.contains(pkg.toLowerCase()) ){
+					packageNames.add(pkg.toLowerCase());
+				}
+			}
+			
+			return packageNames;			
+		} else {
+			return null;
+		}
+	}
 	
 	// X-ref
 	
