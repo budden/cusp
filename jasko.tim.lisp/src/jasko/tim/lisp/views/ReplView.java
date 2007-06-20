@@ -116,7 +116,7 @@ public class ReplView extends ViewPart implements SelectionListener {
         }
         
         public void callUrl(String url) {
-        	// TODO: this code is almost duplicated in ReplView
+        	// TODO: this code is almost duplicated in LispEditor
     		ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
     		int offset = ts.getOffset();
     		IDocument doc = getDocument();
@@ -306,19 +306,40 @@ public class ReplView extends ViewPart implements SelectionListener {
  		sashData.bottom = new FormAttachment (percent, 5);
  		sash.setLayoutData (sashData);
  		// I have to handle this manually? Worst. Splitter. Ever.
- 		sash.addListener (SWT.Selection, new Listener () {
+ 		Listener sashListener = new Listener () {
  			public void handleEvent (Event e) {
  				Rectangle sashRect = sash.getBounds ();
+ 				if( sashRect.height == 0){ //sash is not displayed
+ 					return;
+ 				}
+ 				
  				Rectangle shellRect = notButtons.getClientArea ();
+ 				
  				int top = shellRect.height - sashRect.height - limit;
- 				e.y = Math.max (Math.min (e.y, top), limit);
+ 				if( e.y == 0) { //just check that everything is visible
+ 	 				if(sashRect.y <= limit){
+ 	 					e.y = limit;
+ 	 				} else {
+ 	 					e.y = sashRect.y;
+ 	 				}
+ 	 				if(sashRect.y >= top){
+ 	 					e.y = top;
+ 	 				} else {
+ 	 					e.y = sashRect.y; 	 					
+ 	 				}
+ 				} else {
+ 	 				e.y = Math.max (Math.min (e.y, top), limit); 					
+ 				}
  				if (e.y != sashRect.y)  {
  					sashData.top = new FormAttachment (0, e.y);
  					sashData.bottom = new FormAttachment (0, e.y + 5);
  					notButtons.layout ();
  				}
  			}
- 		});
+ 		}; 
+ 		sash.addListener (SWT.Selection, sashListener);
+ 		parent.addListener(SWT.RESIZE,sashListener);
+ 		parent.addListener(SWT.Resize,sashListener);
  		
  		FormData bottomData = new FormData ();
  		bottomData.left = new FormAttachment (0, 0);
