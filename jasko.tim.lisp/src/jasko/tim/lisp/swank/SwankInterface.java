@@ -476,7 +476,7 @@ public class SwankInterface {
 		String usepkg = currPackage;
 
 		if(usefuzzy){
-			msg = "(let ((lst (mapcar #'first (first (swank:fuzzy-completions ";
+			msg = "(let ((lst (mapcar #'first (let ((x (swank:fuzzy-completions ";
 		} else {
 			msg = "(let ((lst (first (swank:completions ";
 		}
@@ -487,15 +487,15 @@ public class SwankInterface {
 			msg += cleanPackage(pkg)+" ";
 			usepkg = pkg;
 		}
-		if( usefuzzy && n > 0 ){
-			msg += ":limit " + n;
+		if( usefuzzy  ){
+			if( n > 0 ){
+				msg += ":limit " + n;
+			}
+			msg += "))) (if (cadr x) x (car x))";
 		}
 		msg += "))))";
-		if(usefuzzy){
-			msg += ")";
-		}
-		msg += "(list lst (mapcar #'(lambda (x) (swank:arglist-for-echo-area (cons x nil))) lst) (mapcar #'(lambda (x) (swank:documentation-symbol x)) lst)))";
-
+		msg += "(list lst (mapcar #'(lambda (x) (swank:arglist-for-echo-area (cons x nil))) lst)" +
+				" (mapcar #'(lambda (x) (swank:documentation-symbol x)) lst)))";
 		LispNode resNode = LispParser.parse(sendEvalAndGrab(msg, usepkg, timeout));
 		LispNode compl = resNode.car().get(0);
 		LispNode args = resNode.car().get(1);
@@ -564,7 +564,11 @@ public class SwankInterface {
 			synchronized (callBack) {
 				if (emacsRex(msg)) {
 					callBack.wait(timeout);
-					LispNode results = callBack.result.cadr().cadr().car();
+					LispNode results = callBack.result.cadr().cadr();
+					// for some reasons sometimes it is in car() and at other times just at results
+					if( results.cadr().value.equalsIgnoreCase("nil")){
+						results = results.car();
+					}
 					String[] ret = new String[results.params.size()];
 					if ( usefuzzy ) {
 						int nn = nlim;
