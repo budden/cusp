@@ -26,6 +26,8 @@ public interface PreferenceConstants {
 	public static final String SYSTEMS_PATH = "systemsPath";
 
 	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";	
+	public static final String PAIR_SMART_BRACKETS = "pairSmartBrackets";	
+	public static final String PAIR_EDIT_BRACES = "pairEditBraces";	
 	public static final String PAIR_EDIT_QUOTES = "pairEditQuotes";	
 	public static final String PAIR_EDIT_COMMENTS = "pairEditComments";	
 	public static final String AUTO_POPUP_COMPLETIONS = "autoPopupCompletions";
