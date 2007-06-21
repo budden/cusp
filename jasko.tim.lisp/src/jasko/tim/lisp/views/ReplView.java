@@ -338,8 +338,10 @@ public class ReplView extends ViewPart implements SelectionListener {
  			}
  		}; 
  		sash.addListener (SWT.Selection, sashListener);
+ 		/*
  		parent.addListener(SWT.RESIZE,sashListener);
  		parent.addListener(SWT.Resize,sashListener);
+ 		*/
  		
  		FormData bottomData = new FormData ();
  		bottomData.left = new FormAttachment (0, 0);

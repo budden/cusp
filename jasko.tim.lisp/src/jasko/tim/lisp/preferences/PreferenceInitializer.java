@@ -49,7 +49,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 
         store.setDefault(PAIR_EDIT_BRACKETS, false);
         store.setDefault(PAIR_SMART_BRACKETS, false);
-        store.setDefault(PAIR_EDIT_BRACES, true);
+        store.setDefault(PAIR_EDIT_BRACES, false);
         store.setDefault(PAIR_EDIT_QUOTES, false);
         store.setDefault(PAIR_EDIT_COMMENTS, false);
         store.setDefault(AUTO_POPUP_COMPLETIONS, true);
