@@ -42,6 +42,16 @@ public class EditorPreferencePage
                 getFieldEditorParent()));
     
         addField(new BooleanFieldEditor(
+                PreferenceConstants.PAIR_SMART_BRACKETS,
+                "If automatically close '('.\nIf next is complete sexp, put closing ')' after it",
+                getFieldEditorParent()));
+    
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.PAIR_EDIT_BRACES,
+                "If complete sexp starts at next position, pressing '[' encloses it in '()'",
+                getFieldEditorParent()));
+    
+        addField(new BooleanFieldEditor(
                 PreferenceConstants.PAIR_EDIT_QUOTES,
                 "Automatically close '\"'",
                 getFieldEditorParent()));
