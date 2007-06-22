@@ -23,11 +23,6 @@ public class PairAutoEdit implements IAutoEditStrategy {
 			DocumentCommand c) {
 		try{
 			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-			if("(".equals(c.text) && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS)){
-				c.text = "()";
-				cmdEnd(c);
-				return;
-			}
 			if( ("(".equals(c.text) && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS) 
 					&& prefs.getBoolean(PreferenceConstants.PAIR_SMART_BRACKETS) 
 					&& d.getChar(c.offset) == '(')
@@ -35,9 +30,14 @@ public class PairAutoEdit implements IAutoEditStrategy {
 				  && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACES) )){
 				String txt = "( " + LispUtil.getCurrentExpression(d, c.offset, 0) + ")";
 				c.text = txt;
-				c.length = txt.length()-2;
+				c.length = txt.length()-3;
 				cmdEnd(c);
 				return;						
+			}
+			if("(".equals(c.text) && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS)){
+				c.text = "()";
+				cmdEnd(c);
+				return;
 			}
 			if("\"".equals(c.text) && !(c.offset > 0 && d.getChar(c.offset-1) == '\\')
 					&& prefs.getBoolean(PreferenceConstants.PAIR_EDIT_QUOTES)){
