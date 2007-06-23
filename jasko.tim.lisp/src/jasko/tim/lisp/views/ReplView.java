@@ -50,6 +50,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected Stack<State> states = new Stack<State>();
 
 	protected SwankInterface swank;
+	private boolean sentEvalByKeyboard = false;
 	
 	protected Sash replComposite;
 	protected ReplHistory history;
@@ -715,6 +716,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected class OkListener implements SelectionListener {
 
 		public void widgetSelected(SelectionEvent e) {
+			sentEvalByKeyboard = false;
 			eval();
 		}
 
@@ -763,6 +765,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if ((event.keyCode == '\r' || event.keyCode == '\n')
 					&& LispUtil.doParensBalance(in.getDocument())) {
 				//System.out.println("*" + event.text + ":" + event.text.length());
+				sentEvalByKeyboard = true;
 				eval();
 				event.doit = false;
 			}
@@ -1158,18 +1161,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}*/
 		}
 		
+		private boolean enterKeyInited = false;
+		
 		public void keyPressed(KeyEvent e) {
-			if ((e.character == '\r' || e.character == '\n')/* &&	
-					System.getProperty("os.name").toLowerCase().contains("windows")*/) {
-				TreeItem[] sels = debugTree.getSelection();
-				if (sels.length > 0) {
-					TreeItem item = sels[0];
-					if (item.getData() != null && item.getData() instanceof Integer) {
-						Integer choice = (Integer) item.getData();
-						choose(choice);
-					}
-				}
-			} else {
+			//System.out.printf("Key pressed: \n%c = \n%s\n", e.character, e.toString());
+			if (!(e.character == '\r' || e.character == '\n')){
 				Character c = new Character(e.character);
 				try {
 					if( c.toString().matches("\\D") ){
@@ -1190,6 +1186,28 @@ public class ReplView extends ViewPart implements SelectionListener {
 		public void mouseUp(MouseEvent e) {
 		}
 		public void keyReleased(KeyEvent e) {
+			//System.out.printf("Key released: \n%c = \n%s\n", e.character, e.toString());
+			if (e.character == '\r' || e.character == '\n') {
+				// <Enter> on Linux sends keyEvent only on keyReleased. However
+				// we get into tree when we press <Enter> in REPL, and we release
+				// <Enter> on tree. So we need to skip first <Enter> on release.
+				// But we also can send eval from REPL using Send button which
+				// does no create any <Enter> event.
+				if( !enterKeyInited ){
+					enterKeyInited = true;
+					if(sentEvalByKeyboard){
+						return;
+					}
+				}
+				TreeItem[] sels = debugTree.getSelection();
+				if (sels.length > 0) {
+					TreeItem item = sels[0];
+					if (item.getData() != null && item.getData() instanceof Integer) {
+						Integer choice = (Integer) item.getData();
+						choose(choice);
+					}
+				}
+			}
 		}
 		public void treeCollapsed(TreeEvent e) {
 		}
