@@ -60,20 +60,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	}
 
 
-	public static void addTask(IFile file, String message, int lineNumber) {
-		try {
-			IMarker marker = file.createMarker(IMarker.TASK);
-			marker.setAttribute(IMarker.MESSAGE, message);
-			if (lineNumber == -1) {
-				lineNumber = 1;
-			}
-			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-	}
-
-
 	public static void addMarker(IFile file, String message, int lineNumber,
 			int severity) {
 		try {
@@ -129,7 +115,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			try {
 				IFile file = (IFile) resource;
 				deleteMarkers(file);
-				deleteTasks(file);
 				System.out.println("*builder");
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(file.getContents()));
@@ -137,13 +122,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				String line = reader.readLine();
 				int numLines = 0;
 				while (line != null) {
-					//process todo items
-					if ( line.matches(".*;.*TODO:.*") ){
-						String[] strs = line.split("TODO:");
-						for ( int i = 1; i < strs.length; ++i ) {
-							addTask(file,"TODO:" + strs[i],numLines+1);
-						}
-					}
 					sb.append(line);
 					sb.append('\n');
 					line = reader.readLine();
@@ -332,14 +310,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	private void deleteMarkers(IFile file) {
 		try {
 			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
-			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
-		} catch (CoreException ce) {
-		}
-	}
-
-	private void deleteTasks(IFile file) {
-		try {
-			file.deleteMarkers(IMarker.TASK, false, IResource.DEPTH_ZERO);
 			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
 		} catch (CoreException ce) {
 		}
