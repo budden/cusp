@@ -10,41 +10,42 @@ import org.eclipse.swt.graphics.Color;
 public class LispScanner extends RuleBasedScanner {
 
 	public LispScanner(ColorManager manager, Color background) {
-		IRule[] rules = new IRule[10];
-		
-		IToken number = new Token(
-			new TextAttribute(manager.getColor(ColorManager.TokenType.NUMBER), background, SWT.NORMAL));
-		rules[0] = new LispNumberRule(number);
+		IRule[] rules = new IRule[11];
 		
 		IToken comment = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.COMMENT), background, SWT.NORMAL));
-		rules[1] = new EndOfLineRule(";", comment);
+		rules[0] = new EndOfLineRule(";", comment);
 		
 		IToken paren = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.PAREN), background, SWT.NORMAL));
-		rules[2] = new WordRule(new ParenDetector(), paren);
+		rules[1] = new WordRule(new ParenDetector(), paren);
 		
 		IToken symbol = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.SYMBOL), background, SWT.NORMAL));
-		rules[3] = new WordRule(new SymbolDetector(':'), symbol);
+		rules[2] = new WordRule(new SymbolDetector(':'), symbol);
 		
 		IToken params = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.PARAMS), background, SWT.ITALIC));
-		rules[4] = new WordRule(new SymbolDetector('&'), params);
+		rules[3] = new WordRule(new SymbolDetector('&'), params);
 		
 		IToken global = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.GLOBAL), background, SWT.NORMAL));
 		//rules[5] = new SingleLineRule("*", "*", global);
-		rules[5] = new WordPatternRule(new LispIdentifierDetector(), "*", "*", global);
+		rules[4] = new WordPatternRule(new LispIdentifierDetector(), "*", "*", global);
 		
 		IToken constant = new Token(
 				new TextAttribute(manager.getColor(ColorManager.TokenType.CONSTANT), background, SWT.NORMAL));
-		rules[6] = new WordPatternRule(new LispIdentifierDetector(), "+", "+", constant);
+		rules[5] = new WordPatternRule(new LispIdentifierDetector(), "+", "+", constant);
+		rules[6] = new WordPatternRule(new LispIdentifierDetector(), "#.+", "+", constant);
+		
+		IToken number = new Token(
+				new TextAttribute(manager.getColor(ColorManager.TokenType.NUMBER), background, SWT.NORMAL));
+			rules[7] = new LispNumberRule(number);
 		
 		IToken ucwToken = new Token(
 				new TextAttribute(manager.getColor(ColorManager.TokenType.UCW_TAG), background, SWT.BOLD));
-		rules[7] = new WordPatternRule(new LispIdentifierDetector(), "<:", "", ucwToken);
-		rules[8] = new WordPatternRule(new LispIdentifierDetector(), "<ucw:", "", ucwToken);
+		rules[8] = new WordPatternRule(new LispIdentifierDetector(), "<:", "", ucwToken);
+		rules[9] = new WordPatternRule(new LispIdentifierDetector(), "<ucw:", "", ucwToken);
 		
 		IToken defaultToken = new Token(
 				new TextAttribute(manager.getColor(ColorManager.TokenType.KEYWORD), background, SWT.NORMAL));
@@ -55,7 +56,7 @@ public class LispScanner extends RuleBasedScanner {
 		for(int i = 0; i < LispSpecialWordDetector.RESERVED_WORDS.length; i++) {
 			keywordRule.addWord(LispSpecialWordDetector.RESERVED_WORDS[i], keyword);
 		}
-		rules[9] = keywordRule;
+		rules[10] = keywordRule;
 		
 		
 		
