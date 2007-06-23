@@ -24,7 +24,6 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
@@ -34,8 +33,6 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.part.ViewPart;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 
 
 /**
@@ -1185,6 +1182,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		public void mouseUp(MouseEvent e) {
 		}
+		
 		public void keyReleased(KeyEvent e) {
 			//System.out.printf("Key released: \n%c = \n%s\n", e.character, e.toString());
 			if (e.character == '\r' || e.character == '\n') {
@@ -1209,6 +1207,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				}
 			}
 		}
+		
 		public void treeCollapsed(TreeEvent e) {
 		}
 		

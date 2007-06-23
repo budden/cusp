@@ -1,11 +1,9 @@
 package jasko.tim.lisp.builder;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
-import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.editors.actions.FileCompiler;
 import jasko.tim.lisp.util.LispUtil;
 

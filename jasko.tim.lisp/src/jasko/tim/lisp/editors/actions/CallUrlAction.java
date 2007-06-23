@@ -18,15 +18,10 @@
  */
 package jasko.tim.lisp.editors.actions;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import jasko.tim.lisp.*;
 import jasko.tim.lisp.editors.*;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.ui.*;
-import org.eclipse.ui.browser.*;
 
 public class CallUrlAction extends LispAction {
 	private String url;
