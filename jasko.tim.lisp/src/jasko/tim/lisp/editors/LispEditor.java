@@ -1,5 +1,7 @@
 package jasko.tim.lisp.editors;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -45,6 +47,17 @@ public class LispEditor extends TextEditor implements ILispEditor {
     private final LispConfiguration config = new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
     
     private final CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
+    
+    /**
+     * Returns IFile associated with this editor
+     * @return IFile or null
+     */
+    private IFile getIFile(){
+    	IEditorInput input= getEditorInput();
+    	IFile original= (input instanceof IFileEditorInput) ?
+    	                  ((IFileEditorInput) input).getFile() : null;
+    	return original;
+    }
     
 	public LispEditor() {
 		super();
@@ -325,6 +338,58 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		profileReset.setActionDefinitionId(ProfileResetAction.ID);
 		keys.registerAction(profileReset);*/
 	}
+
+
+	private void deleteTasks() {
+		IFile file = getIFile();
+		if( file == null ){
+			return;
+		}		
+		try {
+			file.deleteMarkers(IMarker.TASK, false, IResource.DEPTH_ZERO);
+			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
+		} catch (CoreException ce) {
+		}
+	}
+
+	
+	private void addTask(String message, int lineNumber) {
+		IFile file = getIFile();
+		if( file == null ){
+			return;
+		}
+		try {
+			IMarker marker = file.createMarker(IMarker.TASK);
+			marker.setAttribute(IMarker.MESSAGE, message);
+			if (lineNumber == -1) {
+				lineNumber = 1;
+			}
+			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private void updateTasks() {
+		IFile file = getIFile();
+		if( file == null ){
+			return;
+		}
+		deleteTasks();
+		String[] lines = getDocument().get().split("\n");
+		int numLines = 0;
+		for( String line : lines ){
+			if ( line.matches(".*;.*TODO:.*") ){
+				String[] strs = line.split("TODO:");
+				for ( int i = 1; i < strs.length; ++i ) {
+					addTask("TODO:" + strs[i],numLines+1);
+				}
+			}
+			++numLines;			
+		}
+	}
+	
 	
 	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
@@ -333,7 +398,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			IDocument doc = getDocument();
 			LispNode contents = LispParser.parse(doc.get() + "\n)");
 			outline.update(contents);
-			//updateFolding(contents);
+			updateTasks();
+			//updateFolding(contents); TODO: change outline in same way
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
