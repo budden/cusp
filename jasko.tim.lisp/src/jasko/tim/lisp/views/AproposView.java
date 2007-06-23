@@ -114,6 +114,10 @@ public class AproposView extends ViewPart implements KeyListener {
 				showProp(n, ":generic-function", "Generic Function");
 			}
 			
+			if( contents.params.size() == 0 ){
+				output.append("No results for " + input.getText() + "\n");
+			}
+			
 			output.setRedraw(true);
 		}
 	}
