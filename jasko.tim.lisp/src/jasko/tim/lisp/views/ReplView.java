@@ -1062,27 +1062,44 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if (sel.getData("frame") != null) {
 				final Object frame = sel.getData("frame");
 				
+				// all stupidity of this procedure, to make tree behave civilized on linux
+				// it would be much clearer and strightforward to just delete all old items and
+				// add create new ones, instead we need to reuse existing items
 				getSwank().sendGetFrameLocals(frame.toString(), new SwankRunnable() {
 					public void run() {
-						sel.removeAll();
+						int n0 = sel.getItemCount();
+						//sel.removeAll(); //this precludes displaying on Linux
 						LispNode vars = result.getf(":return").getf(":ok");
 						if (vars.params.size() <= 0) {
-							TreeItem tmp = new TreeItem(sel, 0);
-							tmp.setText("[No Locals]");
+							if(n0 > 0){
+								sel.getItems()[0].setText("[No Locals]");
+								sel.setItemCount(1);								
+							} else {
+								TreeItem tmp = new TreeItem(sel, 0);
+								tmp.setText("[No Locals]");		
+							}
 						} else {
+							TreeItem varItem = null;
 							for (int i=0; i < vars.params.size(); ++i) {
 								LispNode var = vars.params.get(i);
 								String name = var.getf(":name").value;
 								String val = var.getf(":value").value;
-								TreeItem varItem = new TreeItem(sel, 0);
+								if( i < n0 ){
+									varItem = sel.getItem(i);
+								} else {
+									varItem = new TreeItem(sel, 0);									
+								}
 								varItem.setText(name + " = " + val);
 								varItem.setData("frameNum", frame);
 								varItem.setData("varNum", i);
 							}
+							if( vars.params.size() < n0 ){
+								sel.setItemCount(vars.params.size());
+							}
 						}
 					}
-				});
-			}
+				}); 
+			} 
 		}
 		
 		public void widgetSelected(SelectionEvent e) {
@@ -1142,7 +1159,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 		
 		public void keyPressed(KeyEvent e) {
-			if (e.character == '\r' || e.character == '\n') {
+			if ((e.character == '\r' || e.character == '\n')/* &&	
+					System.getProperty("os.name").toLowerCase().contains("windows")*/) {
 				TreeItem[] sels = debugTree.getSelection();
 				if (sels.length > 0) {
 					TreeItem item = sels[0];
