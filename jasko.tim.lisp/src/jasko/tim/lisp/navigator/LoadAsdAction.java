@@ -3,7 +3,6 @@ package jasko.tim.lisp.navigator;
 
 import jasko.tim.lisp.*;
 import jasko.tim.lisp.swank.*;
-import jasko.tim.lisp.editors.actions.FileCompiler;
 import jasko.tim.lisp.builder.LispBuilder;
 
 import org.eclipse.core.resources.*;
@@ -33,7 +32,7 @@ public class LoadAsdAction implements IActionDelegate {
 				IFile file = (IFile) obj;
 				try{
 					file.getParent().deleteMarkers(LispBuilder.MARKER_TYPE, false, IResource.DEPTH_INFINITE);					
-					file.getParent().deleteMarkers(FileCompiler.COMPILE_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);					
+					file.getParent().deleteMarkers(LispBuilder.COMPILE_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -44,7 +43,7 @@ public class LoadAsdAction implements IActionDelegate {
 				*/
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
 				//swank.sendEval(command, null);
-				swank.sendLoadASDF(file.getLocation().toString(), new FileCompiler.CompileListener(null));
+				swank.sendLoadASDF(file.getLocation().toString(), new LispBuilder.CompileListener(null));
 			}
 		}
 	}
