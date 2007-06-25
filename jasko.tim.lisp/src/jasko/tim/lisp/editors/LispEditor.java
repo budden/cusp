@@ -399,7 +399,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			LispNode contents = LispParser.parse(doc.get() + "\n)");
 			outline.update(contents);
 			updateTasks();
-			//updateFolding(contents); TODO: change outline in same way
+			//updateFolding(contents); TODO: change outline in same way as folding now
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

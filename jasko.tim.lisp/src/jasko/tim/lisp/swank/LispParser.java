@@ -2,6 +2,9 @@ package jasko.tim.lisp.swank;
 
 import java.util.*;
 
+import org.eclipse.core.resources.IFile;
+import java.io.*;
+
 
 /**
  * Quick and very dirty lisp parser.
@@ -11,9 +14,31 @@ import java.util.*;
  */
 public class LispParser {
 	public int parenBalance = 0;
-	
+
 	public static LispNode parse(String code) {
 		return new LispParser().parseCode(code);
+	}
+	
+	public static String fileToString(IFile file){
+		try{
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(file.getContents()));
+			StringBuilder sb = new StringBuilder();
+			String line = reader.readLine();
+			while (line != null) {
+				sb.append(line);
+				sb.append('\n');
+				line = reader.readLine();
+			}
+			return sb.toString();			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+		}		
+	}
+	
+	public static LispNode parse(IFile file){
+		return LispParser.parse(fileToString(file));
 	}
 	
 	public LispNode parseCode(String code) {
