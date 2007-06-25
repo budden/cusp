@@ -155,13 +155,13 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		}
 		
 		// add section comments
-		for ( LispNode.LispComment comment: file.comments ) {
+		for ( LispComment comment: file.comments ) {
 			if ( comment.isSectionComment() ) {
 				OutlineItem item = new OutlineItem();
 				
 				item.type = "section";
 				item.name = comment.SectionName();
-				item.offset = comment.offset + LispNode.LispComment.SECTION_START.length();
+				item.offset = comment.offset + LispComment.SECTION_START.length();
 				if (! item.name.equals("")) {
 					items.add(item);
 				}

@@ -306,13 +306,15 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd, String pkg){
+	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd,
+			int lineNum, String pkg){
 		if( file == null ){
 			return;
 		}
 		Map<String, Object> attr = new HashMap<String, Object>();
 		attr.put(IMarker.CHAR_START, offsetStart);
 		attr.put(IMarker.CHAR_END, offsetEnd+1);
+		attr.put(IMarker.LINE_NUMBER, lineNum);
 		
 		attr.put(IMarker.MESSAGE, "Package "+ pkg + " is not loaded");
 		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
@@ -351,7 +353,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 								LispNode usepkg = subnode.params.get(i);
 								if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
 									addBadPackageMarker(file,usepkg.offset,
-											usepkg.endOffset+1,
+											usepkg.endOffset+1,usepkg.line,
 											LispUtil.formatPackage(usepkg.value));
 									cancompile = false;
 								}									
@@ -363,11 +365,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
 								if (usepkg.offset == 0) {
 									addBadPackageMarker(file,subnode.offset,
-											subnode.offset + subtype.length(),
+											subnode.offset + subtype.length(), subnode.line,
 											LispUtil.formatPackage(usepkg.value));										
 								} else {
 									addBadPackageMarker(file,usepkg.offset,
-											usepkg.endOffset,
+											usepkg.endOffset, usepkg.line,
 											LispUtil.formatPackage(usepkg.value));										
 								}
 								cancompile = false;
@@ -389,11 +391,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
 								if (usepkg.offset == 0) {
 									addBadPackageMarker(file,node.offset,
-											node.offset + nodetype.length(),
+											node.offset + nodetype.length(), node.line,
 											LispUtil.formatPackage(usepkg.value));										
 								} else {
 									addBadPackageMarker(file,usepkg.offset,
-											usepkg.endOffset,
+											usepkg.endOffset, usepkg.line,
 											LispUtil.formatPackage(usepkg.value));										
 								}
 								cancompile = false;									
@@ -405,11 +407,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					if(!pkgs.contains(LispUtil.formatPackage(pkgnode.value))){
 						if (pkgnode.offset == 0) {
 							addBadPackageMarker(file,node.offset,
-									node.offset + nodetype.length(),
+									node.offset + nodetype.length(), node.line,
 									LispUtil.formatPackage(pkgnode.value));										
 						} else {
 							addBadPackageMarker(file,pkgnode.offset,
-									pkgnode.endOffset,
+									pkgnode.endOffset, pkgnode.line,
 									LispUtil.formatPackage(pkgnode.value));										
 						}
 						cancompile = false;							
@@ -439,6 +441,10 @@ public class LispBuilder extends IncrementalProjectBuilder {
 								
 				boolean inQuotes = false;
 				boolean inComment = false;
+				//each parenData is an array of 3 numbers:
+				// paren type: -1 close, 1 open
+				// offset
+				// lineNum
 				ArrayList<int[]> parenData = new ArrayList<int[]>();
 				
 				BufferedReader reader = new BufferedReader(
