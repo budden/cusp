@@ -41,6 +41,30 @@ public class LispParser {
 		return LispParser.parse(fileToString(file));
 	}
 	
+	
+	public static int[] getEOLOffsets(String str){
+		ArrayList<Integer> pos = new ArrayList<Integer>();
+		for(int i = 0; i < str.length(); ++i ){
+			if(str.charAt(i) == '\n'){
+				pos.add(new Integer(i));
+			}
+		}
+		int[] res = new int[pos.size()];
+		for(int i = 0; i < pos.size(); ++i){
+			res[i] = pos.get(i).intValue();
+		}
+		return res;
+	}
+	
+	public static int getLineNum(int offset, int[] EOLOffsets){
+		int res = Arrays.binarySearch(EOLOffsets, offset);
+		if( res >= 0 ){
+			return res + 1;
+		} else {
+			return -res;
+		}
+	}
+
 	public LispNode parseCode(String code) {
 		int start = 0;
 		parenBalance = 0;
@@ -48,6 +72,8 @@ public class LispParser {
 		//System.out.println("*parsing:" + code.charAt(0));
 		LispNode ret = new LispNode(0);
 		Stack<LispNode> s = new Stack<LispNode>();
+		
+		int[] eoffsets = getEOLOffsets(code);
 		
 		LispNode curr = ret;
 		s.push(curr);
@@ -60,8 +86,11 @@ public class LispParser {
 			if (c == '(') {
 				++parenBalance;
 				LispNode next = new LispNode(i);
+				next.line = getLineNum(i,eoffsets);
 				if (!sb.toString().equals("")) {
-					curr.params.add(new LispNode(sb.toString(), i-sb.toString().length(), i));
+					int startOffset = i - sb.toString().length();
+					curr.params.add(new LispNode(sb.toString(), startOffset, i,
+							getLineNum(startOffset,eoffsets), getLineNum(i,eoffsets)));
 					sb = new StringBuilder();
 				}
 				curr.params.add(next);
@@ -70,7 +99,9 @@ public class LispParser {
 			} else if (c == ')') {
 				--parenBalance;
 				if (!sb.toString().equals("")) {
-					curr.params.add(new LispNode(sb.toString(), i-sb.toString().length(), i-1));
+					int startOffset = i - sb.toString().length();
+					curr.params.add(new LispNode(sb.toString(), startOffset, 
+							i-1, getLineNum(startOffset,eoffsets), getLineNum(i-1,eoffsets)));
 					sb = new StringBuilder();
 				}
 				curr.endOffset = i;
@@ -100,7 +131,8 @@ public class LispParser {
 						}
 					}
 				} while (lit != '"' && i<length);
-				LispNode str = new LispNode(sb.toString(), offset, i);
+				LispNode str = new LispNode(sb.toString(), offset, i, 
+						getLineNum(offset,eoffsets), getLineNum(i,eoffsets));
 				str.isString = true;
 				curr.params.add(str);
 				sb = new StringBuilder();
@@ -113,7 +145,8 @@ public class LispParser {
   					++i;
   					lit = code.charAt(i);
   				} while (lit != '\n' && i<length);
- 				ret.addComment(sbtmp.toString(),i0,i-1);
+ 				ret.addComment(sbtmp.toString(),i0,i-1,
+ 						getLineNum(i0,eoffsets),getLineNum(i-1,eoffsets));
 				if (i >= length) {
 					--i;
 				}
@@ -137,13 +170,15 @@ public class LispParser {
 								}
 							}
 						} while (!done && i<length-1);
-  						ret.addComment(sbtmp.toString(),i0,i-1);
+  						ret.addComment(sbtmp.toString(),i0,i-1,
+  								getLineNum(i0,eoffsets),getLineNum(i-1,eoffsets));
 						
 					} else if (code.charAt(i+1) == '\\' && i < length-2) {
 						int offset = i;
 						i += 2;
 						sb.append(code.charAt(i));
-						LispNode str = new LispNode(sb.toString(), offset, i);
+						LispNode str = new LispNode(sb.toString(), offset, i,
+								getLineNum(offset,eoffsets),getLineNum(offset,eoffsets));
 						str.isString = true; // close enough
 						curr.params.add(str);
 						sb = new StringBuilder();
@@ -151,7 +186,8 @@ public class LispParser {
 				}
 			} else if (Character.isWhitespace(c)) {
 				if (!sb.toString().equals("")) {
-					curr.params.add(new LispNode(sb.toString(), i-sb.toString().length(), i-1));
+					curr.params.add(new LispNode(sb.toString(), i-sb.toString().length(), i-1,
+							getLineNum(i-sb.toString().length(),eoffsets),getLineNum(i-1,eoffsets)));
 					sb = new StringBuilder();
 				}
 			} else {
@@ -163,32 +199,17 @@ public class LispParser {
 		// This is important for LispUtil.getParameterNumber, and thus for LispIndenter
 		if (curr.endOffset == 0) {
 			curr.endOffset = i;
+			curr.endLine = getLineNum(i,eoffsets);
 		}
 		while (!s.empty()) {
 			curr = s.peek();
 			if (curr.endOffset == 0) {
 				curr.endOffset = i;
+				curr.endLine = getLineNum(i,eoffsets);
 			}
 			s.pop();
 		}
 		return ret;
 	}
-	
-	
-	public class LispComment {
- 		public int offset = 0;
- 		public int endOffset = 0;
- 		public String value = "";
- 		
- 		public LispComment() {
- 		}
- 		
- 		public LispComment(String val, int offset,int endOffset) {
- 			value = val;
- 			this.offset = offset;
- 			this.endOffset = endOffset;
- 		}		
- 	}
-
 	
 }
