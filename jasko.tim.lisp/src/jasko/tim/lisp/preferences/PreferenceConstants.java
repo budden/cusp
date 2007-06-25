@@ -24,6 +24,7 @@ public interface PreferenceConstants {
 	public static final String MANAGE_PACKAGES = "managePackages";
 	public static final String CONSOLE_COMPILER_LOG = "consoleCompilerLog";
 	public static final String SYSTEMS_PATH = "systemsPath";
+	public static final String USE_ASD_BASED_BUILD = "useAsdBasedBuild";
 
 	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";	
 	public static final String PAIR_SMART_BRACKETS = "pairSmartBrackets";	

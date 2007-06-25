@@ -46,6 +46,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 		}
         
 		store.setDefault(MANAGE_PACKAGES, true);
+		store.setDefault(USE_ASD_BASED_BUILD, false);
 
         store.setDefault(PAIR_EDIT_BRACKETS, false);
         store.setDefault(PAIR_SMART_BRACKETS, false);

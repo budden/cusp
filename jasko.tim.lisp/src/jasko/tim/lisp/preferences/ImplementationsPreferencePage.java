@@ -59,6 +59,9 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 		addField(new BooleanFieldEditor(PreferenceConstants.MANAGE_PACKAGES, 
 				"Use Cusp to Manage Packages (requires Lisp restart)", getFieldEditorParent()));
 
+		addField(new BooleanFieldEditor(PreferenceConstants.USE_ASD_BASED_BUILD, 
+				"Use Asd based autobuild", getFieldEditorParent()));
+
 		addField(new BooleanFieldEditor(PreferenceConstants.CONSOLE_COMPILER_LOG, 
 				"Write compiler log to Console", getFieldEditorParent()));		
 	}
