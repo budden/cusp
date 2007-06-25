@@ -23,9 +23,70 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	public static final String BUILDER_ID = "jasko.tim.lisp.lispBuilder";
 	public static final String MARKER_TYPE = "jasko.tim.lisp.lispProblem";
 	public static final String TASK_MARKER_TYPE = "jasko.tim.lisp.lispTask";
-	public static final String COMPILE_PROBLEM_MARKER = "jasko.tim.lisp.lispCompile";	
-
-	class SampleDeltaVisitor implements IResourceDeltaVisitor {
+	public static final String COMPILE_PROBLEM_MARKER = "jasko.tim.lisp.lispCompile";
+	
+	private ArrayList<IFile> asdFiles = null;
+	private ArrayList<ArrayList<String>> filesInAsd = null;
+	private boolean[] doAsdLoad = null;
+	
+	private void initAsdFiles(){
+		try{
+			asdFiles = new ArrayList<IFile>();
+			filesInAsd = new ArrayList<ArrayList<String>>();
+			for( IResource resource : getProject().members() ){
+				if(resource.getType() == IResource.FILE){
+					IFile file = (IFile)resource;
+					if(file.getFileExtension().equalsIgnoreCase("asd")){
+						asdFiles.add(file);
+						filesInAsd.add(getFilesInAsd(file));
+					}
+				}
+			}
+			doAsdLoad = new boolean[asdFiles.size()];
+			return;
+		} catch (CoreException e) {
+			return;
+		}
+	}
+	
+	private ArrayList<String> getFilesInAsd(IFile asdFile){
+		ArrayList<String> res = new ArrayList<String>();
+		LispNode code = LispParser.parse(asdFile);
+		for( LispNode node: code.params ){
+			if( node.car().value.equalsIgnoreCase("defsystem") ){
+				for( LispNode subnode : node.getf(":components").params )
+				{
+					if( subnode.car().value.equalsIgnoreCase(":file")){
+						res.add(subnode.cadr().value); //probably cannot handle files in subfolders
+					}
+				}
+			}
+		}
+		return res;
+	}
+	
+	//assumes that file is in same folder as asd
+	private IFile getAsdForFile(IFile file){
+		if( asdFiles == null || file == null){
+			return null;
+		} else {
+			String ext = file.getFileExtension();
+			if( ext.equalsIgnoreCase("lisp") || ext.equalsIgnoreCase("cl")){
+				String name = file.getName();
+				name = name.substring(0, name.length()-1-(ext.length()+1));
+				for(int i = 0; i < asdFiles.size(); ++i){
+					for(String filename: filesInAsd.get(i)){
+						if(filename.equalsIgnoreCase(name)){
+							return asdFiles.get(i);
+						}
+					}
+				}
+			}
+			return null;
+		}
+	}
+	
+	class LispDeltaVisitor implements IResourceDeltaVisitor {
 
 		public boolean visit(IResourceDelta delta) throws CoreException {
 			IResource resource = delta.getResource();
@@ -53,7 +114,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
-	class SampleResourceVisitor implements IResourceVisitor {
+	class LispResourceVisitor implements IResourceVisitor {
 		public boolean visit(IResource resource) {
 			if (resource.isAccessible()){
 				if (resource instanceof IFile && checkLisp((IFile)resource)){
@@ -70,6 +131,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 
 	protected IProject[] build(int kind, Map args, IProgressMonitor monitor)
 			throws CoreException {
+		initAsdFiles();
 		if (kind == FULL_BUILD) {
 			fullBuild(monitor);
 		} else {
@@ -87,7 +149,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	protected void fullBuild(final IProgressMonitor monitor)
 		throws CoreException {
 		try {
-			getProject().accept(new SampleResourceVisitor());
+			getProject().accept(new LispResourceVisitor());
 		} catch (CoreException e) {
 		}
 	}
@@ -96,60 +158,10 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	protected void incrementalBuild(IResourceDelta delta,
 		IProgressMonitor monitor) throws CoreException {
 		// the visitor does the work.
-		delta.accept(new SampleDeltaVisitor());
+		delta.accept(new LispDeltaVisitor());
 	}
+	
 
-	private static void addMarker(IFile file, String message, int lineNumber, int severity) {
-		if( file == null ){
-			return;
-		}
-		try {
-			IMarker marker = file.createMarker(MARKER_TYPE);
-			//marker.setAttribute(IMarker.CHAR_START, charOffset);
-			//marker.setAttribute(IMarker.CHAR_END, charOffset + 1);
-			marker.setAttribute(IMarker.MESSAGE, message);
-			marker.setAttribute(IMarker.SEVERITY, severity);
-			if (lineNumber == -1) {
-				lineNumber = 1;
-			}
-			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private static void deleteMarkers(IFile file) {
-		if( file == null ){
-			return;
-		}
-		try {
-			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
-			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
-		} catch (CoreException ce) {
-		}
-	}
-
-	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd, String pkg){
-		if( file == null ){
-			return;
-		}
-		Map<String, Object> attr = new HashMap<String, Object>();
-		attr.put(IMarker.CHAR_START, offsetStart);
-		attr.put(IMarker.CHAR_END, offsetEnd+1);
-		
-		attr.put(IMarker.MESSAGE, "Package "+ pkg + " is not loaded");
-		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
-		try {
-			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * call checkLisp before calling this function to see if can compile file
-	 *
-	 */
 	public static void compileFile(IFile file){
 		if( file == null ){
 			return;
@@ -241,6 +253,77 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
+	private static void deleteMarkers(IFile file) {
+		if( file == null ){
+			return;
+		}
+		try {
+			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
+			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
+		} catch (CoreException ce) {
+		}
+	}
+
+	private static void addMarker(IFile file, String message, int lineNumber, int severity) {
+		if( file == null ){
+			return;
+		}
+		try {
+			IMarker marker = file.createMarker(MARKER_TYPE);
+			//marker.setAttribute(IMarker.CHAR_START, charOffset);
+			//marker.setAttribute(IMarker.CHAR_END, charOffset + 1);
+			marker.setAttribute(IMarker.MESSAGE, message);
+			marker.setAttribute(IMarker.SEVERITY, severity);
+			if (lineNumber == -1) {
+				lineNumber = 1;
+			}
+			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void addParenMarker(IFile file, int offset, 
+			int lineNum, boolean unmatchedOpen){
+		if( file == null ){
+			return;
+		}
+		Map<String, Object> attr = new HashMap<String, Object>();
+		attr.put(IMarker.CHAR_START, offset);
+		attr.put(IMarker.CHAR_END, offset+1);
+		
+		if(unmatchedOpen){
+			attr.put(IMarker.MESSAGE, "Unmatched open parenthesis.");			
+		} else {
+			attr.put(IMarker.MESSAGE, "Unmatched closing parenthesis.");
+		}
+		attr.put(IMarker.LINE_NUMBER, lineNum);
+		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
+		try {
+			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd, String pkg){
+		if( file == null ){
+			return;
+		}
+		Map<String, Object> attr = new HashMap<String, Object>();
+		attr.put(IMarker.CHAR_START, offsetStart);
+		attr.put(IMarker.CHAR_END, offsetEnd+1);
+		
+		attr.put(IMarker.MESSAGE, "Package "+ pkg + " is not loaded");
+		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
+		try {
+			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	
 	private static boolean checkPackageDependence(LispNode code, IFile file){
 		if( file == null ){
@@ -341,57 +424,27 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	public static boolean checkLisp(IFile resource) {
-		if( !(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")
-						|| resource.getName().endsWith(".cl"))) {
+	private static boolean checkParenBalancing(IFile file){
+		if( !(file.getFileExtension().equalsIgnoreCase("lisp") 
+				|| file.getFileExtension().equalsIgnoreCase("el")
+				|| file.getFileExtension().equalsIgnoreCase("cl"))) {
 			return false;
 		} else {
-			
 			try {
-				IFile file = (IFile) resource;
-				deleteMarkers(file);
-				System.out.println("*builder");
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(file.getContents()));
-				StringBuilder sb = new StringBuilder();
-				String line = reader.readLine();
-				int numLines = 0;
-				while (line != null) {
-					sb.append(line);
-					sb.append('\n');
-					line = reader.readLine();
-					++numLines;
-				}
-				LispParser parser = new LispParser();
-				LispNode code = parser.parseCode(sb.toString());
-				// check parens
-				System.out.println("*parens:" + parser.parenBalance);
-				if (parser.parenBalance > 0) {
-					addMarker(file, parser.parenBalance + " more closing parentheses needed.",
-							numLines, IMarker.SEVERITY_ERROR);
-				} else if (parser.parenBalance < 0) {
-					addMarker(file, -parser.parenBalance + " more opening parentheses needed.",
-							numLines, IMarker.SEVERITY_ERROR);
-				}
-				
-				return (checkPackageDependence(code,file) && (parser.parenBalance == 0));
-			} catch (Exception e) {
-				e.printStackTrace();
-				return false;
-			}
-			/*
+				boolean res = true;
 				int open = 0;
 				int close = 0;
 				int lineNum = 1;
 				int charOffset = 0;
+								
+				boolean inQuotes = false;
+				boolean inComment = false;
+				ArrayList<int[]> parenData = new ArrayList<int[]>();
 				
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(file.getContents()));
-				
 				String line = reader.readLine();
-				boolean inQuotes = false;
-				boolean inComment = false;
-				while (line != null) {
+				while (line != null) {				
 					for (int i=0; i<line.length(); ++i) {
 						if (inComment) {
 							int endComment = line.indexOf("|#", i);
@@ -400,30 +453,31 @@ public class LispBuilder extends IncrementalProjectBuilder {
 								i = endComment;
 								inComment = false;
 							} else {
+								charOffset += line.length() - i;
+								i = line.length();
 								break;
 							}
 						}
 						char c = line.charAt(i);
-						if (c == '(' && !inQuotes) {
+						if (c == '(' && !inQuotes && !(i > 0 && line.charAt(i-1) == '\\')) {
 							++open;
-						} else if (c == ')' && !inQuotes) {
+							parenData.add(new int[]{1,charOffset, lineNum});
+						} else if (c == ')' && !inQuotes && !(i > 0 && line.charAt(i-1) == '\\')) {
 							++close;
+							parenData.add(new int[]{-1,charOffset,lineNum});
 							if (close > open) {
 								// reset everything so we don't throw off the rest of the matching
 								close = open;
-								addMarker(file, "Unmatched closing parenthesis.",
-										lineNum, charOffset, IMarker.SEVERITY_ERROR);
+								res = false;
+								addParenMarker(file, charOffset, lineNum, false);
 							} // if
-						} else if (c == ';' && !inQuotes) {
+						} else if (c == ';' && !inQuotes && !(i > 0 && line.charAt(i-1) == '\\')) {
+							charOffset += line.length() - i;
 							i = line.length();
 							break;
-						} else if (c == '"') {
-							if (inQuotes) {
-								inQuotes = false;
-							} else {
-								inQuotes = true;
-							}
-						} else if (c == '#') {
+						} else if (c == '"' && !(i > 0 && line.charAt(i-1) == '\\')) {
+							inQuotes = !inQuotes;
+						} else if (c == '#' && !(i > 0 && line.charAt(i-1) == '\\')) {
 							if (i+1 < line.length()) {
 								if (line.charAt(i+1) == '|') {
 									inComment = true;
@@ -434,18 +488,50 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					} // for i
 					
 					++lineNum;
-					line = reader.readLine();
 					++charOffset;
-				} // while
-				if (open > close) {
-					addMarker(file, (open-close) + " more closing parentheses needed.",
-							lineNum-1,charOffset, IMarker.SEVERITY_ERROR);
+					line = reader.readLine();
 				}
-			} catch (CoreException e) {
+				if (open > close) { //go backwards
+					open = 0;
+					close = 0;
+					for(int k = parenData.size() - 1; k >= 0; --k){
+						if( parenData.get(k)[0] == -1 ) {//close
+							++close;
+						} else {
+							++open;
+							if(open>close){
+								// reset everything so we don't throw off the rest of the matching
+								open = close;
+								addParenMarker(file,parenData.get(k)[1],parenData.get(k)[2],true);
+							}
+						}
+					} //for k
+					res = false;
+				}
+				return res;
+			} catch (Exception e) {
 				e.printStackTrace();
-			} catch (IOException e) {
+				return false;
+			}			
+		}
+	}
+
+	
+	public static boolean checkLisp(IFile resource) {
+		if( !(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")
+						|| resource.getName().endsWith(".cl"))) {
+			return false;
+		} else {
+			
+			try {
+				IFile file = (IFile) resource;
+				deleteMarkers(file);
+				System.out.println("*builder");
+				return (checkParenBalancing(file) && checkPackageDependence(LispParser.parse(file),file));
+			} catch (Exception e) {
 				e.printStackTrace();
-			}*/
+				return false;
+			}
 		}
 	}
 }
