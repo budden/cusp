@@ -2,10 +2,12 @@ package jasko.tim.lisp.editors.outline;
 
 import jasko.tim.lisp.*;
 import jasko.tim.lisp.editors.*;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
 
 import java.util.*;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.action.*;
@@ -28,6 +30,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		Alpha,
 		Type
 	}
+	
 	Sort sort = Sort.Position;
 	IAction sortType;
 	IAction sortAlpha;
@@ -39,6 +42,42 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	
 	public LispOutlinePage(LispEditor editor) {
 		this.editor = editor;
+		sort = getDefaultSort();
+	}
+	
+	private Sort getDefaultSort() {
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+		int sortInt = prefs.getInt(PreferenceConstants.OUTLINE_SORT);
+		switch (sortInt) {
+		case 0:
+			return Sort.Alpha;
+		case 1:
+			return Sort.Position;
+		case 2:
+			return Sort.Type;
+		default:
+			return Sort.Alpha;	
+		}
+	}
+	
+	private void setDefaultSort() {
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+		//System.out.println("######" + sort);
+		int sortInt = 0;
+		switch(sort) {
+		case Alpha:
+			sortInt = 0;
+			break;
+		case Position:
+			sortInt = 1;
+			break;
+		case Type:
+			sortInt = 2;
+			break;
+		}
+		
+		prefs.setValue(PreferenceConstants.OUTLINE_SORT, sortInt);
+		
 	}
 	
 	public void makeContributions(IMenuManager menuMgr,
@@ -48,6 +87,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		sortAlpha = new Action("Sort by name") {
 			public void run() {
 				sort = Sort.Alpha;
+				setDefaultSort();
 				this.setChecked(true);
 				sortType.setChecked(false);
 				sortPosition.setChecked(false);
@@ -57,13 +97,18 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		};
 		sortAlpha.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.SORT_ALPHA));
-		sortAlpha.setChecked(false);
+		if (sort == Sort.Alpha) {
+			sortAlpha.setChecked(true);
+		} else {
+			sortAlpha.setChecked(false);
+		}
 		sortAlpha.setToolTipText("Sort by name");
 		
 		
 		sortType = new Action("Sort by type") {
 			public void run() {
 				sort = Sort.Type;
+				setDefaultSort();
 				this.setChecked(true);
 				sortAlpha.setChecked(false);
 				sortPosition.setChecked(false);
@@ -73,12 +118,17 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		};
 		sortType.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.SORT_TYPE));
-		sortType.setChecked(false);
+		if (sort == Sort.Type) {
+			sortType.setChecked(true);
+		} else {
+			sortType.setChecked(false);
+		}
 		sortType.setToolTipText("Sort by type");
 		
 		sortPosition = new Action("Sort by position") {
 			public void run() {
 				sort = Sort.Position;
+				setDefaultSort();
 				this.setChecked(true);
 				sortType.setChecked(false);
 				sortAlpha.setChecked(false);
@@ -88,7 +138,11 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		};
 		sortPosition.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.SORT_POSITION));
-		sortPosition.setChecked(true);
+		if (sort == Sort.Position) {
+			sortPosition.setChecked(true);
+		} else {
+			sortPosition.setChecked(false);
+		}
 		sortPosition.setToolTipText("Sort by position");
 
 		toolBarMgr.add(sortPosition);
