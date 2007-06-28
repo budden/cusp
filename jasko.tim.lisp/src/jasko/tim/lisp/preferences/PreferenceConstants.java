@@ -43,4 +43,6 @@ public interface PreferenceConstants {
     public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";
     public static final String REPL_INSPECTABLE_FG_COLOR = "REPLInspectableColorFG";
     public static final String REPL_INSPECTABLE_UNDERLINE = "REPLInspectableUnderline";
+    
+    public static final String OUTLINE_SORT = "OutlineSort";
 }

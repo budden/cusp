@@ -8,7 +8,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.graphics.RGB;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.ColorManager;;
+import jasko.tim.lisp.ColorManager;
 
 /**
  * Class used to initialize default preference values.
@@ -62,6 +62,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
         store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);
+        
+        store.setDefault(OUTLINE_SORT, 0);
 	}
 
 	/**
