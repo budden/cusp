@@ -18,7 +18,7 @@ public class ProfileFunctionAction extends LispAction {
 		String symbol = getSymbol();
 		
 		if (!symbol.equals("")) {
-			getSwank().sendToggleProfileFunction(symbol, editor.getPackage(), new SwankRunnable() {
+			getSwank().sendToggleProfileFunction(symbol, getPackage(), new SwankRunnable() {
 				public void run() {
 					editor.showPopupInfo(result.getf(":return").getf(":ok").value);
 				}

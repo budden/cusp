@@ -100,7 +100,7 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 			if ( doGetDocs ){
 				String usepkg = null;
 				if(editor != null){
-					usepkg = editor.getPackage();
+					usepkg = LispUtil.getPackage(viewer.getDocument().get(),offset);
 				}
 				String[][] results = swank.getCompletionsAndDocs(variable, usepkg, TIMEOUT, nn);
 				if (results[0].length == 1) {
@@ -136,7 +136,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				
 			} else {
 				String[] results = (editor != null ?
-						LispPlugin.getDefault().getSwank().getCompletions(variable, editor.getPackage(), TIMEOUT) :
+						LispPlugin.getDefault().getSwank().getCompletions(variable, 
+								LispUtil.getPackage(viewer.getDocument().get(),offset), TIMEOUT) :
 						LispPlugin.getDefault().getSwank().getCompletions(variable, TIMEOUT));
 				//System.out.println("*results received");
 				// Displaying a completion for something that is already complete is dumb.
@@ -204,7 +205,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				
 				if (editor != null) {
 					info = LispPlugin.getDefault().getSwank()
-						.getMakeInstanceArglist(className, editor.getPackage(), TIMEOUT);
+						.getMakeInstanceArglist(className, 
+								LispUtil.getPackage(viewer.getDocument().get(),offset), TIMEOUT);
 				} else {
 					info = LispPlugin.getDefault().getSwank()
 						.getMakeInstanceArglist(className, TIMEOUT);
@@ -218,7 +220,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				
 				if (editor != null) {
 					info = LispPlugin.getDefault().getSwank()
-						.getSpecialArglist("defmethod", arg0, editor.getPackage(), TIMEOUT);
+						.getSpecialArglist("defmethod", arg0, 
+								LispUtil.getPackage(viewer.getDocument().get(),offset), TIMEOUT);
 				} else {
 					info = LispPlugin.getDefault().getSwank()
 						.getSpecialArglist("defmethod", arg0, TIMEOUT);
@@ -236,8 +239,10 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				info = swank.getArglist(function, 3000);
 				docString = swank.getDocumentation(function, 1000);
 			} else {
-				info = swank.getArglist(function, 3000, editor.getPackage());
-				docString = swank.getDocumentation(function, editor.getPackage(), 1000);
+				info = swank.getArglist(function, 3000, 
+						LispUtil.getPackage(viewer.getDocument().get(),offset));
+				docString = swank.getDocumentation(function, 
+						LispUtil.getPackage(viewer.getDocument().get(),offset), 1000);
 			}
 			if (!docString.equals("")) {
 				String[] lines = docString.split("\n");

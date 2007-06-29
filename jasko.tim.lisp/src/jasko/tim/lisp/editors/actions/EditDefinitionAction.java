@@ -21,7 +21,7 @@ public class EditDefinitionAction extends LispAction {
 		String symbol = getSymbol();
 		
 		if (!symbol.equals("")) {
-			getSwank().sendFindDefinitions(symbol, editor.getPackage(), new OpenDefinitionRunnable(symbol));
+			getSwank().sendFindDefinitions(symbol, getPackage(), new OpenDefinitionRunnable(symbol));
 		}
 		
 	}

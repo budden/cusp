@@ -32,7 +32,7 @@ public class UndefineFunctionAction extends LispAction {
 		});
 		
 		if (win.open() == InputDialog.OK && !win.getValue().equals("")) {
-			swank.sendUndefine(win.getValue(), editor.getPackage(), null);
+			swank.sendUndefine(win.getValue(), getPackage(), null);
 		}
 	}
 

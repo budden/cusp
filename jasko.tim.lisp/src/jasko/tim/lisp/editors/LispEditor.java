@@ -11,9 +11,11 @@ import jasko.tim.lisp.ColorManager.ColorChangeEvent;
 import jasko.tim.lisp.editors.actions.IndentAction;
 import jasko.tim.lisp.editors.assist.LispInformationControlManager;
 import jasko.tim.lisp.editors.outline.LispOutlinePage;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.util.LispUtil;
+import jasko.tim.lisp.builder.LispBuilder;
 
 import java.util.Iterator;
 import java.util.HashMap;
@@ -24,14 +26,15 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.text.Position;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.text.source.projection.ProjectionSupport;
 import org.eclipse.jface.text.source.projection.ProjectionViewer;
+import org.eclipse.jface.text.DefaultPositionUpdater;
+import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
@@ -46,7 +49,11 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private ColorManager.ChangeEventListener colorPrefChangeListener;
     private final LispConfiguration config = new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
     
-    private final CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
+    private final CurrentExpressionHighlightingListener highlighter = 
+    	new CurrentExpressionHighlightingListener();
+    
+    private final String CHANGED_POS_CATEGORY = "jasko.tim.lisp.doc.change";
+    private boolean useAutoBuild = false;
     
     /**
      * Returns IFile associated with this editor
@@ -86,7 +93,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
     	//TODO: this code is almost duplicated in ReplView
 		ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
 		int offset = ts.getOffset();
-		IDocument doc = getDocumentProvider().getDocument(getEditorInput());
+		IDocument doc = getDocument();
 		
 		String identifier = LispUtil.getCurrentFullWord(doc, offset);
 		identifier = identifier.replace("'", "");
@@ -210,6 +217,22 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	
 	private ProjectionSupport projectionSupport;
 	private ProjectionAnnotationModel projectionAnnotationModel;
+
+	private class changesListener implements IDocumentListener{
+		public void documentAboutToBeChanged(DocumentEvent event){
+		}
+		
+		public void documentChanged(DocumentEvent event){
+			if(useAutoBuild){
+				try{
+					event.fDocument.addPosition(CHANGED_POS_CATEGORY, 
+						new Position(event.fOffset,event.fText.length()));
+				} catch (Exception e){
+					e.printStackTrace();				
+				}	
+			}
+		}
+	}
 	
 	public void createPartControl(Composite parent) {
 		super.createPartControl(parent);
@@ -228,6 +251,12 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
 		licm = new LispInformationControlManager(this);
 		licm.install(this.getSourceViewer().getTextWidget());
+
+		IDocument doc = getDocument();
+		doc.addPositionCategory(CHANGED_POS_CATEGORY);
+		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_CATEGORY));
+		doc.addDocumentListener(new changesListener());
+		useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_AUTO_BUILD);
 	}
 	
 	
@@ -400,6 +429,27 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			outline.update(contents);
 			updateTasks();
 			//updateFolding(contents); TODO: change outline in same way as folding now
+			boolean oldAutoBuild = useAutoBuild;
+			useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_AUTO_BUILD);
+			//If use autobuild, remove changed positions after file is compiled in LispBuilder
+			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
+				doc.removePositionCategory(CHANGED_POS_CATEGORY);
+				doc.addPositionCategory(CHANGED_POS_CATEGORY);
+			}
+			if( useAutoBuild ){
+				Position[] pos = doc.getPositions(CHANGED_POS_CATEGORY);
+				if( pos == null || pos.length == 0 ){ //compile whole file
+					LispBuilder.deleteMarkers(getIFile());
+					boolean parens = LispBuilder.checkParenBalancing(getIFile());
+					LispNode code = LispParser.parse(getIFile());
+					boolean pack = LispBuilder.checkPackageDependence(code, getIFile());
+					if( parens && pack ){
+						LispBuilder.compileFile(getIFile());
+					}
+				} else {
+					
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -476,32 +526,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	 */
 	public IDocument getDocument() {
 		return getDocumentProvider().getDocument(getEditorInput());
-	}
-	
-	private String inPackage = ")"; //impossible
-	
-	// updated by LispReconcilingStrategy
-	public void setPackage(String str){
-		inPackage = str;
-	}
-	
-	public String getPackage() {
-		if ( inPackage.equals(")") ) {
-			LispNode contents = LispParser.parse(getDocument().get() + "\n");
-			for (int i=0; i<contents.params.size(); ++i) {
-				LispNode sexp = contents.params.get(i);
-				
-				if (sexp.get(0).value.equalsIgnoreCase("in-package") ||
-						sexp.get(0).value.equalsIgnoreCase("defpackage")) {
-					inPackage = sexp.get(1).value;
-				}
-			}
-		}
-		if ( inPackage.equals(")") ) {
-			inPackage = "";
-		}
-
-		return inPackage;
 	}
 	
 	

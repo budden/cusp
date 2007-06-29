@@ -18,7 +18,6 @@ import org.eclipse.swt.widgets.Display;
 public class LispReconcilingStrategy implements IReconcilingStrategy,
 		IReconcilingStrategyExtension {
 
-	private String finPackage;
 	private LispEditor editor;
 
 	private IDocument fDocument;
@@ -102,12 +101,11 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 	protected void calculatePositions() {
 		if(editor != null){
 			fPositions.clear();
-			finPackage = "";
 			try {
 				//System.out.printf("%s\n", editor.getDocument().get(fOffset, fRangeEnd - fOffset)	+ "\n");
 				LispNode contents = 
 					LispParser.parse(editor.getDocument().get(fOffset, fRangeEnd - fOffset)	+ "\n");
-				finPackage = getTokens(contents,fOffset,fRangeEnd);
+				getTokens(contents,fOffset,fRangeEnd);
 			} catch (BadLocationException e) {
 				e.printStackTrace();
 			}
@@ -119,7 +117,6 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 			public void run() {
 				if(editor != null){
 					editor.updateFoldingStructure(fPositions,fLastSection);
-					editor.setPackage(finPackage);					
 				}
 			}
 		});

@@ -21,7 +21,7 @@ public class FindCalleesAction extends LispAction {
 	public void run() {
 		String symbol = getSymbol();
 		
-		getSwank().sendGetCallees(symbol, editor.getPackage(), new SwankRunnable() {
+		getSwank().sendGetCallees(symbol, getPackage(), new SwankRunnable() {
 			public void run() {
 				LispNode guts = result.getf(":return").getf(":ok");
 				

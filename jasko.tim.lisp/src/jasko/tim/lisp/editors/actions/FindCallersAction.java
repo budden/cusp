@@ -20,7 +20,7 @@ public class FindCallersAction extends LispAction {
 	public void run() {
 		String symbol = getSymbol();
 		
-		getSwank().sendGetCallers(symbol, editor.getPackage(), new SwankRunnable() {
+		getSwank().sendGetCallers(symbol, getPackage(), new SwankRunnable() {
 			public void run() {
 				LispNode guts = result.getf(":return").getf(":ok");
 				
