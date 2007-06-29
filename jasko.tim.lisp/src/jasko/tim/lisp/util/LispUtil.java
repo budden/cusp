@@ -484,4 +484,26 @@ public class LispUtil {
     	}
     	return res;
     }
+    
+    // get package definition closest to offset
+	public static String getPackage(String code, int offset){
+		LispNode contents = LispParser.parse(code + "\n");
+		String res = "";
+		for (int i=0; i<contents.params.size(); ++i) {
+			LispNode sexp = contents.params.get(i);
+			
+			if(sexp.offset >= offset){
+				return res;
+			}
+			
+			if (sexp.get(0).value.equalsIgnoreCase("in-package") ||
+					sexp.get(0).value.equalsIgnoreCase("defpackage")) {
+				res = sexp.get(1).value;
+			}
+		}
+		
+		return res;
+	}
+
+
 }

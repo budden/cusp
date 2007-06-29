@@ -30,8 +30,9 @@ public class FileCompiler {
 			
 			SwankInterface swank = LispPlugin.getDefault().getSwank();
 			String fileName = file.getName();
-			String filePath = file.getPath().toString().replace(fileName, "");
-			swank.sendCompileString(exp, fileName, filePath, topLevelOffset, editor.getPackage(), 
+			String filePath = file.getPath().toString().replace(fileName, ""); //TODO: this will not behave well for c:\my-lisp.lisp\my-lisp.lisp file
+			swank.sendCompileString(exp, fileName, filePath, topLevelOffset, 
+					LispUtil.getPackage(editor.getDocumentProvider().getDocument(editor.getEditorInput()).get(),topLevelOffset), 
 					new LispBuilder.CompileListener(file.getFile()));
 			
 			if (switchToRepl) {

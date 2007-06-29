@@ -17,7 +17,7 @@ public class DisassembleAction extends LispAction {
 	public void run() {
 		String sym = getSymbol();
 
-		LispPlugin.getDefault().getSwank().sendDisassemble(sym, editor.getPackage(),
+		LispPlugin.getDefault().getSwank().sendDisassemble(sym, getPackage(),
 				new SwankRunnable() {
 			public void run() {
 				String assembly = result.getf(":return").getf(":ok").value;

@@ -63,7 +63,8 @@ public class LispHyperlinkDetector implements IHyperlinkDetector {
 			}
 			else {
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				haveDefinition = swank.haveDefinitions(function, editor.getPackage(), TIMEOUT);
+				haveDefinition = swank.haveDefinitions(function, 
+						LispUtil.getPackage(doc.get()+"\n",range[0]), TIMEOUT);
 			}
 		}
 		if( haveDefinition ) {

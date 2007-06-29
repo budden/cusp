@@ -1,7 +1,6 @@
 package jasko.tim.lisp.builder;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 
 public class LispBuilder extends IncrementalProjectBuilder {
@@ -29,9 +27,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	
 	private ArrayList<IFile> asdFiles = null;
 	private ArrayList<ArrayList<String>> filesInAsd = null;
-	private boolean[] canLoadAsd = null;
-	private boolean[] asdHasModDependents = null;
-	boolean asdBasedBuild = false;
 	
 	private void initAsdFiles(){
 		try{
@@ -45,12 +40,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 						filesInAsd.add(getFilesInAsd(file));
 					}
 				}
-			}
-			canLoadAsd = new boolean[asdFiles.size()];
-			asdHasModDependents = new boolean[asdFiles.size()];
-			for( int i = 0; i < asdFiles.size(); ++i ){
-				canLoadAsd[i] = true;
-				asdHasModDependents[i] = false;
 			}
 			return;
 		} catch (CoreException e) {
@@ -95,14 +84,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	private int getAsdIndex(IFile asd){
-		if( asdFiles == null || asdFiles.contains(asd)){
-			return -1;
-		} else {
-			return asdFiles.indexOf(asd);
-		}
-	}
-	
 	class LispDeltaVisitor implements IResourceDeltaVisitor {
 
 		public boolean visit(IResourceDelta delta) throws CoreException {
@@ -120,22 +101,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					break;
 				case IResourceDelta.CHANGED:
 					// handle changed resource
-					if(asdBasedBuild){
-						int ind = getAsdIndex(getAsdForFile((IFile)resource));
-						if( ind < 0){
-							if ( checkLisp((IFile)resource) ){
-								compileFile((IFile)resource);
-							}						
-						} else {
-							if ( !checkLispForAsd((IFile)resource) ){
-								canLoadAsd[ind] = false;
-							}
-							asdHasModDependents[ind] = true;
-						}						
-					} else {
-						if ( checkLisp((IFile)resource) ){
-							compileFile((IFile)resource);
-						}						
+					if ( checkLisp((IFile)resource) ){
+						compileFile((IFile)resource);
 					}
 					break;
 				}
@@ -149,23 +116,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		public boolean visit(IResource resource) {
 			if (resource.isAccessible()){
 				if (resource instanceof IFile && checkLisp((IFile)resource)){
-					if(asdBasedBuild){
-						int ind = getAsdIndex(getAsdForFile((IFile)resource));
-						if( ind < 0){
-							if ( checkLisp((IFile)resource) ){
-								compileFile((IFile)resource);
-							}						
-						} else {
-							if ( !checkLispForAsd((IFile)resource) ){
-								canLoadAsd[ind] = false;
-							}
-							asdHasModDependents[ind] = true;
-						}						
-					} else {
-						if ( checkLisp((IFile)resource) ){
-							compileFile((IFile)resource);
-						}						
-					}
+					compileFile((IFile)resource);
 				}
 				//return true to continue visiting children.
 				return true;
@@ -178,12 +129,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 
 	protected IProject[] build(int kind, Map args, IProgressMonitor monitor)
 			throws CoreException {
-		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-		asdBasedBuild = prefs.getBoolean(PreferenceConstants.USE_ASD_BASED_BUILD);
-
-		if(asdBasedBuild){
-			initAsdFiles();			
-		}
 		if (kind == FULL_BUILD) {
 			fullBuild(monitor);
 		} else {
@@ -194,17 +139,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				incrementalBuild(delta, monitor);
 			}
 		}
-		if(asdBasedBuild){
-			for(int i = 0; i < asdFiles.size(); ++i){
-				IFile file = asdFiles.get(i);
-				int ind = getAsdIndex(file);
-				if( ind >= 0 && canLoadAsd[ind] && asdHasModDependents[ind]){
-					SwankInterface swank = LispPlugin.getDefault().getSwank();
-					swank.sendLoadASDF(file.getLocation().toString(), new LispBuilder.CompileListener(null));				
-				}			
-			}			
-		}
-		
 		return null;
 	}
 
@@ -239,6 +173,23 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}		
 	}
 
+
+//	public synchronized void sendCompileString(String expr, String file, String dir, int offset, String pckg, SwankRunnable callBack) {
+	public static void compileFilePart(IFile file, String expr, int offset){
+		if(expr == null || expr == ""){
+			return;
+		}
+		try{
+			SwankInterface swank = LispPlugin.getDefault().getSwank();
+			String filename = file.getName();
+			String dir = file.getFullPath().toPortableString();
+			
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public static class CompileListener extends SwankRunnable {
  		IFile file;
   		
@@ -316,7 +267,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	private static void deleteMarkers(IFile file) {
+	public static void deleteMarkers(IFile file) {
 		if( file == null ){
 			return;
 		}
@@ -390,7 +341,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 
 
 	
-	private static boolean checkPackageDependence(LispNode code, IFile file){
+	public static boolean checkPackageDependence(LispNode code, IFile file){
 		if( file == null ){
 			return false;
 		}
@@ -489,7 +440,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	private static boolean checkParenBalancing(IFile file){
+	public static boolean checkParenBalancing(IFile file){
 		if( !(file.getFileExtension().equalsIgnoreCase("lisp") 
 				|| file.getFileExtension().equalsIgnoreCase("el")
 				|| file.getFileExtension().equalsIgnoreCase("cl"))) {
@@ -603,23 +554,4 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			}
 		}
 	}
-	
-	public static boolean checkLispForAsd(IFile resource) {
-		if( !(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")
-						|| resource.getName().endsWith(".cl"))) {
-			return false;
-		} else {
-			
-			try {
-				IFile file = (IFile) resource;
-				deleteMarkers(file);
-				System.out.println("*builder");
-				return (checkPackageDependence(LispParser.parse(file),file));
-			} catch (Exception e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-	}
-
 }

@@ -40,12 +40,21 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
 		return LispPlugin.getDefault().getSwank();
 	}
 	
-	protected String getSymbol() {
+	protected int getOffset() {
 		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
 		int offset = ts.getOffset();
+		return offset;
+	}
+	
+	protected String getPackage(){
+		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		return LispUtil.getPackage(doc.get(), getOffset());
+	}
+	
+	protected String getSymbol() {
 		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 		
-		String symbol = LispUtil.getCurrentFullWord(doc, offset);
+		String symbol = LispUtil.getCurrentFullWord(doc, getOffset());
 		symbol = symbol.replace("'", "");
 		symbol = symbol.replace("`", "");
 		
@@ -53,11 +62,9 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
 	}
 	
 	protected String getTopLevel() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
 		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 		
-		return LispUtil.getTopLevelExpression(doc, offset);
+		return LispUtil.getTopLevelExpression(doc, getOffset());
 	}
     
     protected String getCurrentExpression () {
@@ -68,10 +75,8 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
     }
 	
 	protected String getExpression() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
 		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 		
-		return LispUtil.getCurrentFullExpression(doc, offset);
+		return LispUtil.getCurrentFullExpression(doc, getOffset());
 	}
 }

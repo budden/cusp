@@ -36,7 +36,8 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
 		String result = "";
 		if (editor != null) {
-			result = swank.getArglist(function,3000, editor.getPackage());
+			result = swank.getArglist(function,3000, 
+					LispUtil.getPackage(textViewer.getDocument().get(),hoverRegion.getOffset()));
 		} else {
 			result = swank.getArglist(function,3000);
 		}
@@ -44,7 +45,8 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 		if (!result.contains("not available") && !result.equals("nil")) {
 			String docString = "";
 			if (editor != null) {
- 				docString = swank.getDocumentation(function, editor.getPackage(), 1000);
+ 				docString = swank.getDocumentation(function, 
+ 						LispUtil.getPackage(textViewer.getDocument().get(),hoverRegion.getOffset()), 1000);
  			} else {
  				docString = swank.getDocumentation(function, 1000);
  			}

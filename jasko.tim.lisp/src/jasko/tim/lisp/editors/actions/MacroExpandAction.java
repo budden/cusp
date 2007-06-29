@@ -24,7 +24,7 @@ public class MacroExpandAction extends LispAction {
 				String expanded = result.getf(":return").getf(":ok").value;
 				editor.showPopupInfo(expanded);
 			}
-		}, all, editor.getPackage());
+		}, all, getPackage());
 		
 	}
 
