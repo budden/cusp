@@ -25,8 +25,8 @@ public class PairAutoEdit implements IAutoEditStrategy {
 			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
 			if( ("(".equals(c.text) && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS) 
 					&& prefs.getBoolean(PreferenceConstants.PAIR_SMART_BRACKETS) 
-					&& d.getChar(c.offset) == '(')
-			  ||("[".equals(c.text) && d.getChar(c.offset) == '(' 
+					&& d.getLength() > c.offset && d.getChar(c.offset) == '(')
+			  ||("[".equals(c.text) && d.getLength() > c.offset && d.getChar(c.offset) == '(' 
 				  && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACES) )){
 				String txt = "( " + LispUtil.getCurrentExpression(d, c.offset, 0) + ")";
 				c.text = txt;
