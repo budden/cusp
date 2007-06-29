@@ -16,6 +16,7 @@ import org.eclipse.jface.text.*;
 public class LispTextHover implements ITextHover, ITextHoverExtension {
 	String prev = ")"; // impossible value
 	String prevResult = "";
+	int prevOffset = 0;
 	LispEditor editor;
 	
 	public LispTextHover(LispEditor editor) {
@@ -28,9 +29,10 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 	public String getHoverInfo(ITextViewer textViewer, IRegion hoverRegion) {
 		IDocument doc = textViewer.getDocument();
 		String function = LispUtil.getCurrentFullWord(doc, hoverRegion.getOffset());
+		int[] range = LispUtil.getCurrentFullWordRange(doc, hoverRegion.getOffset());
 		if (function.equals("")) {
 			return null;
-		} else if (function.equals(prev)) {
+		} else if (function.equals(prev) && range[0] == prevOffset) {
 			return prevResult;
 		}
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
@@ -57,6 +59,7 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 			// Cache the last result, save some swanking
 			prev = function;
 			prevResult = result;
+			prevOffset = range[0];
 			
 			return result;
 		} else {
