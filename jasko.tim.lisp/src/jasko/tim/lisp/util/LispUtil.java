@@ -504,6 +504,4 @@ public class LispUtil {
 		
 		return res;
 	}
-
-
 }

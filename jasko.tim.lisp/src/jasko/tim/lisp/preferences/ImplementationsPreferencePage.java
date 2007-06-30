@@ -52,12 +52,15 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 				"Path to system definitions:", getFieldEditorParent());
 		String strfTipString = "Top levels. Package manager will search subdirectories.\n Separate directories by ;\n Requires Lisp restart";
 		strf.getLabelControl(getFieldEditorParent()).setToolTipText(strfTipString);
-		strf.getTextControl(getFieldEditorParent()).setToolTipText(strfTipString);
-		
+		strf.getTextControl(getFieldEditorParent()).setToolTipText(strfTipString);		
 		addField(strf);
 		
-		addField(new BooleanFieldEditor(PreferenceConstants.USE_AUTO_BUILD,
-				"Use Eclipse Build", getFieldEditorParent()));
+		addField(new RadioGroupFieldEditor("buildType", "How to handle compilation:", 1, 
+				new String[][] {
+				  { "Compile on Save", PreferenceConstants.USE_AUTO_BUILD },
+				  { "Use Eclipse Autobuild Feature", PreferenceConstants.USE_ECLIPSE_BUILD },
+				  { "Use only Slime Style Build", PreferenceConstants.USE_SLIME_BUILD } 
+				}, getFieldEditorParent()));
 		
 		addField(new BooleanFieldEditor(PreferenceConstants.MANAGE_PACKAGES, 
 				"Use Cusp to Manage Packages (requires Lisp restart)", getFieldEditorParent()));
