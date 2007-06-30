@@ -1,7 +1,5 @@
 package jasko.tim.lisp.editors;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -20,13 +18,14 @@ import jasko.tim.lisp.builder.LispBuilder;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
@@ -431,23 +430,40 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			//updateFolding(contents); TODO: change outline in same way as folding now
 			boolean oldAutoBuild = useAutoBuild;
 			useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_AUTO_BUILD);
-			//If use autobuild, remove changed positions after file is compiled in LispBuilder
+			//If use autobuild is changed from last save, remove all positions
 			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);
 				doc.addPositionCategory(CHANGED_POS_CATEGORY);
 			}
 			if( useAutoBuild ){
-				Position[] pos = doc.getPositions(CHANGED_POS_CATEGORY);
-				if( pos == null || pos.length == 0 ){ //compile whole file
-					LispBuilder.deleteMarkers(getIFile());
-					boolean parens = LispBuilder.checkParenBalancing(getIFile());
-					LispNode code = LispParser.parse(getIFile());
-					boolean pack = LispBuilder.checkPackageDependence(code, getIFile());
-					if( parens && pack ){
-						LispBuilder.compileFile(getIFile());
-					}
-				} else {
-					
+				if( LispBuilder.checkLisp(getIFile()) ){
+					Position[] pos = doc.getPositions(CHANGED_POS_CATEGORY);
+					if( pos == null || pos.length == 0 ){ //compile whole file
+						LispBuilder.compileFile(getIFile(),false);
+					} else { //compile only parts that have changed
+						// TODO: in code below it was assumed - no deletes, no package changes
+						// TODO: also we need to handle the following situation:
+						// suppose have two function definition (defun f () 1) (defun f () 2)
+						// if second definition change to (defun ff () 2) need to recompile also first definition
+						ArrayList<Integer> sexpOffsets = new ArrayList<Integer>();
+						for( Position p: pos){ //TODO: add cache, so that getTopLevelOffset is not called that often
+							for( int i = p.offset; i <= p.offset + p.length; ++i){
+								Integer offset =  new Integer(LispUtil.getTopLevelOffset(doc, i));
+								if( !sexpOffsets.contains(offset) ){
+									sexpOffsets.add(offset);
+								}
+							}
+						}
+						Collections.sort(sexpOffsets);
+						// evaluate all modified sexps
+						// TODO: combine consecutive sexps together
+						for( Integer offset: sexpOffsets){
+							if( offset.intValue() >= 0 ){
+								String sexp = LispUtil.getExpression(doc, offset.intValue());
+								LispBuilder.compileFilePart(getIFile(), sexp, offset.intValue());
+							}
+						}
+					}					
 				}
 			}
 		} catch (Exception e) {

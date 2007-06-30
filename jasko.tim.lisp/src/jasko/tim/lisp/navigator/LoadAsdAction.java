@@ -9,7 +9,6 @@ import org.eclipse.core.resources.*;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.ui.*;
-import org.eclipse.core.resources.IResource;
 
 
 public class LoadAsdAction implements IActionDelegate {
@@ -30,20 +29,9 @@ public class LoadAsdAction implements IActionDelegate {
 			Object obj = ssel.getFirstElement();
 			if (obj instanceof IFile) {
 				IFile file = (IFile) obj;
-				try{
-					file.getParent().deleteMarkers(LispBuilder.MARKER_TYPE, false, IResource.DEPTH_INFINITE);					
-					file.getParent().deleteMarkers(LispBuilder.COMPILE_PROBLEM_MARKER, false, IResource.DEPTH_INFINITE);					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				/*
-				String filePath = file.getLocation().toOSString().replace("\\", "\\\\");
-				String asdName = file.getName().replace(".asd", "");
-				String command = "(progn (load \"" + filePath + "\") (asdf:oos 'asdf:load-op \"" + asdName + "\"))";
-				*/
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				//swank.sendEval(command, null);
-				swank.sendLoadASDF(file.getLocation().toString(), new LispBuilder.CompileListener(null));
+				swank.sendLoadASDF(file.getLocation().toString(), 
+						new LispBuilder.CompileListener(null));
 			}
 		}
 	}

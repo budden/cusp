@@ -59,7 +59,7 @@ public class FileCompiler {
 		IFile file = ((FileEditorInput)editor.getEditorInput()).getFile();
 		boolean cancompile = LispBuilder.checkLisp(file);
 		if(cancompile){
-			LispBuilder.compileFile(file);
+			LispBuilder.compileFile(file,true);
 			if (switchToRepl) {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 				try {

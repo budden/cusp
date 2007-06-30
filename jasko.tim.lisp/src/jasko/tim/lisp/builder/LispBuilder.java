@@ -1,6 +1,7 @@
 package jasko.tim.lisp.builder;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.ui.texteditor.MarkerUtilities;
+
 
 public class LispBuilder extends IncrementalProjectBuilder {
 
@@ -55,7 +57,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				for( LispNode subnode : node.getf(":components").params )
 				{
 					if( subnode.car().value.equalsIgnoreCase(":file")){
-						res.add(subnode.cadr().value); //probably cannot handle files in subfolders
+						res.add(subnode.cadr().value); //TODO: cannot handle files in subfolders
 					}
 				}
 			}
@@ -63,7 +65,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		return res;
 	}
 	
-	//assumes that file is in same folder as asd
+	//TODO: assumes that file is in same folder as asd
 	private IFile getAsdForFile(IFile file){
 		if( asdFiles == null || file == null){
 			return null;
@@ -87,13 +89,16 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	class LispDeltaVisitor implements IResourceDeltaVisitor {
 
 		public boolean visit(IResourceDelta delta) throws CoreException {
+			if(!LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_ECLIPSE_BUILD)){
+				return true;
+			}
 			IResource resource = delta.getResource();
 			if(resource instanceof IFile){
 				switch (delta.getKind()) {
 				case IResourceDelta.ADDED:
 					// handle added resource
 					if ( checkLisp((IFile)resource) ){
-						compileFile((IFile)resource);
+						compileFile((IFile)resource,true);
 					}
 					break;
 				case IResourceDelta.REMOVED:
@@ -102,7 +107,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				case IResourceDelta.CHANGED:
 					// handle changed resource
 					if ( checkLisp((IFile)resource) ){
-						compileFile((IFile)resource);
+						compileFile((IFile)resource,true);
 					}
 					break;
 				}
@@ -115,8 +120,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	class LispResourceVisitor implements IResourceVisitor {
 		public boolean visit(IResource resource) {
 			if (resource.isAccessible()){
+				if(!LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_ECLIPSE_BUILD)){
+					return true;
+				}
 				if (resource instanceof IFile && checkLisp((IFile)resource)){
-					compileFile((IFile)resource);
+					compileFile((IFile)resource,true);
 				}
 				//return true to continue visiting children.
 				return true;
@@ -159,22 +167,24 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	}
 	
 
-	public static void compileFile(IFile file){
+	public static void compileFile(IFile file, boolean makeFasl){
 		if( file == null ){
 			return;
 		}
-		try{
-			SwankInterface swank = LispPlugin.getDefault().getSwank();
-			swank.sendCompileFile(file.getLocation().toString(), 
-					new CompileListener(file));
-			System.out.printf("Compiling %s\n", file.getLocation().toString());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}		
+		if( makeFasl ){
+			try{
+				SwankInterface swank = LispPlugin.getDefault().getSwank();
+				swank.sendCompileFile(file.getLocation().toString(), 
+						new CompileListener(file));
+				System.out.printf("Compiling %s\n", file.getLocation().toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}			
+		} else {
+			compileFilePart(file,LispParser.fileToString(file),0);			
+		}
 	}
 
-
-//	public synchronized void sendCompileString(String expr, String file, String dir, int offset, String pckg, SwankRunnable callBack) {
 	public static void compileFilePart(IFile file, String expr, int offset){
 		if(expr == null || expr == ""){
 			return;
@@ -182,31 +192,61 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		try{
 			SwankInterface swank = LispPlugin.getDefault().getSwank();
 			String filename = file.getName();
-			String dir = file.getFullPath().toPortableString();
-			
+			String dir = file.getLocation().toPortableString();
+			dir = dir.substring(0, dir.length() - filename.length());
+			String pkg = LispUtil.getPackage(LispParser.fileToString(file),offset);
+			swank.sendCompileString(expr, filename, dir, offset, pkg, 
+					new CompileListener(file,offset,expr.length()));
+						
 		} catch (Exception e){
 			e.printStackTrace();
 		}
 	}
 	
 	
+	/**
+	 * This class updates compile markers in source code.
+	 * @author sk
+	 *
+	 */
 	public static class CompileListener extends SwankRunnable {
  		IFile file;
+ 		int offset;
+ 		int length;
   		
  		public CompileListener(IFile file) {
  			this.file = file;
+ 			offset = 0;
+ 			length = 0;
+  		}
+  		
+ 		public CompileListener(IFile file, int offset, int length) {
+ 			this.file = file;
+ 			this.offset = offset;
+ 			this.length = length;
   		}
   		
   		public void run() {
- 			ArrayList<String> files = new ArrayList<String>(); 
- 			if ( file != null ){
+ 			ArrayList<String> files = new ArrayList<String>();
+ 			if ( file != null && length == 0){
  				try {
  					file.deleteMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
  				} catch (CoreException e1) {
  					e1.printStackTrace();
  				}				
+  			} else if ( file != null && length > 0) {
+  				try{
+  					IMarker[] markers = file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
+  					for( IMarker m: markers ){
+  						int moffset = (Integer)m.getAttribute(IMarker.CHAR_START); 
+  						if( moffset >= offset && moffset <= offset + length ){
+  							m.delete();
+  						}
+  					}
+  				} catch (CoreException e1) {
+ 					e1.printStackTrace();
+  				}
   			}
-  			
   			LispNode guts = result.getf(":return").getf(":ok");
  			if (! guts.value.equalsIgnoreCase("nil")) {
  				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
@@ -250,8 +290,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
  								System.out.println(e);
  							}							
   						}
- 					} else if (file.getLocation().toString().replace("\\", "/").equals(fileName)
- 							|| file.getName().equals(buffer)) {						
+ 					} else if ( file.getLocation().toPortableString().equals(fileName)
+ 							|| file.getName().equals(buffer)
+ 							|| file.getLocation().toPortableString().equals(buffer)) {						
   						try {
   							MarkerUtilities.createMarker(file, attr, COMPILE_PROBLEM_MARKER);
   						} catch (CoreException e) {
@@ -547,7 +588,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				IFile file = (IFile) resource;
 				deleteMarkers(file);
 				System.out.println("*builder");
-				return (checkParenBalancing(file) && checkPackageDependence(LispParser.parse(file),file));
+				boolean paren = checkParenBalancing(file);
+				boolean pack = checkPackageDependence(LispParser.parse(file),file);
+				return (paren && pack);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
