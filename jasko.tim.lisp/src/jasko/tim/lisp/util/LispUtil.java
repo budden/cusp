@@ -2,6 +2,7 @@ package jasko.tim.lisp.util;
 
 
 import jasko.tim.lisp.editors.*;
+import jasko.tim.lisp.swank.LispComment;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 
@@ -496,12 +497,73 @@ public class LispUtil {
 				return res;
 			}
 			
-			if (sexp.get(0).value.equalsIgnoreCase("in-package") ||
-					sexp.get(0).value.equalsIgnoreCase("defpackage")) {
+			if (sexp.get(0).value.equalsIgnoreCase("in-package")) {
 				res = sexp.get(1).value;
 			}
 		}
 		
 		return res;
+	}
+	
+	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file){
+		ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>(file.params.size());
+		for (LispNode exp: file.params) {
+			//System.out.println(exp);
+			TopLevelItem item = new TopLevelItem();
+			
+			item.type = exp.get(0).value.toLowerCase();
+			item.name = exp.get(1).toLisp();
+			item.offset = exp.offset;
+			if (! item.type.startsWith("def")) {
+				item.name = item.type;
+				if (item.type.equals("in-package")) {
+					item.name = "in-package " + exp.get(1).toLisp(); 
+				}
+			} else if (item.type.equals("defstruct")) {
+				LispNode name = exp.get(1); 
+				if (!name.value.equals("")) {
+					item.name = name.value;
+				} else {
+					item.name = name.get(0).value;
+				}
+			} else if (item.type.equals("defmethod")) {
+				String name = exp.get(2).toLisp();
+				if (name.startsWith(":")) {
+					item.name += " " + name + " " + exp.get(3).toLisp();
+				} else {
+					item.name += " " + name;
+				}
+			}
+			
+			if (item.name.equals("")) {
+				if (exp.params.size() >= 2) {
+					if (exp.get(1).toLisp().startsWith(":")) {
+						item.name = exp.get(1).toLisp() + " " + exp.get(2).toLisp();
+					} else {
+						item.name = exp.get(1).toLisp();
+					}
+				}
+			}
+			
+			if (! item.name.equals("")) {
+				items.add(item);
+			}
+		}
+		
+		// add section comments
+		for ( LispComment comment: file.comments ) {
+			if ( comment.isSectionComment() ) {
+				TopLevelItem item = new TopLevelItem();
+				
+				item.type = "section";
+				item.name = comment.SectionName();
+				item.offset = comment.offset + LispComment.SECTION_START.length();
+				if (! item.name.equals("")) {
+					items.add(item);
+				}
+			}
+		}
+		
+		return items;
 	}
 }
