@@ -58,7 +58,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
      * Returns IFile associated with this editor
      * @return IFile or null
      */
-    private IFile getIFile(){
+    public IFile getIFile(){
     	IEditorInput input= getEditorInput();
     	IFile original= (input instanceof IFileEditorInput) ?
     	                  ((IFileEditorInput) input).getFile() : null;
@@ -255,7 +255,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		doc.addPositionCategory(CHANGED_POS_CATEGORY);
 		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_CATEGORY));
 		doc.addDocumentListener(new changesListener());
-		useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_AUTO_BUILD);
+		useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
+			.equals(PreferenceConstants.USE_AUTO_BUILD);
 	}
 	
 	
@@ -429,7 +430,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			updateTasks();
 			//updateFolding(contents); TODO: change outline in same way as folding now
 			boolean oldAutoBuild = useAutoBuild;
-			useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_AUTO_BUILD);
+			useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
+				.equals(PreferenceConstants.USE_AUTO_BUILD);
 			//If use autobuild is changed from last save, remove all positions
 			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);

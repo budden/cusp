@@ -27,6 +27,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	public static final String TASK_MARKER_TYPE = "jasko.tim.lisp.lispTask";
 	public static final String COMPILE_PROBLEM_MARKER = "jasko.tim.lisp.lispCompile";
 	
+
+/*	// We ended up not using asd files for incremental build. However these couple of functions
+    // might be usefull for future code handling project management with asd files. So I leave them commented out.
 	private ArrayList<IFile> asdFiles = null;
 	private ArrayList<ArrayList<String>> filesInAsd = null;
 	
@@ -85,29 +88,32 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			return null;
 		}
 	}
+*/
 	
 	class LispDeltaVisitor implements IResourceDeltaVisitor {
 
 		public boolean visit(IResourceDelta delta) throws CoreException {
-			if(!LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_ECLIPSE_BUILD)){
+			if(!LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
+					.equals(PreferenceConstants.USE_ECLIPSE_BUILD)){
 				return true;
 			}
 			IResource resource = delta.getResource();
 			if(resource instanceof IFile){
+				IFile file = (IFile)resource;
 				switch (delta.getKind()) {
 				case IResourceDelta.ADDED:
 					// handle added resource
-					if ( checkLisp((IFile)resource) ){
-						compileFile((IFile)resource,true);
+					if ( checkLisp(file) ){
+						compileFile(file,false);
 					}
 					break;
 				case IResourceDelta.REMOVED:
-					// handle removed resource - TODO: undefine all functions from file before remove
+					// handle removed resource - TODO: undefine all functions from file before remove?
 					break;
 				case IResourceDelta.CHANGED:
 					// handle changed resource
-					if ( checkLisp((IFile)resource) ){
-						compileFile((IFile)resource,true);
+					if ( checkLisp(file) ){
+						compileFile(file,false);
 					}
 					break;
 				}
@@ -120,11 +126,10 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	class LispResourceVisitor implements IResourceVisitor {
 		public boolean visit(IResource resource) {
 			if (resource.isAccessible()){
-				if(!LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.USE_ECLIPSE_BUILD)){
-					return true;
-				}
-				if (resource instanceof IFile && checkLisp((IFile)resource)){
-					compileFile((IFile)resource,true);
+				if(LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
+						.equals(PreferenceConstants.USE_ECLIPSE_BUILD) 
+						&&	(resource instanceof IFile && checkLisp((IFile)resource))	){
+					compileFile((IFile)resource,false);
 				}
 				//return true to continue visiting children.
 				return true;
@@ -319,25 +324,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
-	private static void addMarker(IFile file, String message, int lineNumber, int severity) {
-		if( file == null ){
-			return;
-		}
-		try {
-			IMarker marker = file.createMarker(MARKER_TYPE);
-			//marker.setAttribute(IMarker.CHAR_START, charOffset);
-			//marker.setAttribute(IMarker.CHAR_END, charOffset + 1);
-			marker.setAttribute(IMarker.MESSAGE, message);
-			marker.setAttribute(IMarker.SEVERITY, severity);
-			if (lineNumber == -1) {
-				lineNumber = 1;
-			}
-			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private static void addParenMarker(IFile file, int offset, 
 			int lineNum, boolean unmatchedOpen){
 		if( file == null ){
@@ -379,8 +365,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			e.printStackTrace();
 		}
 	}
-
-
 	
 	public static boolean checkPackageDependence(LispNode code, IFile file){
 		if( file == null ){

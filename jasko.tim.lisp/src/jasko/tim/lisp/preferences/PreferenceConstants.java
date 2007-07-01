@@ -16,7 +16,7 @@ public interface PreferenceConstants {
 	public static final String COLOR_SENT_MESSAGE  = "colorSentMessage";
 	public static final String COLOR_STRINGS       = "colorStrings";
 	public static final String COLOR_SYMBOL        = "colorSymbol";
-	public static final String COLOR_UCW        = "colorUcw";
+	public static final String COLOR_UCW           = "colorUcw";
 
 	public static final String LISP_EXE = "lispExecutable";
 	public static final String LISP_INI = "lispIni";
@@ -27,6 +27,7 @@ public interface PreferenceConstants {
 	public static final String USE_AUTO_BUILD = "useAutoBuild";
 	public static final String USE_ECLIPSE_BUILD = "useEclipseBuild";
 	public static final String USE_SLIME_BUILD = "useSlimeBuild";
+	public static final String BUILD_TYPE = "buildType";
 	public static final String SLIME_TYPE_PACK_EVAL = "slimeTypePackEval";
 
 	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";	

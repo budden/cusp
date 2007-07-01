@@ -46,11 +46,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 		}
         
 		store.setDefault(MANAGE_PACKAGES, true);
-		store.setDefault(USE_AUTO_BUILD, false);
+	/*	store.setDefault(USE_AUTO_BUILD, false);
 		store.setDefault(USE_ECLIPSE_BUILD, true);
 		store.setDefault(USE_SLIME_BUILD, false);
 		store.setDefault(SLIME_TYPE_PACK_EVAL, false);
-				
+	*/			
+		store.setDefault(BUILD_TYPE, USE_ECLIPSE_BUILD);
 		
         store.setDefault(PAIR_EDIT_BRACKETS, false);
         store.setDefault(PAIR_SMART_BRACKETS, false);
