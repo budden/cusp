@@ -12,7 +12,7 @@ import jasko.tim.lisp.editors.outline.LispOutlinePage;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
-import jasko.tim.lisp.util.LispUtil;
+import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.builder.LispBuilder;
 
 import java.util.Iterator;
@@ -45,6 +45,7 @@ import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 public class LispEditor extends TextEditor implements ILispEditor {
 	private LispOutlinePage outline;
+	private ArrayList<TopLevelItem> topForms;
 	private ColorManager.ChangeEventListener colorPrefChangeListener;
     private final LispConfiguration config = new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
     
@@ -257,6 +258,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		doc.addDocumentListener(new changesListener());
 		useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
 			.equals(PreferenceConstants.USE_AUTO_BUILD);
+		topForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()));
 	}
 	
 	
@@ -430,15 +432,30 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			updateTasks();
 			//updateFolding(contents); TODO: change outline in same way as folding now
 			boolean oldAutoBuild = useAutoBuild;
-			useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
-				.equals(PreferenceConstants.USE_AUTO_BUILD);
-			//If use autobuild is changed from last save, remove all positions
+			useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
+			  .getString(PreferenceConstants.BUILD_TYPE).equals(PreferenceConstants.USE_AUTO_BUILD);
+			ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()));
+			//If useAutoBuild has changed from last save, remove all positions
 			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);
 				doc.addPositionCategory(CHANGED_POS_CATEGORY);
 			}
 			if( useAutoBuild ){
 				if( LispBuilder.checkLisp(getIFile()) ){
+					// Undefine removed forms. At the moment functions only.
+/*
+How do I find what forms to remove?
+
+have two lists of forms: old and new.
+
+go over old forms
+ if an old form is not in new forms, set it to be undefined, however:
+ if there are two old forms of same name, same type and in same package
+
+
+
+ */
+					
 					Position[] pos = doc.getPositions(CHANGED_POS_CATEGORY);
 					if( pos == null || pos.length == 0 ){ //compile whole file
 						LispBuilder.compileFile(getIFile(),false);
@@ -447,7 +464,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						// TODO: in code below it was assumed - no deletes
 						// TODO: also we need to handle the following situation:
 						// suppose have two function definition (defun f () 1) (defun f () 2)
-						// if second definition change to (defun ff () 2) need to recompile also first definition
+						// if second definition change to (defun ff () 2) need to recompile 
+						// also first definition
 						ArrayList<Integer> sexpOffsets = new ArrayList<Integer>();
 						for( Position p: pos){ //TODO: add cache, so that getTopLevelOffset is not called that often
 							for( int i = p.offset; i <= p.offset + p.length; ++i){
@@ -470,6 +488,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 									LispBuilder.compileFilePart(getIFile(), 
 											doc.get(offset.intValue(), doc.getLength()-offset),
 											offset.intValue());
+									topForms = newForms;
 									return;
 								}
 								LispBuilder.compileFilePart(getIFile(), sexp, offset.intValue());
@@ -478,6 +497,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					}
 				}
 			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

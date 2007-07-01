@@ -4,6 +4,8 @@ import jasko.tim.lisp.*;
 import jasko.tim.lisp.editors.*;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
+import jasko.tim.lisp.util.*;
+import jasko.tim.lisp.util.TopLevelItemSort.Sort;
 
 import java.util.*;
 
@@ -25,11 +27,6 @@ import org.eclipse.ui.views.contentoutline.*;
  *
  */
 public class LispOutlinePage extends ContentOutlinePage implements MouseListener, KeyListener {
-	private enum Sort {
-		Position,
-		Alpha,
-		Type
-	}
 	
 	Sort sort = Sort.Position;
 	IAction sortType;
@@ -37,7 +34,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	IAction sortPosition;
 	
 	LispEditor editor;
-	private ArrayList<OutlineItem> items = new ArrayList<OutlineItem>();
+	private ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>();
 	
 	
 	public LispOutlinePage(LispEditor editor) {
@@ -164,79 +161,14 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	}
 	
 	private void fillTree(LispNode file) {
-		items = new ArrayList<OutlineItem>(file.params.size());
-		for (LispNode exp: file.params) {
-			//System.out.println(exp);
-			OutlineItem item = new OutlineItem();
-			
-			item.type = exp.get(0).value.toLowerCase();
-			item.name = exp.get(1).toLisp();
-			item.offset = exp.offset;
-			if (! item.type.startsWith("def")) {
-				item.name = item.type;
-				if (item.type.equalsIgnoreCase("in-package")) {
-					item.name = "in-package " + exp.get(1).toLisp(); 
-				}
-			} else if (item.type.equalsIgnoreCase("defstruct")) {
-				LispNode name = exp.get(1); 
-				if (!name.value.equals("")) {
-					item.name = name.value;
-				} else {
-					item.name = name.get(0).value;
-				}
-			} else if (item.type.equalsIgnoreCase("defmethod")) {
-				String name = exp.get(2).toLisp();
-				if (name.startsWith(":")) {
-					item.name += " " + name + " " + exp.get(3).toLisp();
-				} else {
-					item.name += " " + name;
-				}
-			}
-			
-			if (item.name.equals("")) {
-				if (exp.params.size() >= 2) {
-					if (exp.get(1).toLisp().startsWith(":")) {
-						item.name = exp.get(1).toLisp() + " " + exp.get(2).toLisp();
-					} else {
-						item.name = exp.get(1).toLisp();
-					}
-				}
-			}
-			
-			if (! item.name.equals("")) {
-				items.add(item);
-			}
-		}
-		
-		// add section comments
-		for ( LispComment comment: file.comments ) {
-			if ( comment.isSectionComment() ) {
-				OutlineItem item = new OutlineItem();
-				
-				item.type = "section";
-				item.name = comment.SectionName();
-				item.offset = comment.offset + LispComment.SECTION_START.length();
-				if (! item.name.equals("")) {
-					items.add(item);
-				}
-			}
-		}
-		
+		items = LispUtil.getTopLevelItems(file);
 		sortItems();
-		
 		redoTree();
 	}
 	
 	private void sortItems() {
-		if (sort == Sort.Alpha) {
-			Collections.<OutlineItem>sort(items);
-		} else if (sort == Sort.Type) {
-			Collections.<OutlineItem>sort(items, new TypeComparator());
-		} else if (sort == Sort.Position) {
-			Collections.<OutlineItem>sort(items, new PositionComparator());
-		} else { // Really shouldn't ever happen
-			Collections.<OutlineItem>sort(items);
-		}
+		TopLevelItemSort sorter = new TopLevelItemSort();
+		sorter.sortItems(items, sort);
 	}
 	
 	private void redoTree() {
@@ -246,7 +178,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		tree.removeAll();
 		String currType = "()"; //impossible type
 		TreeItem category = null;
-		for (OutlineItem item: items) {
+		for (TopLevelItem item: items) {
 			TreeItem temp;
 			if (sort == Sort.Alpha) {
 				temp = new TreeItem(tree, SWT.NONE);
@@ -285,15 +217,15 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	}
 	
 	
-	private OutlineItem lastSelection;
+	private TopLevelItem lastSelection;
 	
 	public void selectionChanged(SelectionChangedEvent event) {
 		try {
 			IStructuredSelection sel = (IStructuredSelection) event.getSelection();
 			
 			if (! sel.isEmpty()) {
-				if (sel.getFirstElement() instanceof OutlineItem) {
-					OutlineItem item = (OutlineItem) sel.getFirstElement();
+				if (sel.getFirstElement() instanceof TopLevelItem) {
+					TopLevelItem item = (TopLevelItem) sel.getFirstElement();
 					if (item != lastSelection) {
 						lastSelection = item;
 						if ( item.type.equals("section") ) {
@@ -312,8 +244,8 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	public void mouseDown(MouseEvent e) {
 		IStructuredSelection sel = (IStructuredSelection) getTreeViewer().getSelection();
 		if (! sel.isEmpty()) {
-			if (sel.getFirstElement() instanceof OutlineItem) {
-				OutlineItem item = (OutlineItem) sel.getFirstElement();
+			if (sel.getFirstElement() instanceof TopLevelItem) {
+				TopLevelItem item = (TopLevelItem) sel.getFirstElement();
 				lastSelection = item;
 				if ( item.type.equals("section") ) {
 					editor.selectAndReveal(item.offset, item.name.length());							
@@ -347,8 +279,8 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			for (TreeItem node: getTreeViewer().getTree().getItems()) {
 				if (node.getText().startsWith(search)) {
 					getTreeViewer().getTree().setSelection(node);
-					if (node.getData() instanceof OutlineItem) {
-						OutlineItem item = (OutlineItem) node.getData();
+					if (node.getData() instanceof TopLevelItem) {
+						TopLevelItem item = (TopLevelItem) node.getData();
 						lastSelection = item;
 						if ( item.type.equals("section") ) {
  							editor.selectAndReveal(item.offset, item.name.length());							
@@ -375,33 +307,6 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		fillTree(file);
 	} // void update()
 	
-	
-	
-	private class OutlineItem implements Comparable<OutlineItem> {
-		public String name;
-		public int offset;
-		public String type;
-		
-		public int compareTo(OutlineItem o) {
-			return name.toLowerCase().compareTo( 
-				o.name.toLowerCase() );
-		}
-	}
-	
-	private class TypeComparator implements Comparator<OutlineItem> {
-		public int compare(OutlineItem arg0, OutlineItem arg1) {
-			return arg0.type.toLowerCase().compareTo(arg1.type.toLowerCase());
-		}
-	}
-	
-	private class PositionComparator implements Comparator<OutlineItem> {
- 		public int compare(OutlineItem arg0, OutlineItem arg1) {
- 			return arg0.offset - arg1.offset;
- 		}
- 	} 		
-	
-	
-
 	public void mouseDoubleClick(MouseEvent e) {
 		// meh
 	}
