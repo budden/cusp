@@ -324,21 +324,17 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
-	private static void addParenMarker(IFile file, int offset, 
-			int lineNum, boolean unmatchedOpen){
-		if( file == null ){
+	private static void addMarker(IFile file, String msg, 
+			int offsetStart, int offsetEnd, int lineNum){
+		if( file == null){
 			return;
 		}
 		Map<String, Object> attr = new HashMap<String, Object>();
-		attr.put(IMarker.CHAR_START, offset);
-		attr.put(IMarker.CHAR_END, offset+1);
-		
-		if(unmatchedOpen){
-			attr.put(IMarker.MESSAGE, "Unmatched open parenthesis.");			
-		} else {
-			attr.put(IMarker.MESSAGE, "Unmatched closing parenthesis.");
-		}
+		attr.put(IMarker.CHAR_START, offsetStart);
+		attr.put(IMarker.CHAR_END, offsetEnd);
 		attr.put(IMarker.LINE_NUMBER, lineNum);
+		
+		attr.put(IMarker.MESSAGE, msg);
 		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
 		try {
 			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
@@ -349,30 +345,16 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	
 	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd,
 			int lineNum, String pkg){
-		if( file == null ){
-			return;
-		}
-		Map<String, Object> attr = new HashMap<String, Object>();
-		attr.put(IMarker.CHAR_START, offsetStart);
-		attr.put(IMarker.CHAR_END, offsetEnd+1);
-		attr.put(IMarker.LINE_NUMBER, lineNum);
-		
-		attr.put(IMarker.MESSAGE, "Package "+ pkg + " is not loaded");
-		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
-		try {
-			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		addMarker(file,"Package "+ pkg + " is not loaded",offsetStart,offsetEnd+1,lineNum);
 	}
-	
-	public static boolean checkPackageDependence(LispNode code, IFile file){
+
+	private static boolean checkPackageDependence(LispNode code, IFile file){
 		if( file == null ){
 			return false;
 		}
 		try {
 			boolean cancompile = true;
-			// check if package dependence is satisfied: (TODO: need to add this also to FileCompiler, refactor this all!)
+			// check if package dependence is satisfied:
 			ArrayList<String> pkgs = LispPlugin.getDefault().getSwank().getAvailablePackages(2000);
 			for( LispNode node: code.params ){
 				String nodetype = node.car().value.toLowerCase();
@@ -465,7 +447,40 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	public static boolean checkParenBalancing(IFile file){
+	private static void addCommaMarker(IFile file, int offset, int lineNum){
+		addMarker(file,"Comma is not inside a backquote",offset,offset+1,lineNum);
+	}
+	
+	private static boolean checkCommas(LispNode code, IFile file){
+		boolean res = true;
+		if( code.value.equals(",")){
+			addCommaMarker(file,code.offset,code.line);
+			res = false;
+		}
+		boolean inBackQuote = false;
+		for( LispNode node: code.params){
+			if(node.value.equals("`")){
+				inBackQuote = true;
+			} else {
+				if(!inBackQuote){
+					res = res && checkCommas(node, file);
+				}
+				inBackQuote = false;
+			}
+		}
+		return res;
+	}
+	
+	private static void addParenMarker(IFile file, int offset, 
+			int lineNum, boolean unmatchedOpen){
+		if(unmatchedOpen){
+			addMarker(file,"Unmatched open parenthesis.",offset,offset+1,lineNum);
+		} else {
+			addMarker(file,"Unmatched closing parenthesis.",offset,offset+1,lineNum);
+		}
+	}
+	
+	private static boolean checkParenBalancing(IFile file){
 		if( !(file.getFileExtension().equalsIgnoreCase("lisp") 
 				|| file.getFileExtension().equalsIgnoreCase("el")
 				|| file.getFileExtension().equalsIgnoreCase("cl"))) {
@@ -573,8 +588,10 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				deleteMarkers(file);
 				System.out.println("*builder");
 				boolean paren = checkParenBalancing(file);
-				boolean pack = checkPackageDependence(LispParser.parse(file),file);
-				return (paren && pack);
+				LispNode code = LispParser.parse(file);
+				boolean pack = checkPackageDependence(code,file);
+				boolean commas = checkCommas(code,file);
+				return (paren && pack && commas);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
