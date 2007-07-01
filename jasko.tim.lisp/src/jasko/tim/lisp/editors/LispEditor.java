@@ -442,8 +442,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					Position[] pos = doc.getPositions(CHANGED_POS_CATEGORY);
 					if( pos == null || pos.length == 0 ){ //compile whole file
 						LispBuilder.compileFile(getIFile(),false);
-					} else { //compile only parts that have changed
-						// TODO: in code below it was assumed - no deletes, no package changes
+					} else { 
+						//compile only parts that have changed
+						// TODO: in code below it was assumed - no deletes
 						// TODO: also we need to handle the following situation:
 						// suppose have two function definition (defun f () 1) (defun f () 2)
 						// if second definition change to (defun ff () 2) need to recompile also first definition
@@ -458,14 +459,23 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						}
 						Collections.sort(sexpOffsets);
 						// evaluate all modified sexps
-						// TODO: combine consecutive sexps together
 						for( Integer offset: sexpOffsets){
 							if( offset.intValue() >= 0 ){
 								String sexp = LispUtil.getExpression(doc, offset.intValue());
+								// check if it is (in-package):
+								if ( sexp.toLowerCase().contains("in-package")
+										|| sexp.toLowerCase().contains("make-package")
+										|| sexp.toLowerCase().contains("defpackage")){
+									// compile rest of the file
+									LispBuilder.compileFilePart(getIFile(), 
+											doc.get(offset.intValue(), doc.getLength()-offset),
+											offset.intValue());
+									return;
+								}
 								LispBuilder.compileFilePart(getIFile(), sexp, offset.intValue());
 							}
 						}
-					}					
+					}
 				}
 			}
 		} catch (Exception e) {
