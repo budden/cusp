@@ -55,7 +55,7 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 		strf.getTextControl(getFieldEditorParent()).setToolTipText(strfTipString);		
 		addField(strf);
 		
-		addField(new RadioGroupFieldEditor("buildType", "How to handle compilation:", 1, 
+		addField(new RadioGroupFieldEditor(PreferenceConstants.BUILD_TYPE, "How to handle compilation:", 1, 
 				new String[][] {
 				  { "Compile on Save", PreferenceConstants.USE_AUTO_BUILD },
 				  { "Use Eclipse Autobuild Feature", PreferenceConstants.USE_ECLIPSE_BUILD },
