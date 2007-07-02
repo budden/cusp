@@ -572,6 +572,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 									LispBuilder.compileFilePart(getIFile(), 
 											doc.get(offset.intValue(), doc.getLength()-offset),
 											offset.intValue());
+									doc.removePositionCategory(CHANGED_POS_CATEGORY);
+									doc.addPositionCategory(CHANGED_POS_CATEGORY);
 									return;
 								}
 								LispBuilder.compileFilePart(getIFile(), sexp, offset.intValue());
@@ -579,8 +581,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						}
 					}
 				}
-			}
-			
+				doc.removePositionCategory(CHANGED_POS_CATEGORY);
+				doc.addPositionCategory(CHANGED_POS_CATEGORY);
+			}	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
