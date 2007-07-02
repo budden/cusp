@@ -14,6 +14,12 @@ public class LispUtil {
 	
 	public static int getTopLevelOffset(IDocument doc, int offset) {
 		try {
+			// if beyond last nonspace character, or at first character which is not (, then should return -1
+			if( (offset == 0 && doc.getChar(offset) != '(') ||
+				((doc.get(offset, doc.getLength() - offset).matches("\\s+") || offset == doc.getLength())
+				  && doc.get(offset-1,1).matches("\\s")) ){
+				return -1;
+			}
 			int line = doc.getLineOfOffset(offset);
 			ArrayList<Integer> lineOffsets = new ArrayList<Integer>();
 			for (int i=line; i>=0; --i) {
@@ -23,7 +29,7 @@ public class LispUtil {
 			
 			for (int i=offset; i>=0; --i) {
 				if (Collections.binarySearch(lineOffsets, i) >= 0) {
-					if (doc.getChar(i) == '(') {
+					if (doc.getLength() > i && doc.getChar(i) == '(') {
 						return i;
 					}
 				}
@@ -505,8 +511,9 @@ public class LispUtil {
 		return res;
 	}
 	
-	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file){
+	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file, String pkg){
 		ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>(file.params.size());
+		String curpkg = pkg;
 		for (LispNode exp: file.params) {
 			//System.out.println(exp);
 			TopLevelItem item = new TopLevelItem();
@@ -514,10 +521,12 @@ public class LispUtil {
 			item.type = exp.get(0).value.toLowerCase();
 			item.name = exp.get(1).toLisp();
 			item.offset = exp.offset;
+			item.pkg = curpkg;
 			if (! item.type.startsWith("def")) {
 				item.name = item.type;
 				if (item.type.equals("in-package")) {
-					item.name = "in-package " + exp.get(1).toLisp(); 
+					item.name = "in-package " + exp.get(1).toLisp();
+					curpkg = LispUtil.formatPackage(exp.get(1).toLisp());
 				}
 			} else if (item.type.equals("defstruct")) {
 				LispNode name = exp.get(1); 
