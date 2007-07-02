@@ -3,6 +3,7 @@ package jasko.tim.lisp.navigator;
 import java.lang.reflect.InvocationTargetException;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.swank.SwankInterface;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
@@ -65,6 +66,11 @@ public class CleanFaslsAction implements IActionDelegate {
 							file.delete(true, monitor);
 						}
 					}
+				}
+				// TODO: also delete fasls from .cusp folder, if use cusp to manage packages
+				SwankInterface swank = LispPlugin.getDefault().getSwank();
+				if( swank.isConnected() && swank.managePackages ){
+					//String cuspFolder = "this";
 				}
 			} catch (CoreException e) {
 				e.printStackTrace();

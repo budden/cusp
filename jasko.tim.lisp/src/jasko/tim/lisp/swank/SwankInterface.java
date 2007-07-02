@@ -1019,8 +1019,9 @@ public class SwankInterface {
 			}
 			
 			for(String pkg : packages){
-				if( !packageNames.contains(pkg.toLowerCase()) ){
-					packageNames.add(pkg.toLowerCase());
+				String pkgTmp = pkg.toLowerCase().trim();
+				if( !packageNames.contains(pkgTmp) ){
+					packageNames.add(pkgTmp);
 				}
 			}
 			
