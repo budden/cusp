@@ -61,6 +61,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected Label debugLabel;
 	
 	protected Button btn;
+	protected Label replPackage;
 	
 	public static void switchToRepl() {
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -283,6 +284,9 @@ public class ReplView extends ViewPart implements SelectionListener {
  		Button prev = new Button(buttonRow, SWT.PUSH);
  		prev.setText("History");
  		prev.addSelectionListener( new PrevListener(parent));
+ 		
+ 		replPackage = new Label(buttonRow, SWT.PUSH);
+ 		replPackage.setText("Current package: "+ swank.getCurrPackage());
  		
  		// layout stuff
  		
@@ -508,6 +512,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 						swank.getAvailablePackages(5000), swank.getPackage(),false);
 				if (pd.open() == Dialog.OK) {
 					switchPackage(pd.getPackage());
+					replPackage.setText("Current package: "+pd.getPackage());
 				}
 			}
 		};
@@ -668,7 +673,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if (packageName.startsWith(":")) packageName = packageName.substring(1);
 			if (!packageName.equals(swank.getPackage())) {
 				ArrayList<String> packages = swank.getAvailablePackages(5000);
-				if (packages.contains(packageName.toUpperCase())) switchPackage(packageName);
+				if (packages.contains(packageName.toUpperCase())){
+					switchPackage(packageName);
+					replPackage.setText("Current package: "+packageName);
+				}
 			}
 		}
 	}
