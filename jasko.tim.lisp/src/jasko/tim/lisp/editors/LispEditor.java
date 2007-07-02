@@ -437,8 +437,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
 			  .getString(PreferenceConstants.BUILD_TYPE).equals(PreferenceConstants.USE_AUTO_BUILD);
 			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
-			ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()),
-					swank.getCurrPackage());
+			ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
 			//If useAutoBuild has changed from last save, remove all positions
 			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);
