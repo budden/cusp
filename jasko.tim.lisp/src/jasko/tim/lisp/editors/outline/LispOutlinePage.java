@@ -161,7 +161,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	}
 	
 	private void fillTree(LispNode file) {
-		items = LispUtil.getTopLevelItems(file);
+		items = LispUtil.getTopLevelItems(file,"");
 		sortItems();
 		redoTree();
 	}
