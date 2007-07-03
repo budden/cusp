@@ -411,11 +411,14 @@ compiler state."
 (sb-alien:define-alien-routine "tmpnam" sb-alien:c-string
   (dest (* sb-alien:c-string)))
 
+(defparameter *temp-folder* (sb-posix:getenv "TEMP"))
+
 (defun temp-file-name ()
   "Return a temporary file name to compile strings into."
-  (concatenate 'string (tmpnam nil) ".lisp"))
+  (concatenate 'string *temp-folder* (tmpnam nil) ".lisp"))
 
 (defimplementation swank-compile-string (string &key buffer position directory)
+  (declare (ignore directory))
   (let ((*buffer-name* buffer)
         (*buffer-offset* position)
         (*buffer-substring* string)
@@ -424,7 +427,6 @@ compiler state."
              (with-compilation-hooks ()
                (with-compilation-unit
                    (:source-plist (list :emacs-buffer buffer
-                                        :emacs-directory directory
                                         :emacs-string string
                                         :emacs-position position))
                  (funcall fn (compile-file filename))))))
@@ -480,23 +482,22 @@ This is useful when debugging the definition-finding code.")
                (sb-introspect::definition-source-description source-location))
         (if *debug-definition-finding*
             (make-definition-source-location source-location type name)
-            (handler-case
-                (make-definition-source-location source-location type name)
+            (handler-case (make-definition-source-location source-location
+                                                           type name)
               (error (e)
-                (list :error (format nil "Error: ~A" e)))))))
+                     (list :error (format nil "Error: ~A" e)))))))
 
 (defun make-definition-source-location (definition-source type name)
   (with-struct (sb-introspect::definition-source-
                    pathname form-path character-offset plist
                    file-write-date)
       definition-source
-    (destructuring-bind (&key emacs-buffer emacs-position emacs-directory
+    (destructuring-bind (&key emacs-buffer emacs-position
                               emacs-string &allow-other-keys)
         plist
       (cond
         (emacs-buffer
-         (let* ((*readtable* (guess-readtable-for-filename emacs-directory))
-                (pos (if form-path
+         (let* ((pos (if form-path
                          (with-debootstrapping
                            (source-path-string-position form-path emacs-string))
                          character-offset))
@@ -783,9 +784,7 @@ stack."
 
 (defun emacs-buffer-source-location (code-location plist)
   (if (code-location-has-debug-block-info-p code-location)
-      (destructuring-bind (&key emacs-buffer emacs-position emacs-string
-                                &allow-other-keys)
-          plist
+      (destructuring-bind (&key emacs-buffer emacs-position emacs-string) plist
         (let* ((pos (string-source-position code-location emacs-string))
                (snipped (with-input-from-string (s emacs-string)
                           (read-snippet s pos))))
