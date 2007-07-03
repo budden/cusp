@@ -14,13 +14,18 @@ public class LispUtil {
 	
 	public static int getTopLevelOffset(IDocument doc, int offset) {
 		try {
-			// if beyond last nonspace character, or at first character which is not (, then should return -1
-			if( (offset == 0 && doc.getChar(offset) != '(') ||
-				((doc.get(offset, doc.getLength() - offset).matches("\\s+") || offset == doc.getLength())
-				  && doc.get(offset-1,1).matches("\\s")) ){
-				return -1;
-			}
+			// SK: I didn't get this. From what I understand this procedure finds topLevelOffset the following way:
+			// 1. Find line of offset.
+			// 2. Starting from this line, check if '(' is first character of the line. If yes, this is topLevelOffset.
+			// I don't understand why we need binarySearch, sort and iterate offset by --i.
 			int line = doc.getLineOfOffset(offset);
+			for( int i = line; i >= 0; --i ){
+				int lineOffset = doc.getLineOffset(i);
+				if( doc.getChar(lineOffset) == '(' ){
+					return lineOffset;
+				}
+			}
+			/*
 			ArrayList<Integer> lineOffsets = new ArrayList<Integer>();
 			for (int i=line; i>=0; --i) {
 				lineOffsets.add(doc.getLineOffset(i));
@@ -34,11 +39,20 @@ public class LispUtil {
 					}
 				}
 			}
+			*/
 			
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 		return -1;
+	}
+	
+	public static int[] getTopLevelRange(IDocument doc, int offset) {
+		int[] range = getCurrentFullExpressionRange (doc, offset);
+		if( range == null ){
+			return null;
+		}
+		return getCurrentFullExpressionRange(doc,getTopLevelOffset(doc,range[0])+1);
 	}
 	
 	public static String getTopLevelExpression(IDocument doc, int offset) {
@@ -318,7 +332,35 @@ public class LispUtil {
 		
 		return -1;
 	}
+
+    public static int findCloseParen (IDocument doc, int offset) {
+        return findCloseParen(doc, offset, offset);
+    }
     
+	public static int findCloseParen (IDocument doc, int offset, int minSearchOffset) {
+		int open = 0;
+		int close = 0;
+		String code = doc.get();
+		for (int i = offset; i < code.length(); ++i) {
+			try {
+				char c = code.charAt(i);
+				if (c == ')' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
+					++close;
+					if (i >= minSearchOffset && close - open == 1) {
+						return i;
+					}
+				} else if (c == '(' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
+					++open;
+				}
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return -1;
+	}
+ 	
+	
     /**
      * Returns a 2-element integer array indicating the range in the current document of the smallest complete
      * s-expression that encloses the given offset.  If no such s-expression is found, this function returns null.
@@ -409,33 +451,6 @@ public class LispUtil {
 		return open - close;
 	}
 	
-    public static int findCloseParen (IDocument doc, int offset) {
-        return findCloseParen(doc, offset, offset);
-    }
-    
-	public static int findCloseParen (IDocument doc, int offset, int minSearchOffset) {
-		int open = 0;
-		int close = 0;
-		String code = doc.get();
-		for (int i = offset; i < code.length(); ++i) {
-			try {
-				char c = code.charAt(i);
-				if (c == ')' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
-					++close;
-					if (i >= minSearchOffset && close - open == 1) {
-						return i;
-					}
-				} else if (c == '(' && doc.getPartition(i).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
-					++open;
-				}
-			} catch (BadLocationException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return -1;
-	}
-    
     /**
      * Returns a 2-element integer array indicating the range (start, length) in the current document of the current "active"
      * s-expression.  If there is no current s-expression, this function returns null.
@@ -521,6 +536,7 @@ public class LispUtil {
 			item.type = exp.get(0).value.toLowerCase();
 			item.name = exp.get(1).toLisp();
 			item.offset = exp.offset;
+			item.offsetEnd = exp.endOffset;
 			item.pkg = curpkg;
 			if (! item.type.startsWith("def")) {
 				item.name = item.type;
