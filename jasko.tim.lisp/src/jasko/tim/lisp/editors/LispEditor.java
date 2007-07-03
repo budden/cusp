@@ -259,7 +259,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		doc.addDocumentListener(new changesListener());
 		useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
 			.equals(PreferenceConstants.USE_AUTO_BUILD);
-		topForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()),
+		topForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()+"\n"),
 				LispPlugin.getDefault().getSwank().getCurrPackage());
 		TopLevelItemSort sorter = new TopLevelItemSort();
 		sorter.sortItems(topForms, TopLevelItemSort.Sort.Position);		
@@ -430,8 +430,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		super.doSave(monitor);
 		
 		try {
-			IDocument doc = getDocument();
-			LispNode contents = LispParser.parse(doc.get() + "\n)");
+			LispNode contents = LispParser.parse(getDocument().get() + "\n)");
 			outline.update(contents);
 			updateTasks();
 			//updateFolding(contents); TODO: change outline in same way as folding now
@@ -441,10 +440,12 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
 			//If useAutoBuild has changed from last save, remove all positions
 			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
+				IDocument doc = getDocument();
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);
 				doc.addPositionCategory(CHANGED_POS_CATEGORY);
 			}
 			if( useAutoBuild ){
+				IDocument doc = getDocument();
 				if( LispBuilder.checkLisp(getIFile()) ){
 					ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
 					TopLevelItemSort sorter = new TopLevelItemSort();
