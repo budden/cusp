@@ -429,218 +429,269 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
 		
-		try {
-			LispNode contents = LispParser.parse(getDocument().get() + "\n)");
-			outline.update(contents);
-			updateTasks();
-			//updateFolding(contents); TODO: change outline in same way as folding now
-			boolean oldAutoBuild = useAutoBuild;
-			useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
-			  .getString(PreferenceConstants.BUILD_TYPE).equals(PreferenceConstants.USE_AUTO_BUILD);
-			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
-			//If useAutoBuild has changed from last save, remove all positions
-			if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
-				IDocument doc = getDocument();
+		LispNode contents = LispParser.parse(getDocument().get() + "\n)");
+		outline.update(contents);
+		updateTasks();
+		//updateFolding(contents); TODO: change outline in same way as folding now
+		boolean oldAutoBuild = useAutoBuild;
+		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
+		  .getString(PreferenceConstants.BUILD_TYPE).equals(PreferenceConstants.USE_AUTO_BUILD);
+		//If useAutoBuild has changed from last save, remove all positions
+		if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
+			IDocument doc = getDocument();
+			try{
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);
 				doc.addPositionCategory(CHANGED_POS_CATEGORY);
+			} catch ( BadPositionCategoryException e) {
+				e.printStackTrace();
 			}
-			if( useAutoBuild ){
-				IDocument doc = getDocument();
-				if( LispBuilder.checkLisp(getIFile()) ){
-					ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
-					TopLevelItemSort sorter = new TopLevelItemSort();
-					sorter.sortItems(newForms, TopLevelItemSort.Sort.Position);
-					
-					// ==== find removed forms
-					ArrayList<String> toUndefine = new ArrayList<String>(topForms.size());
-					ArrayList<String> notToUndefine = new ArrayList<String>(topForms.size());
-					ArrayList<TopLevelItem> toDefine = new ArrayList<TopLevelItem>(topForms.size());
-					ArrayList<String> toDefineNoPos = new ArrayList<String>(topForms.size());
-					ArrayList<String> newTypeNamePack = new ArrayList<String>(newForms.size());
-					ArrayList<String> oldTypeNamePack = new ArrayList<String>(topForms.size());
+		}
+		if( useAutoBuild ){
+			compileOnSave(contents);
+		}	
+	}
 
-					for( TopLevelItem item: newForms ){
-						newTypeNamePack.add(item.type+","+item.name+","+item.pkg);
-					}
-					for( TopLevelItem item: topForms ){
-						oldTypeNamePack.add(item.type+","+item.name+","+item.pkg);
-					}
-					
-					// find removed forms
-					// All complexity is to be handle the following situation:
-					// suppose have two function definition (defun f () 1) (defun f () 2)
-					// if second definition change to (defun ff () 2) need to recompile 
-					// also first definition
+	private void compileOnSave(LispNode contents) {
+		if( LispBuilder.checkLisp(getIFile()) ){
+			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
+			ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
+			TopLevelItemSort sorter = new TopLevelItemSort();
+			sorter.sortItems(newForms, TopLevelItemSort.Sort.Position);
+			
+			ArrayList<TopLevelItem> toDefine = undefineRemovedForms(newForms);
+			
+			Position[] pos = null;
+			try{
+				pos = getDocument().getPositions(CHANGED_POS_CATEGORY);
+			} catch ( BadPositionCategoryException e) {
+				e.printStackTrace();
+				pos = null;
+			}
+			if( pos == null || pos.length == 0 ){ //compile whole file
+				LispBuilder.compileFile(getIFile(),false);
+			} else { 
+				compileForms(getFormsToCompile(pos, newForms, toDefine));
+			}
+		}
+		try {
+			IDocument doc = getDocument();
+			doc.removePositionCategory(CHANGED_POS_CATEGORY);
+			doc.addPositionCategory(CHANGED_POS_CATEGORY);
+		} catch ( BadPositionCategoryException e ){
+			e.printStackTrace();
+		}
+	}
 
-					for( TopLevelItem item: topForms ){
-						String itemTmp = item.type+","+item.name+","+item.pkg;
-						if ( itemTmp.toLowerCase().startsWith("in-package")){
-							
-						} else if( !newTypeNamePack.contains(itemTmp) ){ //if not in new forms - set to undefine
-							if (!toUndefine.contains(itemTmp)){//set to undefine only once
-								toUndefine.add(itemTmp);
-							}
-						} else { //form is in new forms
-							// if it is already in notToUndefine list - multiple forms
-							if( notToUndefine.contains(itemTmp) ){
-								// it it is already in toDefine list - it was already processed
-								if ( !toDefineNoPos.contains(itemTmp) ){
-									// see if need to put form for evaluation
-									// first find number of times form is old and new lists
-									int nnew = 0;
-									for( String itm: newTypeNamePack){
-										if( itm.equalsIgnoreCase(item.type+","+item.name+","+item.pkg)){
-											++nnew;
-										}
-									}
-									int nold = 0;
-									for( String itm: oldTypeNamePack){
-										if( itm.equalsIgnoreCase(item.type+","+item.name+","+item.pkg)){
-											++nold;
-										}
-									}
-									// if number of times is not same - evaluate the form
-									// that has same type/name/package but is last in
-									// new forms
-									if( nnew != nold ){
-										int ind = newTypeNamePack.lastIndexOf(itemTmp);
-										if( ind >= 0 ){
-											toDefine.add(newForms.get(ind));
-										}
-									}
-								}
+	private void compileForms(int[][] sexps) {
+		// evaluate all modified sexps
+		for( int i = 0; i < sexps.length; ++i ){
+			IDocument doc = getDocument();
+			int offset = sexps[i][0];
+			int endOffset = sexps[i][1];;
+			if( offset >= 0 ){
+				String sexp = "";
+				try{
+					sexp = doc.get(offset,endOffset-offset);
+				} catch ( BadLocationException e ){
+					e.printStackTrace();
+					sexp = "";
+				}
+				// check if it is (in-package):
+				if ( sexp.toLowerCase().contains("in-package")
+						|| sexp.toLowerCase().contains("make-package")
+						|| sexp.toLowerCase().contains("defpackage")){
+					// should compile rest of the file
+					try{
+						sexp = doc.get(offset,doc.getLength()-offset);
+						LispBuilder.compileFilePart(getIFile(), sexp, offset);
+						doc.removePositionCategory(CHANGED_POS_CATEGORY);
+						doc.addPositionCategory(CHANGED_POS_CATEGORY);
+					} catch ( Exception e ){
+						e.printStackTrace();
+					}
+					break;
+				} else if ( sexp != null && sexp != "" ){
+					LispBuilder.compileFilePart(getIFile(), sexp, offset);									
+				}
+			}
+		}
+	}
+
+	private int[][] getFormsToCompile(Position[] pos, ArrayList<TopLevelItem> newForms, 
+			ArrayList<TopLevelItem> toDefine) {
+		int[] range = new int[]{-1,0};
+		IDocument doc = getDocument();
+		ArrayList<Integer> sexpOffsets = new ArrayList<Integer>();
+		ArrayList<Integer> sexpOffsetsEnd = new ArrayList<Integer>();
+		for( Position p: pos){
+			for( int i = p.offset; i <= p.offset + p.length; ++i){
+				//Integer offset =  new Integer(LispUtil.getTopLevelOffset(doc, i));
+				if( i < range[0] || i > range[0] + range[1] ){ //not in previous range
+					int ii = Collections.binarySearch(sexpOffsets, i);
+					if( ii >= 0 ){
+						range[0] = sexpOffsets.get(ii).intValue();
+						range[1] = sexpOffsetsEnd.get(ii).intValue();
+					} else {
+						int jj = Collections.binarySearch(sexpOffsetsEnd, i);
+						if( jj >= 0 ){
+							range[0] = sexpOffsets.get(jj).intValue();
+							range[1] = sexpOffsetsEnd.get(jj).intValue();											
+						} else { //both ii and jj < 0
+							ii = -ii - 1;
+							jj = -jj - 1;
+							if( ii > 0 && ii - 1 == jj){
+								range[0] = sexpOffsets.get(jj).intValue();
+								range[1] = sexpOffsetsEnd.get(jj).intValue();
 							} else {
-								notToUndefine.add(itemTmp);
-							}
-						}
-					}
-					
-					// === undefine removed forms (at the moment functions only)
-					for( String itm: toUndefine){
-						String[] item = itm.split(",");
-						if( item[0].equalsIgnoreCase("defun") ){
-							swank.sendUndefine(item[1], item[2], null);
-						}
-					}
-					
-					topForms = newForms;
-					
-					Position[] pos = doc.getPositions(CHANGED_POS_CATEGORY);
-					if( pos == null || pos.length == 0 ){ //compile whole file
-						LispBuilder.compileFile(getIFile(),false);
-					} else { 
-						//compile only parts that have changed
-						//conservative - better to compile more then necessary, then miss anything
-						ArrayList<Integer> sexpOffsets = new ArrayList<Integer>();
-						ArrayList<Integer> sexpOffsetsEnd = new ArrayList<Integer>();
-						int[] range = new int[]{-1,0};
-						for( Position p: pos){
-							for( int i = p.offset; i <= p.offset + p.length; ++i){
-								//Integer offset =  new Integer(LispUtil.getTopLevelOffset(doc, i));
-								if( i < range[0] || i > range[0] + range[1] ){ //not in previous range
-									int ii = Collections.binarySearch(sexpOffsets, i);
-									if( ii >= 0 ){
-										range[0] = sexpOffsets.get(ii).intValue();
-										range[1] = sexpOffsetsEnd.get(ii).intValue();
-									} else {
-										int jj = Collections.binarySearch(sexpOffsetsEnd, i);
-										if( jj >= 0 ){
-											range[0] = sexpOffsets.get(jj).intValue();
-											range[1] = sexpOffsetsEnd.get(jj).intValue();											
-										} else { //both ii and jj < 0
-											ii = -ii - 1;
-											jj = -jj - 1;
-											if( ii > 0 && ii - 1 == jj){
-												range[0] = sexpOffsets.get(jj).intValue();
-												range[1] = sexpOffsetsEnd.get(jj).intValue();
-											} else {
-												range = LispUtil.getTopLevelRange(doc, i);
-												if( range == null ){ //not in sexp
-													range = new int[]{-1, 0};
-													// find prev close paren:
-													int start = 0;
-													for( start = i - 1; start >= 0; --start){
-														if( doc.getChar(start) == ')'){
-															break;
-														}
-													}
-													int end = 0;
-													for( end = i - 1; end < doc.getLength(); ++end ){
-														if( doc.getChar(end) == '('){
-															break;
-														}
-													}
-													if( end > start ){
-														range[0] = start;
-														range[1] = end - start + 1;
-													} else {
-														range[0] = -1;
-														range[1] = 0;
-													}
-												}
-												else if( !sexpOffsets.contains(range[0]) ){
-													sexpOffsets.add(new Integer(range[0]));
-													sexpOffsetsEnd.add(new Integer(range[0]+range[1]));
-												}												
+								range = LispUtil.getTopLevelRange(doc, i);
+								if( range == null ){ //not in sexp
+									range = new int[]{-1, 0};
+									// find prev close paren:
+									try{
+										int start = 0;
+										for( start = i - 1; start >= 0; --start){
+											if( doc.getChar(start) == ')'){
+												break;
 											}
 										}
+										int end = 0;
+										for( end = i - 1; end < doc.getLength(); ++end ){
+											if( doc.getChar(end) == '('){
+												break;
+											}
+										}
+										if( end > start ){
+											range[0] = start;
+											range[1] = end - start + 1;
+										} else {
+											range[0] = -1;
+											range[1] = 0;
+										}
+									} catch ( BadLocationException e ){
+										e.printStackTrace();
+										range[0] = -1;
+										range[1] = 0;														
 									}
 								}
-							}
-						}
-						// also add toDefine offsets:
-						for( TopLevelItem itm: toDefine){
-							if( !sexpOffsets.contains(itm.offset)){
-								sexpOffsets.add(itm.offset);
-								sexpOffsetsEnd.add(itm.offsetEnd);
-							}
-						}
-						// if newForms contains multiple forms with same name and package,
-						// and one of them is modified, add compilation of all forms after modified
-						ArrayList<String> multForms = new ArrayList<String>();
-						for( TopLevelItem itm: newForms){
-							String itmTmp = itm.type+","+itm.name+","+itm.pkg;
-							if( itm.type.equalsIgnoreCase("in-package")){
-								
-							} else 	if( multForms.contains(itmTmp) ){//duplicate items of modified forms
-								sexpOffsets.add(new Integer(itm.offset));
-								sexpOffsets.add(new Integer(itm.offsetEnd));
-							} else if ( sexpOffsets.contains(new Integer(itm.offset))){ //modified form
-								multForms.add(itmTmp);
-							}
-						}
-						
-						
-						Collections.sort(sexpOffsets);
-						Collections.sort(sexpOffsetsEnd);
-						// evaluate all modified sexps
-						for( int i = 0; i < sexpOffsets.size(); ++i ){
-							int offset = sexpOffsets.get(i);
-							int endOffset = sexpOffsetsEnd.get(i);
-							if( offset >= 0 ){
-								String sexp = doc.get(offset,endOffset-offset);
-								// check if it is (in-package):
-								if ( sexp.toLowerCase().contains("in-package")
-										|| sexp.toLowerCase().contains("make-package")
-										|| sexp.toLowerCase().contains("defpackage")){
-									// should compile rest of the file
-									sexp = doc.get(offset,doc.getLength()-offset);
-									LispBuilder.compileFilePart(getIFile(), sexp, offset);
-									doc.removePositionCategory(CHANGED_POS_CATEGORY);
-									doc.addPositionCategory(CHANGED_POS_CATEGORY);
-									return;
-								}
-								LispBuilder.compileFilePart(getIFile(), sexp, offset);
+								else if( !sexpOffsets.contains(range[0]) ){
+									sexpOffsets.add(new Integer(range[0]));
+									sexpOffsetsEnd.add(new Integer(range[0]+range[1]));
+								}												
 							}
 						}
 					}
 				}
-				doc.removePositionCategory(CHANGED_POS_CATEGORY);
-				doc.addPositionCategory(CHANGED_POS_CATEGORY);
-			}	
-		} catch (Exception e) {
-			e.printStackTrace();
+			}
 		}
+		// also add toDefine offsets:
+		for( TopLevelItem itm: toDefine){
+			if( !sexpOffsets.contains(itm.offset)){
+				sexpOffsets.add(itm.offset);
+				sexpOffsetsEnd.add(itm.offsetEnd);
+			}
+		}
+		// if newForms contains multiple forms with same name and package,
+		// and one of them is modified, add compilation of all forms after modified
+		ArrayList<String> multForms = new ArrayList<String>();
+		for( TopLevelItem itm: newForms){
+			String itmTmp = itm.type+","+itm.name+","+itm.pkg;
+			if( itm.type.equalsIgnoreCase("in-package")){
+				
+			} else 	if( multForms.contains(itmTmp) ){//duplicate items of modified forms
+				sexpOffsets.add(new Integer(itm.offset));
+				sexpOffsets.add(new Integer(itm.offsetEnd));
+			} else if ( sexpOffsets.contains(new Integer(itm.offset))){ //modified form
+				multForms.add(itmTmp);
+			}
+		}
+		
+		
+		Collections.sort(sexpOffsets);
+		Collections.sort(sexpOffsetsEnd);
+		
+		int[][] res = new int[sexpOffsets.size()][2];
+		for( int i = 0; i < sexpOffsets.size(); ++i){
+			res[i][0] = sexpOffsets.get(i);
+			res[i][1] = sexpOffsetsEnd.get(i);
+		}
+		return res;
+	}
+
+	private ArrayList<TopLevelItem> undefineRemovedForms(ArrayList<TopLevelItem> newForms) {
+		// ==== find removed forms
+		ArrayList<String> toUndefine = new ArrayList<String>(topForms.size());
+		ArrayList<String> notToUndefine = new ArrayList<String>(topForms.size());
+		ArrayList<TopLevelItem> toDefine = new ArrayList<TopLevelItem>(topForms.size());
+		ArrayList<String> toDefineNoPos = new ArrayList<String>(topForms.size());
+		ArrayList<String> newTypeNamePack = new ArrayList<String>(newForms.size());
+		ArrayList<String> oldTypeNamePack = new ArrayList<String>(topForms.size());
+
+		for( TopLevelItem item: newForms ){
+			newTypeNamePack.add(item.type+","+item.name+","+item.pkg);
+		}
+		for( TopLevelItem item: topForms ){
+			oldTypeNamePack.add(item.type+","+item.name+","+item.pkg);
+		}
+		
+		// find removed forms
+		// All complexity is to be handle the following situation:
+		// suppose have two function definition (defun f () 1) (defun f () 2)
+		// if second definition change to (defun ff () 2) need to recompile 
+		// also first definition
+
+		for( TopLevelItem item: topForms ){
+			String itemTmp = item.type+","+item.name+","+item.pkg;
+			if ( itemTmp.toLowerCase().startsWith("in-package")){
+				
+			} else if( !newTypeNamePack.contains(itemTmp) ){ //if not in new forms - set to undefine
+				if (!toUndefine.contains(itemTmp)){//set to undefine only once
+					toUndefine.add(itemTmp);
+				}
+			} else { //form is in new forms
+				// if it is already in notToUndefine list - multiple forms
+				if( notToUndefine.contains(itemTmp) ){
+					// it it is already in toDefine list - it was already processed
+					if ( !toDefineNoPos.contains(itemTmp) ){
+						// see if need to put form for evaluation
+						// first find number of times form is old and new lists
+						int nnew = 0;
+						for( String itm: newTypeNamePack){
+							if( itm.equalsIgnoreCase(item.type+","+item.name+","+item.pkg)){
+								++nnew;
+							}
+						}
+						int nold = 0;
+						for( String itm: oldTypeNamePack){
+							if( itm.equalsIgnoreCase(item.type+","+item.name+","+item.pkg)){
+								++nold;
+							}
+						}
+						// if number of times is not same - evaluate the form
+						// that has same type/name/package but is last in
+						// new forms
+						if( nnew != nold ){
+							int ind = newTypeNamePack.lastIndexOf(itemTmp);
+							if( ind >= 0 ){
+								toDefine.add(newForms.get(ind));
+							}
+						}
+					}
+				} else {
+					notToUndefine.add(itemTmp);
+				}
+			}
+		}
+		
+		// === undefine removed forms (at the moment functions only)
+		for( String itm: toUndefine){
+			String[] item = itm.split(",");
+			if( item[0].equalsIgnoreCase("defun") ){
+				LispPlugin.getDefault().getSwank().sendUndefine(item[1], item[2], null);
+			}
+		}
+		
+		topForms = newForms;
+		return toDefine;
 	}
 
 	public void updateFoldingStructure(HashSet<Position> positions, 
