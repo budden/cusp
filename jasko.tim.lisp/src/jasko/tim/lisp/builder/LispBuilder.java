@@ -7,6 +7,7 @@ import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.util.LispUtil;
+import jasko.tim.lisp.util.TopLevelItem;
 
 
 import java.io.*;
@@ -452,6 +453,67 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
+	private static void addMultMarker(IFile file, int offsetStart, int offsetEnd, boolean last){
+		if( file == null){
+			return;
+		}
+		Map<String, Object> attr = new HashMap<String, Object>();
+		attr.put(IMarker.CHAR_START, offsetStart);
+		attr.put(IMarker.CHAR_END, offsetEnd);
+		
+		String msg = "";
+		if( last ){
+			msg = "The definition redefines the function defined earlier in the file";
+		} else {
+			msg = "The function is redefined by other definition(s) later in the file";
+		}
+		
+		attr.put(IMarker.MESSAGE, msg);
+		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
+		try {
+			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void checkMultipleDefuncs(LispNode code, IFile file){
+		if( file == null ){
+			return;
+		}
+		ArrayList<TopLevelItem> items = LispUtil.getTopLevelItems(code, "");
+		// find multiple forms with same name and package,
+		HashMap<String,ArrayList<TopLevelItem>> multItems = new HashMap<String,ArrayList<TopLevelItem>>();
+		// add all forms to hashtable
+		for( TopLevelItem itm: items){
+			String itmTmp = itm.type+","+itm.name+","+itm.pkg;
+			if( itm.type.equalsIgnoreCase("in-package")){
+				
+			} else 	if( multItems.containsKey(itmTmp) ){//duplicate items of modified forms
+				multItems.get(itmTmp).add(itm);
+			} else {
+				ArrayList<TopLevelItem> lst = new ArrayList<TopLevelItem>();
+				lst.add(itm);
+				multItems.put(itmTmp, lst);
+			}
+		}
+		//process keys that have more than one entry
+		for( ArrayList<TopLevelItem> lst: multItems.values() ){
+			if( lst.size() > 1 && lst.get(0).type.equalsIgnoreCase("defun")){
+				for( int i = 0; i < lst.size() - 1; ++i ){
+					int offset = lst.get(i).offset+"defun".length()+2;
+					int offsetEnd = offset + lst.get(i).name.length();
+					addMultMarker(file,offset,offsetEnd,false);
+				}
+				int i = lst.size()-1;
+				int offset = lst.get(i).offset+"defun".length()+2;
+				int offsetEnd = offset + lst.get(i).name.length();
+				addMultMarker(file,offset,offsetEnd,true);
+			}
+		}
+		
+	}
+	
 	private static void addCommaMarker(IFile file, int offset, int lineNum){
 		addMarker(file,"Comma is not inside a backquote",offset,offset+1,lineNum);
 	}
@@ -596,6 +658,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				LispNode code = LispParser.parse(file);
 				boolean pack = checkPackageDependence(code,file);
 				boolean commas = checkCommas(code,file);
+				checkMultipleDefuncs(code,file);
 				return (paren && pack && commas);
 			} catch (Exception e) {
 				e.printStackTrace();
