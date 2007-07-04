@@ -530,6 +530,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 	}
 
+	// also removes markers in modified positions that are not in sexp (i.e. when commented out)
 	private int[][] getFormsToCompile(Position[] pos, ArrayList<TopLevelItem> newForms, 
 			ArrayList<TopLevelItem> toDefine) {
 		int[] range = new int[]{-1,0};
@@ -575,6 +576,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 										if( end > start ){
 											range[0] = start;
 											range[1] = end - start + 1;
+											LispBuilder.deleteMarkers(getIFile(), range[0], range[1]);
 										} else {
 											range[0] = -1;
 											range[1] = 0;

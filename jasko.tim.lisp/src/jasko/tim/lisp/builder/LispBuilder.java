@@ -241,17 +241,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
  					e1.printStackTrace();
  				}				
   			} else if ( file != null && length > 0) {
-  				try{
-  					IMarker[] markers = file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
-  					for( IMarker m: markers ){
-  						int moffset = (Integer)m.getAttribute(IMarker.CHAR_START); 
-  						if( moffset >= offset && moffset <= offset + length ){
-  							m.delete();
-  						}
-  					}
-  				} catch (CoreException e1) {
- 					e1.printStackTrace();
-  				}
+  				deleteMarkers(file,offset,length);
   			}
   			LispNode guts = result.getf(":return").getf(":ok");
  			if (! guts.value.equalsIgnoreCase("nil")) {
@@ -328,6 +318,23 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
 			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
 		} catch (CoreException ce) {
+		}
+	}
+	
+	public static void deleteMarkers(IFile file, int offset, int length){
+		if( file == null || offset < 0 || length <= 0 ){
+			return;
+		}
+		try{
+			IMarker[] markers = file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
+			for( IMarker m: markers ){
+				int moffset = (Integer)m.getAttribute(IMarker.CHAR_START); 
+				if( moffset >= offset && moffset <= offset + length ){
+					m.delete();
+				}
+			}
+		} catch (CoreException e1) {
+			e1.printStackTrace();
 		}
 	}
 
