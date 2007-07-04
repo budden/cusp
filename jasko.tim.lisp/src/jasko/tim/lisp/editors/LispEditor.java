@@ -437,7 +437,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
 		  .getString(PreferenceConstants.BUILD_TYPE).equals(PreferenceConstants.USE_AUTO_BUILD);
 		//If useAutoBuild has changed from last save, remove all positions
-		if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //remove all positions if any.
+		if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //autobuild is on and changed
+			//remove all positions if any.
 			IDocument doc = getDocument();
 			try{
 				doc.removePositionCategory(CHANGED_POS_CATEGORY);
@@ -485,13 +486,12 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private void compileForms(int[][] sexps) {
 		// evaluate all modified sexps
 		for( int i = 0; i < sexps.length; ++i ){
-			IDocument doc = getDocument();
 			int offset = sexps[i][0];
 			int endOffset = sexps[i][1];;
 			if( offset >= 0 ){
 				String sexp = "";
 				try{
-					sexp = doc.get(offset,endOffset-offset);
+					sexp = getDocument().get(offset,endOffset-offset+1);
 				} catch ( BadLocationException e ){
 					e.printStackTrace();
 					sexp = "";
@@ -502,10 +502,10 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						|| sexp.toLowerCase().contains("defpackage")){
 					// should compile rest of the file
 					try{
-						sexp = doc.get(offset,doc.getLength()-offset);
+						sexp = getDocument().get(offset,getDocument().getLength()-offset+1);
 						LispBuilder.compileFilePart(getIFile(), sexp, offset);
-						doc.removePositionCategory(CHANGED_POS_CATEGORY);
-						doc.addPositionCategory(CHANGED_POS_CATEGORY);
+						getDocument().removePositionCategory(CHANGED_POS_CATEGORY);
+						getDocument().addPositionCategory(CHANGED_POS_CATEGORY);
 					} catch ( Exception e ){
 						e.printStackTrace();
 					}
@@ -520,7 +520,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private int[][] getFormsToCompile(Position[] pos, ArrayList<TopLevelItem> newForms, 
 			ArrayList<TopLevelItem> toDefine) {
 		int[] range = new int[]{-1,0};
-		IDocument doc = getDocument();
 		ArrayList<Integer> sexpOffsets = new ArrayList<Integer>();
 		ArrayList<Integer> sexpOffsetsEnd = new ArrayList<Integer>();
 		for( Position p: pos){
@@ -543,20 +542,20 @@ public class LispEditor extends TextEditor implements ILispEditor {
 								range[0] = sexpOffsets.get(jj).intValue();
 								range[1] = sexpOffsetsEnd.get(jj).intValue();
 							} else {
-								range = LispUtil.getTopLevelRange(doc, i);
+								range = LispUtil.getTopLevelRange(getDocument(), i);
 								if( range == null ){ //not in sexp
 									range = new int[]{-1, 0};
 									// find prev close paren:
 									try{
 										int start = 0;
 										for( start = i - 1; start >= 0; --start){
-											if( doc.getChar(start) == ')'){
+											if( getDocument().getChar(start) == ')'){
 												break;
 											}
 										}
 										int end = 0;
-										for( end = i - 1; end < doc.getLength(); ++end ){
-											if( doc.getChar(end) == '('){
+										for( end = i - 1; end < getDocument().getLength(); ++end ){
+											if( getDocument().getChar(end) == '('){
 												break;
 											}
 										}
@@ -599,7 +598,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 				
 			} else 	if( multForms.contains(itmTmp) ){//duplicate items of modified forms
 				sexpOffsets.add(new Integer(itm.offset));
-				sexpOffsets.add(new Integer(itm.offsetEnd));
+				sexpOffsetsEnd.add(new Integer(itm.offsetEnd));
 			} else if ( sexpOffsets.contains(new Integer(itm.offset))){ //modified form
 				multForms.add(itmTmp);
 			}
