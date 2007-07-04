@@ -491,7 +491,7 @@ public class SwankInterface {
 			if( n > 0 ){
 				msg += ":limit " + n;
 			}
-			msg += "))) (if (= (length x) 2) (first x) x)";
+			msg += "))) (if (listp (first (first x))) (first x) x)";
 		}
 		msg += "))))";
 		msg += "(list lst (mapcar #'(lambda (x) (swank:arglist-for-echo-area (cons x nil))) lst)" +
