@@ -257,6 +257,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
  				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
 				for (LispNode error: guts.params) {
 					String msg = error.getf(":message").value;
+					if( LispPlugin.getDefault().getSwank().implementation.lispType().equalsIgnoreCase("SBCL") 
+							&& msg.endsWith("is defined but never used.")){
+						String[] lines = msg.split("\n");
+						msg = lines[lines.length-1];
+					}
 					String severity = error.getf(":severity").value;
 					LispNode location = error.getf(":location");
 					String fileName = location.getf(":file").value.replace("\\", "/");
