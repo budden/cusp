@@ -43,7 +43,9 @@ public class FileCompiler {
 	
 	
 	public static void compileFile(LispEditor editor, boolean switchToRepl) {
+		editor.doProcessAutoBuild = false;
 		editor.doSave(null);
+		editor.doProcessAutoBuild = true;
 		boolean cancompile = LispBuilder.checkLisp(editor.getIFile());
 
 		if(cancompile){

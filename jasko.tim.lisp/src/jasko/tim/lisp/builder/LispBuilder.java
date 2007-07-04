@@ -307,10 +307,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
   						try {
   							MarkerUtilities.createMarker(file, attr, COMPILE_PROBLEM_MARKER);
   						} catch (CoreException e) {
-  							System.out.println(e);
+  							e.printStackTrace();
   						}
-  					} else {
- 						System.out.println(file.getLocation().toString());
+  					} else { //cannot resolve error location
+ 					//	System.out.printf("CompileListener: Filename {%s} is not equal buffer {%s} or filename from compiler notes {%s}\n", 
+ 					//			file.getLocation().toString(), fileName, buffer);
   					}
 					
 				}
