@@ -55,7 +55,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
     
     private final String CHANGED_POS_CATEGORY = "jasko.tim.lisp.doc.change";
     private boolean useAutoBuild = false;
-    public boolean doProcessAutoBuild = true;
     
     /**
      * Returns IFile associated with this editor
@@ -434,11 +433,18 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		outline.update(contents);
 		updateTasks();
 		//updateFolding(contents); TODO: change outline in same way as folding now
-		if( doProcessAutoBuild ){
-			processAutoBuild(contents);
-		}
+		processAutoBuild(contents);
 	}
 
+	
+	public void doSaveNoCompile(){
+		super.doSave(null);
+		
+		LispNode contents = LispParser.parse(getDocument().get() + "\n)");
+		outline.update(contents);
+		updateTasks();		
+	}
+	
 	private void processAutoBuild(LispNode contents) {
 		boolean oldAutoBuild = useAutoBuild;
 		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
