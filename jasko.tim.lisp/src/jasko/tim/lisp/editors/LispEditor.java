@@ -548,7 +548,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						int jj = Collections.binarySearch(sexpOffsetsEnd, i);
 						if( jj >= 0 ){
 							range[0] = sexpOffsets.get(jj).intValue();
-							range[1] = sexpOffsetsEnd.get(jj).intValue();											
+							range[1] = sexpOffsetsEnd.get(jj).intValue();
 						} else { //both ii and jj < 0
 							ii = -ii - 1;
 							jj = -jj - 1;
