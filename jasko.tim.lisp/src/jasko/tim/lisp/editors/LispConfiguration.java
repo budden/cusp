@@ -66,7 +66,11 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
         ca.enableAutoInsert(ps.getBoolean(PreferenceConstants.AUTO_INSERT_COMPLETIONS));
 		ca.setAutoActivationDelay(ps.getInt(PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY));
 		ca.setProposalPopupOrientation(ContentAssistant.CONTEXT_INFO_BELOW);
-		ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_ABOVE);
+		if( ps.getBoolean(PreferenceConstants.ARGLIST_BELOW)){
+			ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_BELOW);
+		} else {
+			ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_ABOVE);			
+		}
         
         ps.addPropertyChangeListener(prefsListener);
 	}

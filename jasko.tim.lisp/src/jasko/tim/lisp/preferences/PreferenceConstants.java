@@ -42,6 +42,7 @@ public interface PreferenceConstants {
     public static final String AUTO_COMPLETIONS_NLIMIT = "autoCompletionsNLimit";
     public static final String DOCS_IN_COMPLETIONS = "docsInCompletions";
     public static final String MAX_HINT_LINES = "maxHintLines";
+    public static final String ARGLIST_BELOW = "arglistBelow";
     
     public static final String DECORATE_REPL_INSPECTABLES = "decorateREPLInspectables";
     public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";

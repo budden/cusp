@@ -80,6 +80,11 @@ public class EditorPreferencePage
                 getFieldEditorParent()));
 
         addField(new BooleanFieldEditor(
+                PreferenceConstants.ARGLIST_BELOW,
+                "Show documentation hints below cursor. (Requires restart)",
+                getFieldEditorParent()));
+        
+        addField(new BooleanFieldEditor(
                 PreferenceConstants.AUTO_INSERT_COMPLETIONS,
                 "Automatically insert single content completion option",
                 getFieldEditorParent()));
