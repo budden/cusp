@@ -27,11 +27,39 @@ public class IndentAction extends LispAction {
 	public void run() {
 		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
 		int offset = ts.getOffset();
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		IDocument doc = editor.getDocument();
 
 		try {
 			int firstLine = doc.getLineOfOffset(offset);
-			int lastLine = doc.getLineOfOffset(offset + ts.getLength());
+			int lastLine = doc.getLineOfOffset(offset+ts.getLength());
+			// get first line indent0
+			IRegion firstLineInfo = doc.getLineInformation(firstLine);
+			int firstIndent = 0;
+			for( firstIndent = 0; firstIndent < firstLineInfo.getLength(); ++firstIndent){
+				char c = doc.getChar(firstLineInfo.getOffset()+firstIndent);
+				if( !Character.isWhitespace(c) ){
+					break;
+				}
+			}
+			// get first line trimmed offset
+			int firstTrimedOffset = Math.max(0, offset - firstLineInfo.getOffset() - firstIndent);
+			
+			// get last line indent0
+			IRegion lastLineInfo = doc.getLineInformation(lastLine);
+			int lastIndent = 0;
+			for( lastIndent = 0; lastIndent < lastLineInfo.getLength(); ++lastIndent){
+				char c = doc.getChar(lastLineInfo.getOffset()+lastIndent);
+				if( !Character.isWhitespace(c) ){
+					break;
+				}
+			}
+			// get last line trimmed position
+			int lastTrimedOffset = Math.max(0, 
+					offset + ts.getLength() - lastLineInfo.getOffset() - lastIndent);
+
+			int newLastLineOffset = firstLineInfo.getOffset();
+			int firstIndentNew = 0;
+			int lastIndentNew = 0;
 			for (int funcLine = firstLine; funcLine <= lastLine; ++funcLine) {
 				IRegion lineInfo = doc.getLineInformation(funcLine);
 				
@@ -41,16 +69,27 @@ public class IndentAction extends LispAction {
                 //     multiline strings can be *really* bad, so let expediency overtake purity for the nonce.
                 //     - Chas Emerick
                 if (doc.getContentType(lineInfo.getOffset()).equals(LispPartitionScanner.LISP_STRING) &&
-                        !doc.get(lineInfo.getOffset(), lineInfo.getLength()).trim().startsWith("\"")) continue;
-                
+                        !doc.get(lineInfo.getOffset(), lineInfo.getLength()).trim().startsWith("\"")){
+                	continue;                	
+                }                
 				
 				String indent = LispIndenter.calculateIndent(lineInfo.getOffset(), doc);
 				String line = doc.get(lineInfo.getOffset(), lineInfo.getLength());
 				
 				String newLine = indent + line.trim();
 				doc.replace(lineInfo.getOffset(), lineInfo.getLength(), newLine);
-				
+				if( funcLine == firstLine ){
+					firstIndentNew = indent.length();
+				}
+				if( funcLine != lastLine ){
+					newLastLineOffset += newLine.length() + 1;		
+				} else {
+					lastIndentNew = indent.length();					
+				}
 			}
+			int newOffset = firstLineInfo.getOffset() + firstIndentNew + firstTrimedOffset;
+			int newOffsetEnd = newLastLineOffset + lastIndentNew + lastTrimedOffset;
+			editor.getSelectionProvider().setSelection(new TextSelection(newOffset,newOffsetEnd-newOffset));			
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
