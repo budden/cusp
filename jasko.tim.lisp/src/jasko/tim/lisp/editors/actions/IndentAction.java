@@ -24,6 +24,14 @@ public class IndentAction extends LispAction {
 		super(editor);
 	}
 	
+	private int getIndent(String str){
+		int i = 0;
+		while( i < str.length() && Character.isWhitespace(str.charAt(i)) ){
+			++i;
+		}
+		return i;
+	}
+	
 	public void run() {
 		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
 		int offset = ts.getOffset();
@@ -34,30 +42,18 @@ public class IndentAction extends LispAction {
 			int lastLine = doc.getLineOfOffset(offset+ts.getLength());
 			// get first line indent0
 			IRegion firstLineInfo = doc.getLineInformation(firstLine);
-			int firstIndent = 0;
-			for( firstIndent = 0; firstIndent < firstLineInfo.getLength(); ++firstIndent){
-				char c = doc.getChar(firstLineInfo.getOffset()+firstIndent);
-				if( !Character.isWhitespace(c) ){
-					break;
-				}
-			}
+			int firstIndent = getIndent(doc.get(firstLineInfo.getOffset(),firstLineInfo.getLength()));
 			// get first line trimmed offset
 			int firstTrimedOffset = Math.max(0, offset - firstLineInfo.getOffset() - firstIndent);
 			
 			// get last line indent0
 			IRegion lastLineInfo = doc.getLineInformation(lastLine);
-			int lastIndent = 0;
-			for( lastIndent = 0; lastIndent < lastLineInfo.getLength(); ++lastIndent){
-				char c = doc.getChar(lastLineInfo.getOffset()+lastIndent);
-				if( !Character.isWhitespace(c) ){
-					break;
-				}
-			}
+			int lastIndent = getIndent(doc.get(lastLineInfo.getOffset(),lastLineInfo.getLength()));
 			// get last line trimmed position
 			int lastTrimedOffset = Math.max(0, 
 					offset + ts.getLength() - lastLineInfo.getOffset() - lastIndent);
 
-			int newLastLineOffset = firstLineInfo.getOffset();
+			int newLastLineOffset = lastLineInfo.getOffset();
 			int firstIndentNew = 0;
 			int lastIndentNew = 0;
 			for (int funcLine = firstLine; funcLine <= lastLine; ++funcLine) {
@@ -74,18 +70,16 @@ public class IndentAction extends LispAction {
                 }                
 				
 				String indent = LispIndenter.calculateIndent(lineInfo.getOffset(), doc);
-				String line = doc.get(lineInfo.getOffset(), lineInfo.getLength());
-				
-				String newLine = indent + line.trim();
-				doc.replace(lineInfo.getOffset(), lineInfo.getLength(), newLine);
+				int indentOld = getIndent(doc.get(lineInfo.getOffset(),lineInfo.getLength()));
 				if( funcLine == firstLine ){
 					firstIndentNew = indent.length();
 				}
-				if( funcLine != lastLine ){
-					newLastLineOffset += newLine.length() + 1;		
-				} else {
+				if( funcLine == lastLine ){
 					lastIndentNew = indent.length();					
+				} else {
+					newLastLineOffset += indent.length() - indentOld;
 				}
+				doc.replace(lineInfo.getOffset(), indentOld, indent);
 			}
 			int newOffset = firstLineInfo.getOffset() + firstIndentNew + firstTrimedOffset;
 			int newOffsetEnd = newLastLineOffset + lastIndentNew + lastTrimedOffset;
