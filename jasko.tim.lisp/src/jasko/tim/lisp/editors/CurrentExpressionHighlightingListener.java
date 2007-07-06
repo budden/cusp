@@ -76,7 +76,6 @@ public class CurrentExpressionHighlightingListener implements KeyListener, Mouse
             case SWT.ARROW_UP:
             case SWT.PAGE_DOWN:
             case SWT.PAGE_UP:
-            case SWT.DEL:
                 updateHighlighting();
         }
     }
@@ -85,6 +84,7 @@ public class CurrentExpressionHighlightingListener implements KeyListener, Mouse
         switch (e.keyCode) {
 	        case SWT.HOME:
 	        case SWT.END:
+            case SWT.DEL:
 	            updateHighlighting();
         }
     }
