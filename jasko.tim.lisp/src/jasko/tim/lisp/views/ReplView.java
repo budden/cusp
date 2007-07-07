@@ -117,7 +117,8 @@ public class ReplView extends ViewPart implements SelectionListener {
         public void callUrl(String url) {
         	ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
         	LispConfiguration.callUrl(url,ts.getOffset(),getDocument());
-        }    
+        }
+    
     }
 	
 	public void createPartControl(Composite parent) {
@@ -752,6 +753,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected class CheckEvalListener implements VerifyKeyListener {
 		public void verifyKey(VerifyEvent event) {
 			if ((event.keyCode == '\r' || event.keyCode == '\n')
+					&& !in.getDocument().get().matches("\\s*")
 					&& LispUtil.doParensBalance(in.getDocument())) {
 				//System.out.println("*" + event.text + ":" + event.text.length());
 				sentEvalByKeyboard = true;
