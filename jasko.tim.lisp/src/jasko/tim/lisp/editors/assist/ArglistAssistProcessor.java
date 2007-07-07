@@ -129,7 +129,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 					if(j<nn){
 						IContextInformation ci = getContextInfo(info);
 						ret[j] = new CompletionProposal(results[0][j].toLowerCase(), rStart,
-								variable.length(), results[0][j].length(), null, null, ci,lastCompletionResultsInfo[j]);						
+								variable.length(), results[0][j].length(), null, null, 
+								ci,lastCompletionResultsInfo[j]);						
 					}
 				}
 				return ret;
@@ -196,7 +197,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 		
 		// Special arglist assistance for make-instance
 		if (function.equals("make-instance")) {
-			LispNode exp = LispParser.parse(LispUtil.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
+			LispNode exp = LispParser.parse(LispUtil
+					.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
 			System.out.println("*" + exp);
 			if (exp.get(0).params.size() >= 2) {
 				String className = exp.get(0).params.get(1).value;
@@ -214,7 +216,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				makeInstanceInfoFound = true;
 			}
 		} else if (function.equals("defmethod")) {
-			LispNode exp = LispParser.parse(LispUtil.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
+			LispNode exp = LispParser.parse(LispUtil
+					.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
 			if (exp.get(0).params.size() >= 2) {
 				String arg0 = exp.get(0).params.get(1).value;
 				
@@ -246,8 +249,9 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 			}
 			if (!docString.equals("")) {
 				String[] lines = docString.split("\n");
-				int maxlines = LispPlugin.getDefault().getPreferenceStore().getInt(PreferenceConstants.MAX_HINT_LINES);
-				if (lines.length > maxlines) {
+				int maxlines = LispPlugin.getDefault()
+					.getPreferenceStore().getInt(PreferenceConstants.MAX_HINT_LINES);
+				if (maxlines > 0 && lines.length > maxlines) {
 					for (int i=0; i<maxlines; ++i) {
 						info += "\n" + lines[i];
 					}

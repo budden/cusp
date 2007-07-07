@@ -515,8 +515,7 @@ public class SwankInterface {
 			if (!docString.equals("") && !docString.equalsIgnoreCase("nil")) {
 				String[] lines = docString.split("\n");
 				int maxlines = prefs.getInt(PreferenceConstants.MAX_HINT_LINES);
-				if ( maxlines == 0 ) maxlines = 2;
-				if (lines.length > maxlines) {
+				if (maxlines > 0 && lines.length > maxlines) {
 					for (int j=0; j<maxlines; ++j) {
 						info += "\n" + lines[j];
 					}
