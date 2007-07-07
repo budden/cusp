@@ -113,27 +113,11 @@ public class ReplView extends ViewPart implements SelectionListener {
         public String showContentCompletions () {
             return config.showContentCompletions();
         }
-        
+
         public void callUrl(String url) {
-        	// TODO: this code is almost duplicated in LispEditor
-    		ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
-    		int offset = ts.getOffset();
-    		IDocument doc = getDocument();
-    		
-    		String identifier = LispUtil.getCurrentFullWord(doc, offset);
-    		identifier = identifier.replace("'", "");
-    		identifier = identifier.replace("`", "");
-    		
-    		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
-    		try {
-    			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
-    					url.replace("%s", identifier)));
-    		} catch (PartInitException e) {
-    			e.printStackTrace();
-    		} catch (MalformedURLException e) {
-    			e.printStackTrace();
-    		}
-        }
+        	ITextSelection ts = (ITextSelection) getSelectionProvider().getSelection();
+        	LispConfiguration.callUrl(url,ts.getOffset(),getDocument());
+        }    
     }
 	
 	public void createPartControl(Composite parent) {

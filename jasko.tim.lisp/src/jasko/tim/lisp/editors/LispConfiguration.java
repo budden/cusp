@@ -1,9 +1,13 @@
 package jasko.tim.lisp.editors;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.assist.*;
 import jasko.tim.lisp.preferences.PreferenceConstants;
+import jasko.tim.lisp.util.LispUtil;
 
 import org.eclipse.jface.text.hyperlink.URLHyperlinkDetector;
 import org.eclipse.swt.*;
@@ -18,6 +22,8 @@ import org.eclipse.jface.text.rules.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.editors.text.*;
 
 /**
@@ -79,7 +85,28 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
         // is this the right way to do it?  No .dispose on config objects...
         LispPlugin.getDefault().getPreferenceStore().removePropertyChangeListener(prefsListener);
     }
-	
+
+    
+    public static void callUrl(String url, int offset, IDocument doc) {
+/*		ITextSelection ts = (ITextSelection) source.getSelectionProvider().getSelection();
+		int offset = ts.getOffset();
+		IDocument doc = source.getDocument();
+	*/	
+		String identifier = LispUtil.getCurrentFullWord(doc, offset);
+		identifier = identifier.replace("'", "");
+		identifier = identifier.replace("`", "");
+		
+		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
+		try {
+			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
+					url.replace("%s", identifier)));
+		} catch (PartInitException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+    }
+    
     public String showParameterHints () {
         return ca.showContextInformation();
     }
@@ -87,7 +114,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
     public String showContentCompletions () {
         return ca.showPossibleCompletions();
     }
-	
+    
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 		ca.setInformationControlCreator(new LispTextHoverControlCreator());
 		return ca;
