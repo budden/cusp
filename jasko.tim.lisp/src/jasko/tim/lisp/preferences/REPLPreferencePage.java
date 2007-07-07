@@ -1,7 +1,5 @@
 package jasko.tim.lisp.preferences;
 
-import java.util.ArrayList;
-
 import org.eclipse.jface.preference.*;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -29,10 +27,13 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
         // deprecated in Eclipse 3.0 in favor of the UI themes stuff, which is more of a hairball than
         // I can bring myself to figure out right this minute.  - Chas Emerick
         
-        final ArrayList<FieldEditor> replInspectableStyleEditors = new ArrayList<FieldEditor>();
+//        final ArrayList<FieldEditor> replInspectableStyleEditors = new ArrayList<FieldEditor>();
         final Composite parent = getFieldEditorParent();
         
-        
+
+        addField(new BooleanFieldEditor(PreferenceConstants.SHOW_EVAL_IN_REPL,
+        		"Show expression evaluated from file in REPL", parent));
+
         addField(new BooleanFieldEditor(
                     PreferenceConstants.DECORATE_REPL_INSPECTABLES,
                     "Apply custom style to inspectable objects in the REPL",
