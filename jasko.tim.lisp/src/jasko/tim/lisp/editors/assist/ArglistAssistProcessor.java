@@ -34,6 +34,33 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 		this.editor = editor;
 	}
 
+	/**
+	 * Finds if offset is after space or ), so that argHint should be displayed
+	 * @param doc
+	 * @param offset
+	 * @return
+	 */
+	public static boolean doArgs(IDocument doc, int offset){
+		char c;
+		try {
+			c = doc.getChar(offset-1);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return false;
+		}
+		try {
+			if ((c == ')' || Character.isWhitespace(c)) 
+					&& doc.getPartition(offset-1).getType().equals(IDocument.DEFAULT_CONTENT_TYPE)) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 	private IContextInformation getContextInfo(String info){
 		if( info != null && !info.equals("") && !info.equals(NO_DOC_STRING)){
 			return new ContextInformation(info, info);

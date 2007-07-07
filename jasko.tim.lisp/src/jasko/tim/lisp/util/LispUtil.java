@@ -232,7 +232,7 @@ public class LispUtil {
 			return new FunctionInfo("", -1);
 		}
 	}
-	
+
 	public static String getCurrentFunction(IDocument doc, int offset) {
 		String source = "";
 		
