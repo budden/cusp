@@ -867,6 +867,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	protected void pushReadState(String s1, String s2) {
+		ReplView.switchToRepl();
 		pushState(new ReadState(s1, s2));
 	}
 
