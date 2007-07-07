@@ -30,7 +30,6 @@ public interface PreferenceConstants {
 	public static final String BUILD_TYPE = "buildType";
 	public static final String SLIME_TYPE_PACK_EVAL = "slimeTypePackEval";
 
-	public static final String SHOW_EVAL_IN_REPL = "showEvalInRepl";
 	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";
 	public static final String PAIR_SMART_BRACKETS = "pairSmartBrackets";
 	public static final String PAIR_EDIT_BRACES = "pairEditBraces";
@@ -45,6 +44,8 @@ public interface PreferenceConstants {
     public static final String MAX_HINT_LINES = "maxHintLines";
     public static final String ARGLIST_BELOW = "arglistBelow";
     
+	public static final String SHOW_EVAL_IN_REPL = "showEvalInRepl";
+	public static final String USE_CTRL_ENTER = "useCtrlEnter";
     public static final String DECORATE_REPL_INSPECTABLES = "decorateREPLInspectables";
     public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";
     public static final String REPL_INSPECTABLE_FG_COLOR = "REPLInspectableColorFG";
