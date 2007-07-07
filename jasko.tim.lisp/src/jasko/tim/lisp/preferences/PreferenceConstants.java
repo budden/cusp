@@ -30,11 +30,12 @@ public interface PreferenceConstants {
 	public static final String BUILD_TYPE = "buildType";
 	public static final String SLIME_TYPE_PACK_EVAL = "slimeTypePackEval";
 
-	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";	
-	public static final String PAIR_SMART_BRACKETS = "pairSmartBrackets";	
-	public static final String PAIR_EDIT_BRACES = "pairEditBraces";	
-	public static final String PAIR_EDIT_QUOTES = "pairEditQuotes";	
-	public static final String PAIR_EDIT_COMMENTS = "pairEditComments";	
+	public static final String SHOW_EVAL_IN_REPL = "showEvalInRepl";
+	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";
+	public static final String PAIR_SMART_BRACKETS = "pairSmartBrackets";
+	public static final String PAIR_EDIT_BRACES = "pairEditBraces";
+	public static final String PAIR_EDIT_QUOTES = "pairEditQuotes";
+	public static final String PAIR_EDIT_COMMENTS = "pairEditComments";
 	public static final String AUTO_POPUP_COMPLETIONS = "autoPopupCompletions";
 	public static final String AUTO_POPUP_COMPLETIONS_DELAY = "autoPopupCompletionsDelay";
     public static final String AUTO_INSERT_COMPLETIONS = "autoInsertCompletions";

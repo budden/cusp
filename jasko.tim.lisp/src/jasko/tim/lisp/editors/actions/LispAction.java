@@ -36,7 +36,7 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
 	
 	// Handy util functions
 	
-	protected SwankInterface getSwank() {
+	protected static SwankInterface getSwank() {
 		return LispPlugin.getDefault().getSwank();
 	}
 	

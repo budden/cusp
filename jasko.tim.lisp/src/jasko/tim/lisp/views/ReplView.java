@@ -869,10 +869,19 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected void pushReadState(String s1, String s2) {
 		pushState(new ReadState(s1, s2));
 	}
+
 	
-	
-	
-	
+	public void EvalStateHandle(String command, String cleanCommand){
+		System.out.println(cleanCommand);
+		prevCommands.add(command.trim());
+		currPrevCommand = prevCommands.size();
+		appendText(swank.getPackage() + "> " + command);
+		scrollDown();
+		
+		swank.sendEval(cleanCommand, new ReturnHandler());
+		
+		checkSwitchPackage(command);		
+	}
 	
 	
 	protected class EvalState implements State {
@@ -882,16 +891,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public boolean handle(String command, String cleanCommand) {
-			System.out.println(cleanCommand);
-			prevCommands.add(command.trim());
-			currPrevCommand = prevCommands.size();
-			appendText(swank.getPackage() + "> " + command);
-			scrollDown();
-			
-			swank.sendEval(cleanCommand, new ReturnHandler());
-			
-			checkSwitchPackage(command);
-			
+			EvalStateHandle(command,cleanCommand);
 			return false;
 		}
 

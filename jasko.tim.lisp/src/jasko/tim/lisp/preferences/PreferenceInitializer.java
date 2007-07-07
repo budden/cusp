@@ -53,6 +53,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 	*/			
 		store.setDefault(BUILD_TYPE, USE_ECLIPSE_BUILD);
 		
+		store.setDefault(SHOW_EVAL_IN_REPL, false);
         store.setDefault(PAIR_EDIT_BRACKETS, false);
         store.setDefault(PAIR_SMART_BRACKETS, false);
         store.setDefault(PAIR_EDIT_BRACES, false);
