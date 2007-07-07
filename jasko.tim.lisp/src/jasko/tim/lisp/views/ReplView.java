@@ -9,8 +9,6 @@ import jasko.tim.lisp.editors.actions.*;
 import jasko.tim.lisp.inspector.InspectorRunnable;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 import org.eclipse.swt.*;
@@ -31,7 +29,6 @@ import org.eclipse.ui.IKeyBindingService;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.part.ViewPart;
 
 
@@ -89,8 +86,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
     private class ReplEditor extends SourceViewer implements ILispEditor {
-        private final LispConfiguration config = new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
-        private final CurrentExpressionHighlightingListener highlighter = new CurrentExpressionHighlightingListener();
+        private final LispConfiguration config = 
+        	new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
+        private final CurrentExpressionHighlightingListener highlighter = 
+        	new CurrentExpressionHighlightingListener();
         
         public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
             super(comp2, ruler, i);
@@ -372,7 +371,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 				}
 			}
 		});*/
-		if ( LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG)){
+		if ( LispPlugin.getDefault().getPreferenceStore()
+				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG)){
 			LispPlugin.getDefault().out("Lisp compiler log:");			
 		}
 	}
@@ -752,7 +752,13 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	protected class CheckEvalListener implements VerifyKeyListener {
 		public void verifyKey(VerifyEvent event) {
-			if ((event.keyCode == '\r' || event.keyCode == '\n')
+			boolean ctrl = true;
+			if( LispPlugin.getDefault().getPreferenceStore()
+				.getBoolean(PreferenceConstants.USE_CTRL_ENTER) ){
+				ctrl = event.stateMask == SWT.CONTROL; 
+			}
+			if ( ctrl
+					&& (event.keyCode == '\r' || event.keyCode == '\n')
 					&& !in.getDocument().get().matches("\\s*")
 					&& LispUtil.doParensBalance(in.getDocument())) {
 				//System.out.println("*" + event.text + ":" + event.text.length());
@@ -1127,7 +1133,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 			} else if (item.getData("frameNum") != null && item.getData("varNum") != null) {
 				Object frame = item.getData("frameNum");
 				Object var = item.getData("varNum");
-				getSwank().sendInspectFrameLocal(thread, frame.toString(), var.toString(), new InspectorRunnable());
+				getSwank().sendInspectFrameLocal(thread, frame.toString(), var.toString(),
+						new InspectorRunnable());
 			}
 		}
 

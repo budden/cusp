@@ -31,6 +31,10 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
         final Composite parent = getFieldEditorParent();
         
 
+        addField(new BooleanFieldEditor(PreferenceConstants.USE_CTRL_ENTER,
+        		"Expression in Repl is sent for eval when Ctrl+Enter is pressed.\nUse it when autobalancing () is on.", 
+        		parent));
+
         addField(new BooleanFieldEditor(PreferenceConstants.SHOW_EVAL_IN_REPL,
         		"Show expression evaluated from file in REPL", parent));
 
