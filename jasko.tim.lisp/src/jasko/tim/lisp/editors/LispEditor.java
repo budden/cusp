@@ -413,6 +413,11 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	
 	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
+
+		if (LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
+				.equals(PreferenceConstants.USE_SLIME_BUILD)) { 
+			LispBuilder.checkLisp(getIFile());
+		}
 		
 		LispNode contents = LispParser.parse(getDocument().get() + "\n)");
 		outline.update(contents);
