@@ -197,7 +197,7 @@ public class SwankInterface {
 					+ "asdf-extensions/asdf-extensions.lisp";
 				System.out.printf("asdf path: %s\n", asdfext);
 				String dir = LispPlugin.getDefault().getPluginPath()
-					+ "sbcl/site-systems";
+					+ "libraries";
 				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
 				sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
 						+ dir +"\")",1000);
