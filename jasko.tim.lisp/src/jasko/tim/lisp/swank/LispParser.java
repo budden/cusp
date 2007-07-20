@@ -175,8 +175,10 @@ public class LispParser {
 						
 					} else if (code.charAt(i+1) == '\\' && i < length-2) {
 						int offset = i;
-						i += 2;
 						sb.append(code.charAt(i));
+						sb.append(code.charAt(i+1));
+						sb.append(code.charAt(i+2));
+						i += 2;
 						LispNode str = new LispNode(sb.toString(), offset, i,
 								getLineNum(offset,eoffsets),getLineNum(offset,eoffsets));
 						str.isString = true; // close enough
