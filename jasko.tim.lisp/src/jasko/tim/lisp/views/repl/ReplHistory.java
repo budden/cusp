@@ -29,6 +29,8 @@ public class ReplHistory extends SourceViewer
 	private Cursor hand;
 	private Color inspectableBack;
 	private Color inspectableFore;
+	private Color inputBack;
+	private Color inputFore;
     
     private boolean applyInspectableStyles;
     private boolean underlineInspectables;
@@ -51,6 +53,9 @@ public class ReplHistory extends SourceViewer
  		
  		hand = new Cursor(parent.getDisplay(), SWT.CURSOR_HAND);
  		
+ 		inputBack = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INP_BG);
+ 		inputFore = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INP_FG);
+        
  		inspectableBack = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INSP_BG);
  		inspectableFore = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INSP_FG);
         
@@ -78,6 +83,10 @@ public class ReplHistory extends SourceViewer
                     inspectableBack = event.newValue;
                 } else if (event.tokenType.equals(ColorManager.TokenType.REPL_INSP_FG)) {
                     inspectableFore = event.newValue;
+                } else if (event.tokenType.equals(ColorManager.TokenType.REPL_INP_FG)) {
+                    inputFore = event.newValue;
+                } else if (event.tokenType.equals(ColorManager.TokenType.REPL_INP_BG)) {
+                    inputBack = event.newValue;
                 } else {
                     return;
                 }
@@ -105,7 +114,23 @@ public class ReplHistory extends SourceViewer
 			e.printStackTrace();
 		}
 	}
+
+	public void appendInput(String text){
+		IDocument doc = getDocument();
+		try {
+			int start = doc.getLength();
+			doc.replace(doc.getLength(), 0, text);
+            applyInputStyle(start, text.length());
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}		
+	}
 	
+    private void applyInputStyle (int start, int length) {
+        StyleRange style = new StyleRange(start, length, inputFore, inputBack);
+        getTextWidget().setStyleRange(style);
+    }
+    
 	public void appendInspectable(String text, String id) {
 		IDocument doc = getDocument();
 		try {
@@ -118,7 +143,7 @@ public class ReplHistory extends SourceViewer
 			e.printStackTrace();
 		}
 	}
-    
+	
     private void applyInspectableStyle (int start, int length) {
         if (!applyInspectableStyles) return;
         

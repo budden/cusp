@@ -32,6 +32,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         
         DEFAULT_COLOR_MAP.put(REPL_INSPECTABLE_BG_COLOR, rgbAsPrefString(ColorManager.DEFAULT_REPL_INSPECTABLE_BG_COLOR));
         DEFAULT_COLOR_MAP.put(REPL_INSPECTABLE_FG_COLOR, rgbAsPrefString(ColorManager.DEFAULT_REPL_INSPECTABLE_FG_COLOR));
+        DEFAULT_COLOR_MAP.put(REPL_INPUT_BG_COLOR, rgbAsPrefString(ColorManager.DEFAULT_REPL_INPUT_BG_COLOR));
+        DEFAULT_COLOR_MAP.put(REPL_INPUT_FG_COLOR, rgbAsPrefString(ColorManager.DEFAULT_REPL_INPUT_FG_COLOR));
     }
     
 	/*

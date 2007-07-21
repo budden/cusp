@@ -61,6 +61,16 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
                 return b;
             }
         });
+
+        addField(new org.eclipse.jface.preference.ColorFieldEditor(
+                PreferenceConstants.REPL_INPUT_FG_COLOR,
+                "Foreground text color for user input in REPL history: ",
+                getFieldEditorParent()));
+
+        addField(new org.eclipse.jface.preference.ColorFieldEditor(
+                PreferenceConstants.REPL_INPUT_BG_COLOR,
+                "Background text color for user input in REPL history: ",
+                getFieldEditorParent()));        
         
         indent = new Composite(parent, 0);
         indent.setLayout(new GridLayout(2, false));

@@ -20,7 +20,7 @@ public class ColorManager {
 	public static enum TokenType 
 	  { STRING, NUMBER, PAREN, KEYWORD, SYMBOL, PARAMS,
 		COMMENT, DEFAULT, GLOBAL, CONSTANT, SENT_MESSAGE, UCW_TAG,
-        REPL_INSP_BG, REPL_INSP_FG }
+        REPL_INSP_BG, REPL_INSP_FG, REPL_INP_BG, REPL_INP_FG }
 
 	public static RGB DEFAULT_STRING = new RGB(200, 128, 0);
 	public static RGB DEFAULT_NUMBER = new RGB(0, 128, 128);
@@ -37,6 +37,8 @@ public class ColorManager {
     
     public static final RGB DEFAULT_REPL_INSPECTABLE_BG_COLOR = new RGB(230, 230, 255);
     public static final RGB DEFAULT_REPL_INSPECTABLE_FG_COLOR = new RGB(0, 0, 128);
+    public static final RGB DEFAULT_REPL_INPUT_BG_COLOR = new RGB(240, 240, 220);
+    public static final RGB DEFAULT_REPL_INPUT_FG_COLOR = new RGB(0, 0, 0);
 	
 	protected static Map<String, TokenType> prefTokenTypeMap;
 	public static TokenType preferenceStringToTokenType(String str)
@@ -63,6 +65,8 @@ public class ColorManager {
 			prefTokenTypeMap.put(PreferenceConstants.COLOR_UCW,       TokenType.UCW_TAG);
             prefTokenTypeMap.put(PreferenceConstants.REPL_INSPECTABLE_BG_COLOR,       TokenType.REPL_INSP_BG);
             prefTokenTypeMap.put(PreferenceConstants.REPL_INSPECTABLE_FG_COLOR,       TokenType.REPL_INSP_FG);
+            prefTokenTypeMap.put(PreferenceConstants.REPL_INPUT_BG_COLOR,       TokenType.REPL_INP_BG);
+            prefTokenTypeMap.put(PreferenceConstants.REPL_INPUT_FG_COLOR,       TokenType.REPL_INP_FG);
 		}
 		return prefTokenTypeMap;
 	}
