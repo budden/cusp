@@ -30,6 +30,7 @@ public class ReplHistory extends SourceViewer
 	private Color inspectableFore;
 	private Color inputBack;
 	private Color inputFore;
+	private Color commentFore;
     
     private boolean applyInspectableStyles;
     private boolean underlineInspectables;
@@ -52,11 +53,13 @@ public class ReplHistory extends SourceViewer
  		
  		hand = new Cursor(parent.getDisplay(), SWT.CURSOR_HAND);
  		
- 		inputBack = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INP_BG);
- 		inputFore = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INP_FG);
+ 		ColorManager colors = LispPlugin.getDefault().getColorManager();
+ 		inputBack = colors.getColor(ColorManager.TokenType.REPL_INP_BG);
+ 		inputFore = colors.getColor(ColorManager.TokenType.REPL_INP_FG);
         
- 		inspectableBack = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INSP_BG);
- 		inspectableFore = LispPlugin.getDefault().getColorManager().getColor(ColorManager.TokenType.REPL_INSP_FG);
+ 		inspectableBack = colors.getColor(ColorManager.TokenType.REPL_INSP_BG);
+ 		inspectableFore = colors.getColor(ColorManager.TokenType.REPL_INSP_FG);
+ 		commentFore = colors.getColor(ColorManager.TokenType.COMMENT);
         
         IPreferenceStore ps = LispPlugin.getDefault().getPreferenceStore();
         applyInspectableStyles = ps.getBoolean(PreferenceConstants.DECORATE_REPL_INSPECTABLES);
@@ -86,6 +89,8 @@ public class ReplHistory extends SourceViewer
                     inputFore = event.newValue;
                 } else if (event.tokenType.equals(ColorManager.TokenType.REPL_INP_BG)) {
                     inputBack = event.newValue;
+                } else if (event.tokenType.equals(ColorManager.TokenType.COMMENT)) {
+                    commentFore = event.newValue;
                 } else {
                     return;
                 }
@@ -108,12 +113,50 @@ public class ReplHistory extends SourceViewer
 	public void appendText(String text) {
 		IDocument doc = getDocument();
 		try {
-			doc.replace(doc.getLength(), 0, text);
+			int start = doc.getLength();
+			String[] lines = text.split("\\n");
+			for(int i = 0; i < lines.length; ++i){
+				String line = lines[i] + "\n";
+				doc.replace(doc.getLength(), 0, line);
+				int pos = parseLineForComment(line);
+				if( pos >= 0 ){
+					applyCommentStyle(start+pos,line.length()-pos);
+				}
+				start += line.length();
+			}
+			//doc.replace(doc.getLength(), 0, text);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 	}
 
+	private int parseLineForComment(String line){
+		boolean inString = false;
+		for( int i = 0 ; i < line.length(); ++i ){
+			if( inString ){
+				if(line.charAt(i) == '"' && line.charAt(i-1) != '\\'){
+					inString = false;
+				}
+			} else {
+				if( line.charAt(i) == ';' ){
+					if(i == 0 || (i > 0 && line.charAt(i-1) != '\\') ){
+						return i;
+					}
+				} else if ( line.charAt(i) == '"'){
+					if(i == 0 || (i > 0 && line.charAt(i-1) != '\\') ){
+						inString = true;
+					}
+				}
+			}
+		}
+		return -1;
+	}
+	
+	private void applyCommentStyle(int start, int length) {
+        StyleRange style = new StyleRange(start, length, commentFore, null);
+        getTextWidget().setStyleRange(style);		
+	}
+	
 	public void appendInput(String text){
 		IDocument doc = getDocument();
 		try {

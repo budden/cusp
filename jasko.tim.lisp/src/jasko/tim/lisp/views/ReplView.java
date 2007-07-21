@@ -554,13 +554,23 @@ public class ReplView extends ViewPart implements SelectionListener {
 			String strs[] = text.split("\\n");
 			String replStr = "";
 			String consoleStr = "";
-			for(String str : strs){
+			for(int i = 0; i < strs.length; ++i){
+				String str = strs[i];
 				//this works for SBCL
 				if( str.trim().startsWith(";") || str.trim().equals("")){
-					consoleStr = consoleStr + str + "\n";
+					if( i == strs.length-1){
+						consoleStr = consoleStr + str;
+					} else {
+						consoleStr = consoleStr + str + "\n";				
+					}
 				} else {
-					replStr = replStr + str + "\n";  										
-					consoleStr = consoleStr + str + "\n";
+					if( i == strs.length-1){
+						consoleStr = consoleStr + str;
+						replStr = replStr + str;  										
+					} else {
+						consoleStr = consoleStr + str + "\n";						
+						replStr = replStr + str + "\n";
+					}
 				}
 			}
 			history.appendText(replStr);
@@ -865,7 +875,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		System.out.println(cleanCommand);
 		prevCommands.add(command.trim());
 		currPrevCommand = prevCommands.size();
-		appendInput(swank.getPackage() + "> " + command);
+		appendInput("\n"+swank.getPackage() + ">\n" + command+"\n");
 		scrollDown();
 		
 		swank.sendEval(cleanCommand, new ReturnHandler());
