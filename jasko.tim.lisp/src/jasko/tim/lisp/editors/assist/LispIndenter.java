@@ -98,7 +98,7 @@ public class LispIndenter implements IAutoEditStrategy {
 							break;
 						}
 					}
-					indent += "  ";
+					indent += " ";
 				}
 			}
 			//indent = indent.replace("        ", "\t");

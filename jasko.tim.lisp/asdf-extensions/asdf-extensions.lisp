@@ -22,7 +22,7 @@
 (defun register-source-directory (dir)
   (push (pathname-as-directory dir) *top-level-directories*))
 
-(setf *system-definition-search-functions* '(sysdef-crawl-directories))
+(push 'sysdef-crawl-directories *system-definition-search-functions* )
 
 ;;; Build FASLs into a implementation specific directory.
 
