@@ -1,4 +1,4 @@
-package jasko.tim.lisp.views;
+package jasko.tim.lisp.views.repl;
 
 
 import java.util.*;
@@ -65,7 +65,7 @@ public class HistoryDialog extends Dialog  implements KeyListener {
 		gridData.grabExcessVerticalSpace = true;
 		gridData.horizontalAlignment = GridData.FILL;
 		gridData.verticalAlignment = GridData.FILL;
-		gridData.heightHint = 200; //TODO: make it into option
+		gridData.heightHint = 200;
 		lstEnums.setLayoutData(gridData);
 		lstEnums.addMouseListener(new MouseListener() {
 
