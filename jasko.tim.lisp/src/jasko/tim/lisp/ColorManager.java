@@ -37,7 +37,7 @@ public class ColorManager {
     
     public static final RGB DEFAULT_REPL_INSPECTABLE_BG_COLOR = new RGB(230, 230, 255);
     public static final RGB DEFAULT_REPL_INSPECTABLE_FG_COLOR = new RGB(0, 0, 128);
-    public static final RGB DEFAULT_REPL_INPUT_BG_COLOR = new RGB(240, 240, 220);
+    public static final RGB DEFAULT_REPL_INPUT_BG_COLOR = new RGB(240, 240, 170);
     public static final RGB DEFAULT_REPL_INPUT_FG_COLOR = new RGB(0, 0, 0);
 	
 	protected static Map<String, TokenType> prefTokenTypeMap;

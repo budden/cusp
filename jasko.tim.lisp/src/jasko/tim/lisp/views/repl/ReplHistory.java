@@ -6,7 +6,6 @@ import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.ColorManager.ChangeEventListener;
 import jasko.tim.lisp.ColorManager.ColorChangeEvent;
-import jasko.tim.lisp.editors.LispConfiguration;
 import jasko.tim.lisp.inspector.InspectorRunnable;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
@@ -151,7 +150,8 @@ public class ReplHistory extends SourceViewer
         style.underline = underlineInspectables;
         getTextWidget().setStyleRange(style);
     }
-    
+
+ /* TODO:   
     private void applyInspectableHoverStyle (int start, int length) {
         // not currently used -- might be nice to allow users to define a :hover style
         if (!applyInspectableStyles) return;
@@ -160,7 +160,7 @@ public class ReplHistory extends SourceViewer
         style.underline = underlineInspectables;
         getTextWidget().setStyleRange(style);
     }
-	
+ */	
 	private InspectableRegion getRegion (int offset) {
 		for (int i=regions.size()-1; i>=0; --i) {
             InspectableRegion r = regions.get(i);
