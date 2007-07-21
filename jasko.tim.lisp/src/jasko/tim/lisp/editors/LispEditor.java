@@ -49,13 +49,39 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private LispOutlinePage outline;
 	private ArrayList<TopLevelItem> topForms;
 	private ColorManager.ChangeEventListener colorPrefChangeListener;
-    private final LispConfiguration config = new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
+    private final LispConfiguration config = 
+    	new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
     
     private final CurrentExpressionHighlightingListener highlighter = 
     	new CurrentExpressionHighlightingListener();
     
-    private final String CHANGED_POS_CATEGORY = "jasko.tim.lisp.doc.change";
+    private final String CHANGED_POS_FOR_COMPILE = 
+    	"jasko.tim.lisp.doc.change_for_compile";
     private boolean useAutoBuild = false;
+    
+    private final String CHANGED_POS_FOR_OUTLINE = 
+    	"jasko.tim.lisp.doc.change_for_outline";
+
+    private final String TOP_LVL_POS = 
+    	"jasko.tim.lisp.doc.top_lvl_pos";
+    
+    public void addOutlinePosition(Position pos){
+    	try{
+    		getDocument().addPosition(TOP_LVL_POS, pos);
+    	} catch ( Exception e ){
+    		e.printStackTrace();
+    	}
+    }
+    
+    public void clearOutlinePositions(){
+		IDocument doc = getDocument();
+		try{
+			doc.removePositionCategory(TOP_LVL_POS);
+			doc.addPositionCategory(TOP_LVL_POS);
+		} catch ( BadPositionCategoryException e) {
+			e.printStackTrace();
+		}    	
+    }
     
     /**
      * Returns IFile associated with this editor
@@ -106,7 +132,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	 * @param position
 	 * @param snippet
 	 */
-	public static void jumpToDefinition(String filePath, int position, String snippet) {
+	public static void jumpToDefinition(String filePath, int position, 
+			String snippet) {
 		jumpToDefinition(filePath, position, snippet, null);
 	}
 	
@@ -124,7 +151,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	 * @param snippet
 	 * @param symbol
 	 */
-	public static void jumpToDefinition(String filePath, int position, String snippet, String symbol) {
+	public static void jumpToDefinition(String filePath, int position, 
+			String snippet, String symbol) {
 		System.out.println("*jump: " + filePath + ":" + position);
 		IWorkbenchPage page =
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -163,7 +191,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			//System.out.println("0");
 			TextEditor editor2 = (TextEditor) editor;
 			try {
-				IDocument doc = editor2.getDocumentProvider().getDocument(editor2.getEditorInput());
+				IDocument doc = editor2.getDocumentProvider()
+				  .getDocument(editor2.getEditorInput());
 				String contents = doc.get();
 				
 				if (symbol == null) {
@@ -211,12 +240,15 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		public void documentChanged(DocumentEvent event){
 			if(useAutoBuild){
 				try{
-					event.fDocument.addPosition(CHANGED_POS_CATEGORY, 
+					event.fDocument.addPosition(CHANGED_POS_FOR_COMPILE, 
 						new Position(event.fOffset,event.fText.length()));
+					event.fDocument.addPosition(CHANGED_POS_FOR_OUTLINE, 
+							new Position(event.fOffset,event.fText.length()));
 				} catch (Exception e){
 					e.printStackTrace();				
 				}	
 			}
+			//update outline positions
 		}
 	}
 	
@@ -239,10 +271,15 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		licm.install(this.getSourceViewer().getTextWidget());
 
 		IDocument doc = getDocument();
-		doc.addPositionCategory(CHANGED_POS_CATEGORY);
-		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_CATEGORY));
+		doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
+		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_FOR_COMPILE));
+		doc.addPositionCategory(CHANGED_POS_FOR_OUTLINE);
+		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_FOR_OUTLINE));
+		doc.addPositionCategory(TOP_LVL_POS);
+		doc.addPositionUpdater(new DefaultPositionUpdater(TOP_LVL_POS));
 		doc.addDocumentListener(new changesListener());
-		useAutoBuild = LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
+		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
+		  .getString(PreferenceConstants.BUILD_TYPE)
 			.equals(PreferenceConstants.USE_AUTO_BUILD);
 		topForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()+"\n"),
 				LispPlugin.getDefault().getSwank().getCurrPackage());
@@ -251,7 +288,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	}
 	
 	
-	protected ISourceViewer createSourceViewer (Composite parent, IVerticalRuler ruler, int styles) {
+	protected ISourceViewer createSourceViewer (Composite parent, 
+			IVerticalRuler ruler, int styles) {
 		SourceViewer viewer = new ProjectionViewer(parent, ruler,
 				getOverviewRuler(), isOverviewRulerVisible(), styles);
 		// ensure decoration support has been created and configured.
@@ -265,7 +303,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	
 	public void showPopupInfo(String message) {
 		StyledText txt = this.getSourceViewer().getTextWidget();
-		Point p = txt.getLocationAtOffset(this.getSourceViewer().getSelectedRange().x);
+		Point p = 
+			txt.getLocationAtOffset(this.getSourceViewer().getSelectedRange().x);
 		
 		licm.setLocation(p);
 		licm.setText(message);
@@ -414,8 +453,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
 
-		if (LispPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.BUILD_TYPE)
-				.equals(PreferenceConstants.USE_SLIME_BUILD)) { 
+		if (LispPlugin.getDefault().getPreferenceStore()
+				.getString(PreferenceConstants.BUILD_TYPE)
+				  .equals(PreferenceConstants.USE_SLIME_BUILD)) { 
 			LispBuilder.checkLisp(getIFile());
 		}
 		
@@ -438,14 +478,15 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private void processAutoBuild(LispNode contents) {
 		boolean oldAutoBuild = useAutoBuild;
 		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
-		  .getString(PreferenceConstants.BUILD_TYPE).equals(PreferenceConstants.USE_AUTO_BUILD);
+		  .getString(PreferenceConstants.BUILD_TYPE)
+		    .equals(PreferenceConstants.USE_AUTO_BUILD);
 		//If useAutoBuild has changed from last save, remove all positions
 		if(useAutoBuild != oldAutoBuild || !useAutoBuild){ //autobuild is on and changed
 			//remove all positions if any.
 			IDocument doc = getDocument();
 			try{
-				doc.removePositionCategory(CHANGED_POS_CATEGORY);
-				doc.addPositionCategory(CHANGED_POS_CATEGORY);
+				doc.removePositionCategory(CHANGED_POS_FOR_COMPILE);
+				doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
 			} catch ( BadPositionCategoryException e) {
 				e.printStackTrace();
 			}
@@ -458,7 +499,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	private void compileOnSave(LispNode contents) {
 		if( LispBuilder.checkLisp(getIFile()) ){
 			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
-			ArrayList<TopLevelItem> newForms = LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
+			ArrayList<TopLevelItem> newForms = 
+				LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
 			TopLevelItemSort sorter = new TopLevelItemSort();
 			sorter.sortItems(newForms, TopLevelItemSort.Sort.Position);
 			
@@ -466,7 +508,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			
 			Position[] pos = null;
 			try{
-				pos = getDocument().getPositions(CHANGED_POS_CATEGORY);
+				pos = getDocument().getPositions(CHANGED_POS_FOR_COMPILE);
 			} catch ( BadPositionCategoryException e) {
 				e.printStackTrace();
 				pos = null;
@@ -479,8 +521,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 		try {
 			IDocument doc = getDocument();
-			doc.removePositionCategory(CHANGED_POS_CATEGORY);
-			doc.addPositionCategory(CHANGED_POS_CATEGORY);
+			doc.removePositionCategory(CHANGED_POS_FOR_COMPILE);
+			doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
 		} catch ( BadPositionCategoryException e ){
 			e.printStackTrace();
 		}
@@ -507,8 +549,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					try{
 						sexp = getDocument().get(offset,getDocument().getLength()-offset+1);
 						LispBuilder.compileFilePart(getIFile(), sexp, offset);
-						getDocument().removePositionCategory(CHANGED_POS_CATEGORY);
-						getDocument().addPositionCategory(CHANGED_POS_CATEGORY);
+						getDocument().removePositionCategory(CHANGED_POS_FOR_COMPILE);
+						getDocument().addPositionCategory(CHANGED_POS_FOR_COMPILE);
 					} catch ( Exception e ){
 						e.printStackTrace();
 					}
@@ -520,7 +562,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 	}
 
-	// also removes markers in modified positions that are not in sexp (i.e. when commented out)
+	// also removes markers in modified positions that are not in sexp 
+	//(i.e. when commented out)
 	private int[][] getFormsToCompile(Position[] pos, ArrayList<TopLevelItem> newForms, 
 			ArrayList<TopLevelItem> toDefine) {
 		int[] range = new int[]{-1,0};
@@ -528,7 +571,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		ArrayList<Integer> sexpOffsetsEnd = new ArrayList<Integer>();
 		for( Position p: pos){
 			for( int i = p.offset; i <= p.offset + p.length; ++i){
-				//Integer offset =  new Integer(LispUtil.getTopLevelOffset(doc, i));
 				if( i < range[0] || i > range[0] + range[1] ){ //not in previous range
 					int ii = Collections.binarySearch(sexpOffsets, i);
 					if( ii >= 0 ){
@@ -621,6 +663,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		return res;
 	}
 
+	// undefines removed forms and returns unchanged forms that still should be defined
+	// see the comment in the function
 	private ArrayList<TopLevelItem> undefineRemovedForms(ArrayList<TopLevelItem> newForms) {
 		// ==== find removed forms
 		ArrayList<String> toUndefine = new ArrayList<String>(topForms.size());

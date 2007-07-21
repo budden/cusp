@@ -14,10 +14,11 @@ public class LispUtil {
 	
 	public static int getTopLevelOffset(IDocument doc, int offset) {
 		try {
-			// SK: I didn't get this. From what I understand this procedure finds topLevelOffset the following way:
+			// SK: This procedure finds topLevelOffset the following way:
 			// 1. Find line of offset.
-			// 2. Starting from this line, check if '(' is first character of the line. If yes, this is topLevelOffset.
-			// I don't understand why we need binarySearch, sort and iterate offset by --i.
+			// 2. Starting from this line and going backward,
+			//    check if '(' is first character of the line. 
+			//    If yes, this is topLevelOffset.
 			int line = doc.getLineOfOffset(offset);
 			for( int i = line; i >= 0; --i ){
 				int lineOffset = doc.getLineOffset(i);
@@ -25,22 +26,6 @@ public class LispUtil {
 					return lineOffset;
 				}
 			}
-			/*
-			ArrayList<Integer> lineOffsets = new ArrayList<Integer>();
-			for (int i=line; i>=0; --i) {
-				lineOffsets.add(doc.getLineOffset(i));
-			}
-			Collections.sort(lineOffsets);
-			
-			for (int i=offset; i>=0; --i) {
-				if (Collections.binarySearch(lineOffsets, i) >= 0) {
-					if (doc.getLength() > i && doc.getChar(i) == '(') {
-						return i;
-					}
-				}
-			}
-			*/
-			
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
@@ -52,7 +37,8 @@ public class LispUtil {
 		if( range == null ){
 			return null;
 		}
-		return getCurrentFullExpressionRange(doc,getTopLevelOffset(doc,range[0])+1);
+		return getCurrentFullExpressionRange(doc,
+				getTopLevelOffset(doc,range[0])+1);
 	}
 	
 	public static String getTopLevelExpression(IDocument doc, int offset) {
@@ -526,8 +512,10 @@ public class LispUtil {
 		return res;
 	}
 	
-	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file, String pkg){
-		ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>(file.params.size());
+	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file, 
+			String pkg, int offset){
+		ArrayList<TopLevelItem> items = 
+			new ArrayList<TopLevelItem>(file.params.size());
 		String curpkg = pkg;
 		for (LispNode exp: file.params) {
 			//System.out.println(exp);
@@ -535,8 +523,8 @@ public class LispUtil {
 			
 			item.type = exp.get(0).value.toLowerCase();
 			item.name = exp.get(1).toLisp();
-			item.offset = exp.offset;
-			item.offsetEnd = exp.endOffset;
+			item.offset = exp.offset + offset;
+			item.offsetEnd = exp.endOffset + offset;
 			item.pkg = curpkg;
 			if (! item.type.startsWith("def")) {
 				item.name = item.type;
@@ -563,7 +551,8 @@ public class LispUtil {
 			if (item.name.equals("")) {
 				if (exp.params.size() >= 2) {
 					if (exp.get(1).toLisp().startsWith(":")) {
-						item.name = exp.get(1).toLisp() + " " + exp.get(2).toLisp();
+						item.name = 
+							exp.get(1).toLisp() + " " + exp.get(2).toLisp();
 					} else {
 						item.name = exp.get(1).toLisp();
 					}
@@ -582,7 +571,8 @@ public class LispUtil {
 				
 				item.type = "section";
 				item.name = comment.SectionName();
-				item.offset = comment.offset + LispComment.SECTION_START.length();
+				item.offset = comment.offset + offset 
+				  + LispComment.SECTION_START.length();
 				if (! item.name.equals("")) {
 					items.add(item);
 				}
@@ -590,5 +580,9 @@ public class LispUtil {
 		}
 		
 		return items;
+	}
+
+	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file, String pkg){
+		return getTopLevelItems(file,pkg,0);
 	}
 }
