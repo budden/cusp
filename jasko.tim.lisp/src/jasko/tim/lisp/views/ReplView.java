@@ -220,6 +220,9 @@ public class ReplView extends ViewPart implements SelectionListener {
  		LispDocAction ldAction = new LispDocAction(in);
  		ldAction.setActionDefinitionId("jasko.tim.lisp.actions.LispDocAction");
  		keys.registerAction(ldAction); 
+ 		OpenHistoryAction openHistAction = new OpenHistoryAction(this);
+ 		openHistAction.setActionDefinitionId("jasko.tim.lisp.actions.OpenHistoryDialogAction");
+ 		keys.registerAction(openHistAction);
  		PreviousREPLCommandAction prevCmdAction = new PreviousREPLCommandAction(this);
  		prevCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.PreviousREPLCommandAction");
  		keys.registerAction(prevCmdAction);
@@ -791,6 +794,25 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		}
 	}
+
+	public void openHistDialog(){
+		ArrayList<String> hist = new ArrayList<String>(prevCommands.size());
+		for (String command: prevCommands) {
+			if (command.length() > 50) {
+				hist.add(command.substring(0, 47) + "...");
+			} else {
+				hist.add(command);
+			}
+		}
+					
+		HistoryDialog hd = new HistoryDialog(ReplView.this.getSite().getShell(),
+				hist);
+		if (hd.open() == Dialog.OK) {
+			in.getDocument().set(prevCommands.get(hd.getHistInd()));
+		}
+		in.getTextWidget().setFocus();
+		in.getTextWidget().setSelection(in.getTextWidget().getText().length());		
+	}
 	
 	protected class PrevListener implements SelectionListener {
 		Control parent;
@@ -800,22 +822,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void widgetSelected(SelectionEvent e) {
-			ArrayList<String> hist = new ArrayList<String>(prevCommands.size());
-			for (String command: prevCommands) {
-				if (command.length() > 50) {
-					hist.add(command.substring(0, 47) + "...");
-				} else {
-					hist.add(command);
-				}
-			}
-						
-			HistoryDialog hd = new HistoryDialog(ReplView.this.getSite().getShell(),
-					hist);
-			if (hd.open() == Dialog.OK) {
-				in.getDocument().set(prevCommands.get(hd.getHistInd()));
-			}
-			in.getTextWidget().setFocus();
-			in.getTextWidget().setSelection(in.getTextWidget().getText().length());
+			openHistDialog();
 		}
 
 		public void widgetDefaultSelected(SelectionEvent e) {
