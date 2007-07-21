@@ -192,7 +192,8 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		Font baseFont = JFaceResources.getTextFont();
  		FontData fd = baseFont.getFontData()[0];
- 		fd.setHeight(9);
+ 		fd.setHeight(LispPlugin.getDefault().getPreferenceStore()
+ 				.getInt(PreferenceConstants.REPL_FONT_SIZE));
  		Font newFont = new Font(Display.getDefault(), fd);
  		
  		history = new ReplHistory(comp);
@@ -408,6 +409,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 				Font baseFont = history.getFont();
 		 		FontData fd = baseFont.getFontData()[0];
 		 		fd.setHeight(fd.getHeight() + 1);
+		 		LispPlugin.getDefault().getPreferenceStore()
+		 		  .setValue(PreferenceConstants.REPL_FONT_SIZE, fd.getHeight());
 		 		Font newFont = new Font(Display.getDefault(), fd);
 		 		
 		 		history.setFont(newFont);
@@ -424,6 +427,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 				Font baseFont = history.getFont();
 		 		FontData fd = baseFont.getFontData()[0];
 		 		fd.setHeight(fd.getHeight() - 1);
+		 		LispPlugin.getDefault().getPreferenceStore()
+		 		  .setValue(PreferenceConstants.REPL_FONT_SIZE, fd.getHeight());
 		 		Font newFont = new Font(Display.getDefault(), fd);
 		 		
 		 		history.setFont(newFont);
