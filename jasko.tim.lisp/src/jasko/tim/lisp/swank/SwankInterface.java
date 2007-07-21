@@ -196,11 +196,16 @@ public class SwankInterface {
 				String asdfext = LispPlugin.getDefault().getPluginPath() 
 					+ "asdf-extensions/asdf-extensions.lisp";
 				System.out.printf("asdf path: %s\n", asdfext);
-				String dir = LispPlugin.getDefault().getPluginPath()
-					+ "libraries";
+				String baseDir = LispPlugin.getDefault().getPluginPath();;
 				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
-				sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
-						+ dir +"\")",1000);
+				sendEvalAndGrab("(progn "
+						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
+						+ baseDir +"libraries\")"
+						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
+						+ baseDir +"sbcl/site\")"
+						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
+						+ baseDir +"sbcl/site-systems\"))"
+						,1000);
 				String sysdirs[] = prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
 				for(String sysdir: sysdirs){
 					if(!sysdir.equals("")){
