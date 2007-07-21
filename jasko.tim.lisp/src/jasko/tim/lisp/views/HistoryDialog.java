@@ -1,4 +1,4 @@
-package jasko.tim.lisp.views.repl;
+package jasko.tim.lisp.views;
 
 
 import java.util.*;
@@ -6,39 +6,35 @@ import java.util.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.*;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.List;
+import org.eclipse.jface.dialogs.Dialog;
 
 
-public class PackageDialog extends Dialog implements KeyListener {
-	ArrayList<String> packages;
+
+public class HistoryDialog extends Dialog  implements KeyListener {
+	ArrayList<String> hist;
 	String result = "";
-	String currPackage;
-	String title = "";
-	String groupTitle = "";
+	int ind = 0;
+	String title = "Get history";
+	String groupTitle = "History";
 
 	private List lstEnums;
 	private Label lblSearch;
 	private String search = "";
 	
-	public PackageDialog(Shell parentShell, ArrayList<String> packages, String currPackage, boolean loadDialog) {
+	public HistoryDialog(Shell parentShell, ArrayList<String> hist) {
 		super(parentShell);
-		this.currPackage = currPackage;
-		this.packages = packages;
-		if(loadDialog){
-			title = "Load package";
-			groupTitle = "Installed packages";
-		} else {
-			groupTitle = "Current Package: " + currPackage;
-			title = "Change Package";
-		}
-		Collections.sort(this.packages);
+		this.hist = hist;
 	}
 	
 	
-	public String getPackage() {
+	public String getHist() {
 		return result;
+	}
+	
+	public int getHistInd(){
+		return ind;
 	}
 	
 	protected Control createDialogArea(Composite parent) {
@@ -61,16 +57,15 @@ public class PackageDialog extends Dialog implements KeyListener {
 		grpEnum.setLayoutData(gridData);
 	
 		lstEnums = new List(grpEnum, SWT.LEFT | SWT.BORDER | SWT.V_SCROLL | SWT.SINGLE);
-		for(String p: packages) {
+		for(String p: hist) {
 			lstEnums.add(p);
 		}
-		lstEnums.setSelection(new String[] { currPackage });
 		gridData = new GridData();
 		gridData.grabExcessHorizontalSpace = true;
 		gridData.grabExcessVerticalSpace = true;
 		gridData.horizontalAlignment = GridData.FILL;
 		gridData.verticalAlignment = GridData.FILL;
-		gridData.heightHint = 200;
+		gridData.heightHint = 200; //TODO: make it into option
 		lstEnums.setLayoutData(gridData);
 		lstEnums.addMouseListener(new MouseListener() {
 
@@ -84,32 +79,6 @@ public class PackageDialog extends Dialog implements KeyListener {
 			}
 		});
 		lstEnums.addKeyListener(this);
-		/*lstEnums.addKeyListener(new KeyListener() {
-
-			private String acc = "";
-			
-			public void keyPressed(KeyEvent e) {
-				System.out.println(e);
-
-				System.out.println(new Character(e.character).toString());
-				String[] items = lstEnums.getItems();
-				for (int i=0; i<items.length; ++i) {
-					String item = items[i];
-					
-					acc += new Character(e.character).toString().toUpperCase();
-					if (item.startsWith(acc)) {
-						lstEnums.select(i);
-						lstEnums.showSelection();
-						return;
-					}
-					acc = "";
-				}
-			}
-
-			public void keyReleased(KeyEvent e) {
-			}
-			
-		});*/
 		
 		lblSearch = new Label(grpEnum, SWT.SHADOW_IN);
 		gridData = new GridData();
@@ -135,6 +104,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 	
 	protected void okPressed() {
 		result = lstEnums.getSelection()[0];
+		ind = lstEnums.getSelectionIndex();
 		super.okPressed();
 	}
 	

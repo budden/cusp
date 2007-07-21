@@ -777,43 +777,28 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void widgetSelected(SelectionEvent e) {
-			Menu mnu = new Menu(parent);
-			
+			ArrayList<String> hist = new ArrayList<String>(prevCommands.size());
 			for (String command: prevCommands) {
-				MenuItem mnuCom = new MenuItem(mnu, SWT.PUSH);
 				if (command.length() > 50) {
-					mnuCom.setText(command.substring(0, 47) + "...");
+					hist.add(command.substring(0, 47) + "...");
 				} else {
-					mnuCom.setText(command);
+					hist.add(command);
 				}
-				
-				mnuCom.addSelectionListener(new PrevCommandListener(command));
 			}
-			mnu.setVisible(true);
+						
+			HistoryDialog hd = new HistoryDialog(ReplView.this.getSite().getShell(),
+					hist);
+			if (hd.open() == Dialog.OK) {
+				//String expr = hd.getHist();
+				in.getDocument().set(prevCommands.get(hd.getHistInd()));
+			}
+			in.getTextWidget().setFocus();
+			in.getTextWidget().setSelection(in.getTextWidget().getText().length());
 		}
 
 		public void widgetDefaultSelected(SelectionEvent e) {
 		}
 	}
-	
-	protected class PrevCommandListener implements SelectionListener {
-		String command;
-
-		public PrevCommandListener(String command) {
-			this.command = command;
-		}
-		
-		public void widgetSelected(SelectionEvent e) {
-			in.getDocument().set(command);
-		}
-
-		public void widgetDefaultSelected(SelectionEvent e) {
-		}
-	
-	}
-	
-	
-	
 	
 	//******************************
 	//      State handling
