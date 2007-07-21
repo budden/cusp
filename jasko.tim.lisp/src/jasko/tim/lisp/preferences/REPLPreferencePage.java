@@ -38,6 +38,11 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
         addField(new BooleanFieldEditor(PreferenceConstants.SHOW_EVAL_IN_REPL,
         		"Show expression evaluated from file in REPL", parent));
 
+        addField(new StringFieldEditor(
+                PreferenceConstants.REPL_FONT_SIZE,
+                "REPL font size (Requires restart):",
+                getFieldEditorParent()));
+
         addField(new BooleanFieldEditor(
                     PreferenceConstants.DECORATE_REPL_INSPECTABLES,
                     "Apply custom style to inspectable objects in the REPL",

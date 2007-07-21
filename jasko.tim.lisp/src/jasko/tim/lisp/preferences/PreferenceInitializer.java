@@ -65,6 +65,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
         store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);
+        store.setDefault(REPL_FONT_SIZE, 9);
         
         store.setDefault(OUTLINE_SORT, 0);
 	}
