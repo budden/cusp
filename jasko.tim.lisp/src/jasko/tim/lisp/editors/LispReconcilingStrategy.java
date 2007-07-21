@@ -2,6 +2,7 @@ package jasko.tim.lisp.editors;
 
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
+import jasko.tim.lisp.util.TopLevelItem;
 
 import java.util.HashSet;
 
@@ -25,7 +26,7 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 	/** holds the calculated positions */
 	protected final HashSet<Position> fPositions = new HashSet<Position>();
 	protected final Position fLastSection = new Position(0,0);
-
+	
 	/** The offset of the next character to be read */
 	protected int fOffset;
 
@@ -117,6 +118,7 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 			public void run() {
 				if(editor != null){
 					editor.updateFoldingStructure(fPositions,fLastSection);
+					// TODO: add update outline here too
 				}
 			}
 		});
@@ -127,6 +129,7 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 	 * returns inpackage
 	 */
 	private String getTokens(LispNode contents, int offset, int rangeEnd) {
+		IDocument doc = editor.getDocument();
 		String inPackage = "";
 		// process sexps
 		for (int i=0; i<contents.params.size()-1; ++i) {
@@ -143,9 +146,7 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 			 *  Don't poo-poo too hard, though. They're probably still smarter than you.
 			 */
 			if (sexp.endOffset > sexp.offset) {
-				//System.out.println("***end offset was useful!");
 				try {
-					IDocument doc = editor.getDocument();
 					int startLine = doc.getLineOfOffset(offset + sexp.offset);					
 					int endLine = doc.getLineOfOffset(offset + sexp.endOffset);					
 					if (endLine > startLine) {

@@ -11,6 +11,7 @@ import java.util.*;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
+import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.swt.SWT;
@@ -34,8 +35,10 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	IAction sortPosition;
 	
 	LispEditor editor;
-	private ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>();
 	
+	private ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>();
+	private HashMap<TopLevelItem,Position> itemPos = 
+		new HashMap<TopLevelItem,Position>();
 	
 	public LispOutlinePage(LispEditor editor) {
 		this.editor = editor;
@@ -162,6 +165,13 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	
 	private void fillTree(LispNode file) {
 		items = LispUtil.getTopLevelItems(file,"");
+		itemPos.clear();
+		editor.clearOutlinePositions();
+		for( TopLevelItem item : items ){
+			Position pos = new Position(item.offset);
+			editor.addOutlinePosition(pos);
+			itemPos.put(item, pos);
+		}
 		sortItems();
 		redoTree();
 	}
@@ -229,9 +239,9 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 					if (item != lastSelection) {
 						lastSelection = item;
 						if ( item.type.equals("section") ) {
- 							editor.selectAndReveal(item.offset, item.name.length());							
+ 							editor.selectAndReveal(itemPos.get(item).offset, item.name.length());							
  						} else {
- 							editor.selectAndReveal(item.offset, item.type.length() + 1);							
+ 							editor.selectAndReveal(itemPos.get(item).offset, item.type.length() + 1);							
  						}
 					}
 				}
@@ -247,10 +257,11 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			if (sel.getFirstElement() instanceof TopLevelItem) {
 				TopLevelItem item = (TopLevelItem) sel.getFirstElement();
 				lastSelection = item;
+				int pos = itemPos.get(item).offset;
 				if ( item.type.equals("section") ) {
-					editor.selectAndReveal(item.offset, item.name.length());							
+					editor.selectAndReveal(pos, item.name.length());							
 				} else {
-					editor.selectAndReveal(item.offset, item.type.length() + 1);							
+					editor.selectAndReveal(pos, item.type.length() + 1);							
 				}
 			}
 		}
@@ -283,9 +294,9 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 						TopLevelItem item = (TopLevelItem) node.getData();
 						lastSelection = item;
 						if ( item.type.equals("section") ) {
- 							editor.selectAndReveal(item.offset, item.name.length());							
+ 							editor.selectAndReveal(itemPos.get(item).offset, item.name.length());							
  						} else {
- 							editor.selectAndReveal(item.offset, item.type.length() + 1);							
+ 							editor.selectAndReveal(itemPos.get(item).offset, item.type.length() + 1);							
  						}
 					}
 					return;
