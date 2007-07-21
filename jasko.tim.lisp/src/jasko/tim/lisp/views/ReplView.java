@@ -571,6 +571,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 		history.appendInspectable(text, id);
 	}
 	
+	public void appendInput(String text) {
+		history.appendInput(text);
+	}
+	
 	
 	/**
 	 * This is a real class rather than an anonymous one so that it can be cloned properly.
@@ -859,7 +863,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		System.out.println(cleanCommand);
 		prevCommands.add(command.trim());
 		currPrevCommand = prevCommands.size();
-		appendText(swank.getPackage() + "> " + command);
+		appendInput(swank.getPackage() + "> " + command);
 		scrollDown();
 		
 		swank.sendEval(cleanCommand, new ReturnHandler());
@@ -899,7 +903,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 
 		public boolean handle(String command, String cleanCommand) {
 			swank.sendReadString(cleanCommand, null, stringNum1, stringNum2);
-			appendText(">> " + command);
+			appendInput(">> " + command);
 			scrollDown();
 			return true;
 		}
@@ -1000,7 +1004,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		public void choose(Integer choice) {
 			swank.sendDebug(choice.toString(), null);
 			
-			appendText("]> " + choice + "\n");
+			appendInput("]> " + choice + "\n");
 			scrollDown();
 			
 			debugTree.removeSelectionListener(this);
@@ -1028,7 +1032,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				break; */
 			case 'q':
 				swank.sendQuitDebug(null);				
-				appendText("]> Quit debug\n");
+				appendInput("]> Quit debug\n");
 				break;
 			default :
 				return;

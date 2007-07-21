@@ -46,6 +46,8 @@ public interface PreferenceConstants {
     
 	public static final String SHOW_EVAL_IN_REPL = "showEvalInRepl";
 	public static final String USE_CTRL_ENTER = "useCtrlEnter";
+    public static final String REPL_INPUT_BG_COLOR = "REPLInputColorBG";
+    public static final String REPL_INPUT_FG_COLOR = "REPLInputColorFG";
     public static final String DECORATE_REPL_INSPECTABLES = "decorateREPLInspectables";
     public static final String REPL_INSPECTABLE_BG_COLOR = "REPLInspectableColorBG";
     public static final String REPL_INSPECTABLE_FG_COLOR = "REPLInspectableColorFG";
