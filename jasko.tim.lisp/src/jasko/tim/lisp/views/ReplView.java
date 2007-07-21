@@ -470,7 +470,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 				
 		connectButton = new Action("Reconnect") {
 			public void run() {
-				if (MessageDialog.openQuestion(ReplView.this.getSite().getShell(),
+				if (!swank.isConnected() 
+						|| MessageDialog.openQuestion(ReplView.this.getSite().getShell(),
 						"Reconnect", "Are you sure you want to restart your Lisp session?")) {
 					this.setImageDescriptor(
 							LispImages.getImageDescriptor(LispImages.DISCONNECTED));										
