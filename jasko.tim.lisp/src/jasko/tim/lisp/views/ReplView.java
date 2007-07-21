@@ -542,18 +542,21 @@ public class ReplView extends ViewPart implements SelectionListener {
 		if (e.widget.getData() != null) {
 			String partNum = e.widget.getData().toString();
 			System.out.println("part: " + partNum);
-			LispPlugin.getDefault().getSwank().sendInspectInspectedPart(partNum, new InspectorRunnable());
+			LispPlugin.getDefault().getSwank()
+			     .sendInspectInspectedPart(partNum, new InspectorRunnable());
 		}
 	}
 
 	protected void appendText(String text) {		
-		if(LispPlugin.getDefault().getPreferenceStore().getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))
+		if(LispPlugin.getDefault().getPreferenceStore()
+				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))
 		{
 			String strs[] = text.split("\\n");
 			String replStr = "";
 			String consoleStr = "";
 			for(String str : strs){
-				if( str.startsWith(";") || str.equals("")){ //this works for SBCL
+				//this works for SBCL
+				if( str.trim().startsWith(";") || str.trim().equals("")){
 					consoleStr = consoleStr + str + "\n";
 				} else {
 					replStr = replStr + str + "\n";  										
@@ -799,7 +802,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 			HistoryDialog hd = new HistoryDialog(ReplView.this.getSite().getShell(),
 					hist);
 			if (hd.open() == Dialog.OK) {
-				//String expr = hd.getHist();
 				in.getDocument().set(prevCommands.get(hd.getHistInd()));
 			}
 			in.getTextWidget().setFocus();
