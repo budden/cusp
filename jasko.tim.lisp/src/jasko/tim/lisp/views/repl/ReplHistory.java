@@ -37,9 +37,9 @@ public class ReplHistory extends SourceViewer
 		super(parent, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
 		
 		setEditable(false);
-		configure(new LispConfiguration(null, LispPlugin.getDefault().getColorManager()));
+		//configure(new LispConfiguration(null, LispPlugin.getDefault().getColorManager()));
  		IDocument doc = new Document();
- 		ReplPartitionScanner.connectPartitioner(doc);
+ 		//ReplPartitionScanner.connectPartitioner(doc);
  		setDocument(doc);
  		
  		showAnnotations(false);
