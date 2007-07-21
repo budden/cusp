@@ -68,16 +68,6 @@ public class CurrentExpressionHighlightingListener implements KeyListener, Mouse
                 updateHighlighting();
                 return;
         }
-        switch (e.keyCode) {
-            case SWT.KEYPAD_CR:
-            case SWT.ARROW_RIGHT:
-            case SWT.ARROW_LEFT:
-            case SWT.ARROW_DOWN:
-            case SWT.ARROW_UP:
-            case SWT.PAGE_DOWN:
-            case SWT.PAGE_UP:
-                updateHighlighting();
-        }
     }
 
     public void keyReleased (KeyEvent e) {
@@ -85,6 +75,13 @@ public class CurrentExpressionHighlightingListener implements KeyListener, Mouse
 	        case SWT.HOME:
 	        case SWT.END:
             case SWT.DEL:
+            case SWT.KEYPAD_CR:
+            case SWT.ARROW_RIGHT:
+            case SWT.ARROW_LEFT:
+            case SWT.ARROW_DOWN:
+            case SWT.ARROW_UP:
+            case SWT.PAGE_DOWN:
+            case SWT.PAGE_UP:
 	            updateHighlighting();
         }
     }
