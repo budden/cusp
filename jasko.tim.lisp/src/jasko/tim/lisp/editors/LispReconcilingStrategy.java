@@ -2,7 +2,6 @@ package jasko.tim.lisp.editors;
 
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
-import jasko.tim.lisp.util.TopLevelItem;
 
 import java.util.HashSet;
 
@@ -90,7 +89,6 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 		fOffset = 0;
 		fRangeEnd = fDocument.getLength();
 		calculatePositions();
-
 	}
 
 
@@ -118,7 +116,7 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 			public void run() {
 				if(editor != null){
 					editor.updateFoldingStructure(fPositions,fLastSection);
-					// TODO: add update outline here too
+					editor.updateOutline();
 				}
 			}
 		});
