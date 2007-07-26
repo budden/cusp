@@ -82,7 +82,25 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			e.printStackTrace();
 		}    	
     }
+
+    public Position[] getAndClearChangedPosForOutline(){
+		Position[] pos = null;
+		IDocument doc = getDocument();
+		try{
+			pos = doc.getPositions(CHANGED_POS_FOR_OUTLINE);
+			doc.removePositionCategory(CHANGED_POS_FOR_OUTLINE);
+		} catch ( BadPositionCategoryException e) {
+			e.printStackTrace();
+			pos = null;
+		}
+		doc.addPositionCategory(CHANGED_POS_FOR_OUTLINE);
+		return pos;
+    }
     
+    public void updateOutline(){
+    	outline.updateOutline();
+    }
+
     /**
      * Returns IFile associated with this editor
      * @return IFile or null

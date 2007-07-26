@@ -11,4 +11,8 @@ public class TopLevelItem implements Comparable<TopLevelItem> {
 		return name.toLowerCase().compareTo( 
 			o.name.toLowerCase() );
 	}
+	
+	public String toString(){
+		return type+":"+name+" ("+offset+")";
+	}
 }

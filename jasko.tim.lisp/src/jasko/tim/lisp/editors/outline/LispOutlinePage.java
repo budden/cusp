@@ -11,7 +11,6 @@ import java.util.*;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
-import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.action.*;
 import org.eclipse.swt.SWT;
@@ -21,13 +20,20 @@ import org.eclipse.ui.views.contentoutline.*;
 
 /**
  * TODO: Make this not clear out and repopulate every time we save the document.
- *  A clever man could get it to only remove those items which were removed and add only those which we added.
+ *  A clever man could get it to only remove those items which were removed and 
+ *  add only those which we added.
  *  A <i>really</i> clever man could get it to update <i>as the user types</i>.
  *  Clever would be more than enough.
  * @author Tim Jasko
  *
+ * SK: I am <i>really</i> clever man! :) Actually once you figure how to be 
+ * clever, to get to <i>really</i> part is trivial. However code is a mess and
+ * will definitely require refactoring for it to be supportable.
+ * Hopefully the code does not contains too many bugs.
+ *
  */
-public class LispOutlinePage extends ContentOutlinePage implements MouseListener, KeyListener {
+public class LispOutlinePage extends ContentOutlinePage 
+	implements MouseListener, KeyListener {
 	
 	Sort sort = Sort.Position;
 	IAction sortType;
@@ -39,10 +45,367 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	private ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>();
 	private HashMap<TopLevelItem,Position> itemPos = 
 		new HashMap<TopLevelItem,Position>();
+	private HashMap<TopLevelItem,TreeItem> itemTr = 
+		new HashMap<TopLevelItem,TreeItem>();
 	
 	public LispOutlinePage(LispEditor editor) {
 		this.editor = editor;
 		sort = getDefaultSort();
+	}
+
+	private void updateTree(){
+		// get changed offsets
+		ArrayList<Integer> changedTopLevelPos;
+		IDocument doc = editor.getDocument();
+		Position[] changedPos = editor.getAndClearChangedPosForOutline();
+		changedTopLevelPos = new ArrayList<Integer>();
+		int cachedOffset = -1;
+		for(Position pos : changedPos ){
+			if( !pos.isDeleted ){
+				Integer offset = new Integer(LispUtil
+						.getTopLevelOffset(doc, 
+								Math.min(pos.offset,doc.getLength()-1), true));
+				if( offset.intValue() != cachedOffset 
+						&& !changedTopLevelPos.contains(offset) ){
+					cachedOffset = offset.intValue();
+					changedTopLevelPos.add(offset);
+				}
+				for( int i = 0; i < pos.length; ++i ){
+					offset = new Integer(LispUtil
+							.getTopLevelOffset(doc, 
+									Math.min(pos.offset+i,doc.getLength()-1),
+											true));
+					if( offset.intValue() != cachedOffset 
+							&& !changedTopLevelPos.contains(offset) ){
+						cachedOffset = offset.intValue();
+						changedTopLevelPos.add(offset);
+					}			
+				}
+			}
+		}
+		// split these to added and modified
+		// first put all old positions as candidates for modified
+		ArrayList<Integer> modifiedPos = new ArrayList<Integer>(itemPos.size());
+		for(Position pos : itemPos.values()){
+			modifiedPos.add(new Integer(pos.offset-1));
+		}
+		// possibly modified positions
+		modifiedPos.retainAll(changedTopLevelPos);
+		// added positions
+		changedTopLevelPos.removeAll(modifiedPos);
+		
+		//run over elements in tree, update offsets of items,
+		//and modify name and type if necessary
+		//also resort if by alpha or type
+		for( TopLevelItem item : itemPos.keySet()){
+			Position pos = itemPos.get(item);
+			item.offset = pos.offset-1;
+			if( modifiedPos.contains(new Integer(item.offset))){
+				TopLevelItem itm = null; //"through away" item
+				try{
+					if( doc.getChar(item.offset) == ';'){ //section
+						String val = doc.get(item.offset, 
+								doc.getLineLength(doc
+										.getLineOfOffset(item.offset)));
+						itm = LispUtil.getSectionItem(
+								new LispComment(val, item.offset,
+										item.offset + val.length()),
+								item.offset);
+					} else { //sexp
+						LispNode exp = LispParser.parse(LispUtil
+								.getTopLevelExpression(doc, 
+										Math.min(item.offset + 1,
+												doc.getLength()-1))).get(0);
+						itm = LispUtil.getTopLevelItem(exp, "", item.offset);
+					}
+				} catch ( BadLocationException e ){
+					e.printStackTrace();
+				}
+				if( itm != null ){
+					item.offset = itm.offset;
+					item.offsetEnd = itm.offsetEnd;
+					TreeItem tr = itemTr.get(item);
+					tr.setText(itm.name);
+					tr.setImage(LispImages.getImageForType(itm.type));
+
+					if( sort == Sort.Type && !item.type.equals(itm.type) ){
+						TreeItem[] typeNodes = 
+							getTreeViewer().getTree().getItems();
+						int i;
+						for( i = 0; i < typeNodes.length; ++i ){
+							if( typeNodes[i].getText().equals(itm.type) ){
+								break;
+							}
+						}
+						TreeItem typeNode;
+						if( i >= typeNodes.length ){ //create new category
+							typeNode = 
+								new TreeItem(getTreeViewer().getTree(),SWT.NONE);
+							typeNode.setText(itm.type);
+							typeNode.setImage(LispImages
+									.getImageForType(itm.type));
+						} else {
+							typeNode = typeNodes[i];
+						}
+						TreeItem tmp = 
+							new TreeItem(typeNode,SWT.NONE,
+									getIndex(item.offset,
+											typeNode.getItems()));
+						copyItem(tr,tmp);
+						itemTr.put(item, tmp);
+						tr.dispose();
+					} else if( sort == Sort.Alpha 
+							&& !item.name.equals(itm.name)){
+						TreeItem[] nodes = 
+							getTreeViewer().getTree().getItems();
+						int i;
+						for( i = 0; i < nodes.length; ++i ){
+							if( nodes[i].getText()
+									.compareToIgnoreCase(itm.name) >= 0 ){
+								break;
+							}
+						}
+						TreeItem tmp = 
+							new TreeItem(getTreeViewer().getTree(),SWT.NONE,i);
+						copyItem(tr,tmp);
+						itemTr.put(item, tmp);
+						tr.dispose();
+					}
+					item.name = itm.name;
+					item.type = itm.type;						
+				}
+			}
+		}
+
+		// get new items to add
+		ArrayList<TopLevelItem> newItems = 
+			new ArrayList<TopLevelItem>(changedTopLevelPos.size());
+
+		for( Integer offs : changedTopLevelPos){
+			TopLevelItem itm = null;
+			int offset = offs.intValue();
+			try{
+				if( doc.getChar(offset) == ';'){ //section
+					String val = doc.get(offset, 
+							doc.getLineLength(doc.getLineOfOffset(offset)));
+					itm = LispUtil.getSectionItem(
+							new LispComment(val, offset, offset + val.length()),
+							offset);
+				} else { //sexp
+					LispNode exp = LispParser.parse(LispUtil
+							.getTopLevelExpression(doc, offset + 1)).get(0);
+					itm = LispUtil.getTopLevelItem(exp, "", offset);
+				}
+				newItems.add(itm);
+				Position pos = new Position(itm.offset+1);
+				editor.addOutlinePosition(pos);
+				itemPos.put(itm, pos);
+			} catch ( BadLocationException e ){
+				e.printStackTrace();
+			}
+		}
+		
+		// finally refresh tree adding new items
+		// first sort new items
+		TopLevelItemSort sorter = new TopLevelItemSort();
+		sorter.sortItems(newItems, sort);
+		
+		if( sort == Sort.Position ){
+			Tree tree = getTreeViewer().getTree();
+			for( TopLevelItem item : newItems){
+				TreeItem[] roots = getTreeViewer().getTree().getItems();
+				int i = getIndex(item.offset,roots);
+				TreeItem tmp = null;
+				if( i > 0 && ((TopLevelItem)(roots[i-1].getData())).type
+						.equals("section") ){
+					if( item.type.equals("section") ){
+						//move necessary items from previous section to this
+						tmp = new TreeItem(tree,SWT.NONE,i);
+						TreeItem[] kids = roots[i-1].getItems();
+						int start = getIndex(item.offset,kids);
+						for( int j = start; j < kids.length; ++j ){
+							TreeItem tmpkid = new TreeItem(tmp,SWT.NONE);
+							copyItem(kids[j],tmpkid);
+							kids[j].dispose();
+						}
+					} else {
+						tmp = new TreeItem(roots[i-1],
+								SWT.NONE,getIndex(item.offset, 
+										roots[i-1].getItems()));						
+					}
+				} else {
+					tmp = new TreeItem(tree,SWT.NONE,i);						
+					if( item.type.equals("section") ){
+						//move necessary items from tree to this
+						for( int j = i; j < roots.length; ++j ){
+							if( ((TopLevelItem)(roots[j].getData())).type
+									.equals("section") ){
+								break;
+							} else {
+								TreeItem tmpkid = new TreeItem(tmp,SWT.NONE);
+								copyItem(roots[j],tmpkid);
+								roots[j].dispose();								
+							}
+						}						
+					}
+				}
+				tmp.setImage(LispImages.getImageForType(item.type));
+				tmp.setText(item.name);
+				tmp.setData(item);
+				itemTr.put(item, tmp);
+			}
+		} else if ( sort == Sort.Type ) {
+			// first move changed types
+		}
+		//finally update items array
+		items.clear();
+		items.addAll(itemPos.keySet());
+	}
+
+	// get index in items where offset is fit, when sorted by offsets
+	private int getIndex(int offset, TreeItem[] items){
+		if(items == null || items.length == 0 ){
+			return 0;
+		}
+		TopLevelItem item0 = (TopLevelItem)(items[0].getData());
+		int i = 0;
+		if( offset > item0.offset ){
+			for( i = 1; i < items.length; ++i ){
+				TopLevelItem item1 = (TopLevelItem)(items[i].getData());
+				if( offset > item0.offset 
+						&& offset < item1.offset ){
+					break;
+				}
+				item0 = item1;
+			}
+		}
+		
+		return i;
+	}
+	
+	// === dealing with the tree - they could have made it easier!
+	
+	//copies most data "from" "to"
+	private void copyItem(TreeItem from, TreeItem to){
+		if( from == null || to == null ){
+			return;
+		}
+		to.setBackground(from.getBackground());
+		to.setChecked(from.getChecked());
+		to.setData(from.getData());
+		to.setFont(from.getFont());
+		to.setForeground(from.getForeground());
+		to.setGrayed(from.getGrayed());
+		to.setImage(from.getImage());
+		to.setText(from.getText());
+	}
+	
+	// move all kids "from" "to" putting them at the end of "to" 
+	// (don't move disposed and their kids)
+	// also update itemTr
+	private void moveKids(TreeItem from, TreeItem to){
+		if( from == null || from.getItemCount() == 0){
+			return;
+		}
+		if( to != null ){
+			for( TreeItem item: from.getItems() ){
+				if( !item.isDisposed() ){
+					TreeItem tmp = new TreeItem(to,item.getStyle());
+					copyItem(item,tmp);
+					itemTr.put((TopLevelItem)(item.getData()), tmp);
+					if(item.getItemCount() > 0){
+						moveKids(item,tmp);
+					}					
+				}
+			}			
+		} else { // if to == null move to front of the tree 
+			//(before first element with kids)
+			//find index of first non disposed element with kids
+			Tree tree = getTreeViewer().getTree();
+			TreeItem[] items = tree.getItems();
+			int i = 0;
+			for( i = 0; i < items.length; ++i ){
+				if(items[i].getItemCount() > 0 && !items[i].isDisposed()){
+					break;
+				}
+			}
+			for( TreeItem item: from.getItems() ){
+				if( !item.isDisposed() ){
+					TreeItem tmp = new TreeItem(tree,item.getStyle(),i);
+					copyItem(item,tmp);
+					itemTr.put((TopLevelItem)(item.getData()), tmp);
+					++i;
+					if(item.getItemCount() > 0 ){
+						moveKids(item,tmp);
+					}					
+				}
+			}
+		}
+	}
+	
+	private boolean isDeletedTopLevel(TopLevelItem item){
+		if( item == null ){
+			return true;
+		}
+		Position pos = itemPos.get(item);
+		if( pos == null || pos.isDeleted ){
+			return true;
+		}
+		int offset =
+			LispUtil.getTopLevelOffset(editor.getDocument(), pos.offset,true); 
+		if( offset != pos.offset-1 ){
+			return true;
+		}
+		return false;
+	}
+	
+	//works on tree up to 2 levels deep (exactly what we use for LispOutlinePage)
+	private void removeDeletedItems(){
+		Tree tree = getTreeViewer().getTree();
+		TreeItem[] items = tree.getItems();
+		for( int i = 0; i < items.length; ++i ){
+			TreeItem titem = items[i];
+			if( !titem.isDisposed() ){
+				if( sort != Sort.Type ){
+					TopLevelItem item = (TopLevelItem)titem.getData();
+					
+					//- sections) or alpha
+					// first remove deleted kids (they in turn do not have kids)
+					for( TreeItem itm : titem.getItems() ){
+						TopLevelItem tmp = (TopLevelItem)itm.getData();
+						if( tmp != null && isDeletedTopLevel(tmp)){
+							itemPos.remove(tmp);
+							itemTr.remove(tmp);
+							itm.dispose();
+						}
+					}
+					// now delete items and move kids
+					if(isDeletedTopLevel(item)){ //remove item
+						if( titem.getItemCount() > 0 ){
+							if(i == 0){
+								moveKids(titem,null);
+							} else if ( items[i-1].getItemCount() > 0 ){
+								moveKids(titem,items[i-1]);
+							} else {
+								moveKids(titem,null);
+							}
+						}
+						itemPos.remove(item);
+						itemTr.remove(item);
+						titem.dispose();
+					}				
+				} else {
+					for( TreeItem itm : titem.getItems() ){
+						TopLevelItem tmp = (TopLevelItem)itm.getData();
+						if( tmp != null && isDeletedTopLevel(tmp)){
+							itemPos.remove(tmp);
+							itemTr.remove(tmp);
+							itm.dispose();
+						}
+					}					
+				}
+			}
+		}
 	}
 	
 	private Sort getDefaultSort() {
@@ -62,7 +425,6 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	
 	private void setDefaultSort() {
 		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-		//System.out.println("######" + sort);
 		int sortInt = 0;
 		switch(sort) {
 		case Alpha:
@@ -77,13 +439,17 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		}
 		
 		prefs.setValue(PreferenceConstants.OUTLINE_SORT, sortInt);
-		
+	}
+	
+	public void updateOutline(){
+		removeDeletedItems();
+		updateTree();		
 	}
 	
 	public void makeContributions(IMenuManager menuMgr,
          IToolBarManager toolBarMgr,
          IStatusLineManager statusLineMgr) {
-		
+
 		sortAlpha = new Action("Sort by name") {
 			public void run() {
 				sort = Sort.Alpha;
@@ -168,7 +534,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 		itemPos.clear();
 		editor.clearOutlinePositions();
 		for( TopLevelItem item : items ){
-			Position pos = new Position(item.offset);
+			Position pos = new Position(item.offset+1);
 			editor.addOutlinePosition(pos);
 			itemPos.put(item, pos);
 		}
@@ -182,10 +548,10 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	}
 	
 	private void redoTree() {
-		
 		getControl().setRedraw(false);
 		Tree tree = getTreeViewer().getTree();
 		tree.removeAll();
+		itemTr.clear();
 		String currType = "()"; //impossible type
 		TreeItem category = null;
 		for (TopLevelItem item: items) {
@@ -220,6 +586,7 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 			temp.setImage(LispImages.getImageForType(item.type));
 			temp.setText(item.name);
 			temp.setData(item);
+			itemTr.put(item, temp);
 			
 		}
 		
@@ -231,18 +598,16 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	
 	public void selectionChanged(SelectionChangedEvent event) {
 		try {
-			IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+			IStructuredSelection sel = 
+				(IStructuredSelection) event.getSelection();
 			
 			if (! sel.isEmpty()) {
 				if (sel.getFirstElement() instanceof TopLevelItem) {
 					TopLevelItem item = (TopLevelItem) sel.getFirstElement();
 					if (item != lastSelection) {
 						lastSelection = item;
-						if ( item.type.equals("section") ) {
- 							editor.selectAndReveal(itemPos.get(item).offset, item.name.length());							
- 						} else {
- 							editor.selectAndReveal(itemPos.get(item).offset, item.type.length() + 1);							
- 						}
+						editor.selectAndReveal(itemPos.get(item).offset-1,
+								item.type.length() + 1);
 					}
 				}
 			}
@@ -252,17 +617,14 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	} // void selectionChanged( ... )
 	
 	public void mouseDown(MouseEvent e) {
-		IStructuredSelection sel = (IStructuredSelection) getTreeViewer().getSelection();
+		IStructuredSelection sel = 
+			(IStructuredSelection) getTreeViewer().getSelection();
 		if (! sel.isEmpty()) {
 			if (sel.getFirstElement() instanceof TopLevelItem) {
 				TopLevelItem item = (TopLevelItem) sel.getFirstElement();
 				lastSelection = item;
-				int pos = itemPos.get(item).offset;
-				if ( item.type.equals("section") ) {
-					editor.selectAndReveal(pos, item.name.length());							
-				} else {
-					editor.selectAndReveal(pos, item.type.length() + 1);							
-				}
+				int pos = itemPos.get(item).offset-1;
+				editor.selectAndReveal(pos, item.type.length() + 1);							
 			}
 		}
 	}
@@ -270,8 +632,8 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 	String search = "";
 	
 	private boolean isSearchable(char c) {
-		if ("1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_-=+{}|[]\\:;\"\'<>?,./`~".indexOf(
-				Character.toLowerCase(c)) >= 0) {
+		if ("1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_-=+{}|[]\\:;\"\'<>?,./`~"
+				.indexOf(Character.toLowerCase(c)) >= 0) {
 			return true;
 		} else {
 			return false;
@@ -293,11 +655,8 @@ public class LispOutlinePage extends ContentOutlinePage implements MouseListener
 					if (node.getData() instanceof TopLevelItem) {
 						TopLevelItem item = (TopLevelItem) node.getData();
 						lastSelection = item;
-						if ( item.type.equals("section") ) {
- 							editor.selectAndReveal(itemPos.get(item).offset, item.name.length());							
- 						} else {
- 							editor.selectAndReveal(itemPos.get(item).offset, item.type.length() + 1);							
- 						}
+						editor.selectAndReveal(itemPos.get(item).offset-1, 
+								item.type.length() + 1);
 					}
 					return;
 				}

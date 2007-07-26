@@ -13,16 +13,29 @@ import org.eclipse.jface.text.*;
 public class LispUtil {
 	
 	public static int getTopLevelOffset(IDocument doc, int offset) {
+		return getTopLevelOffset(doc,offset,false);
+	}
+	
+	public static int getTopLevelOffset(IDocument doc, int offset, 
+			boolean withSections) {
 		try {
 			// SK: This procedure finds topLevelOffset the following way:
 			// 1. Find line of offset.
 			// 2. Starting from this line and going backward,
 			//    check if '(' is first character of the line. 
 			//    If yes, this is topLevelOffset.
+			//    if withSections and line starts with SECTION_START also toplevel
 			int line = doc.getLineOfOffset(offset);
 			for( int i = line; i >= 0; --i ){
 				int lineOffset = doc.getLineOffset(i);
 				if( doc.getChar(lineOffset) == '(' ){
+					return lineOffset;
+				} else if ( withSections 
+						&& lineOffset+LispComment.SECTION_START.length() 
+						      < doc.getLength()-1 
+						&& doc.get(lineOffset, 
+								LispComment.SECTION_START.length())
+								  .equals(LispComment.SECTION_START)){
 					return lineOffset;
 				}
 			}
@@ -512,53 +525,73 @@ public class LispUtil {
 		return res;
 	}
 	
+	public static TopLevelItem getTopLevelItem(LispNode exp, String pkg, int offset){
+		TopLevelItem item = new TopLevelItem();
+		
+		item.type = exp.get(0).value.toLowerCase();
+		item.name = exp.get(1).toLisp();
+		item.offset = exp.offset + offset;
+		item.offsetEnd = exp.endOffset + offset;
+		item.pkg = pkg;
+		if (! item.type.startsWith("def")) {
+			item.name = item.type;
+			if (item.type.equals("in-package")) {
+				item.name = "in-package " + exp.get(1).toLisp();
+			}
+		} else if (item.type.equals("defstruct")) {
+			LispNode name = exp.get(1); 
+			if (!name.value.equals("")) {
+				item.name = name.value;
+			} else {
+				item.name = name.get(0).value;
+			}
+		} else if (item.type.equals("defmethod")) {
+			String name = exp.get(2).toLisp();
+			if (name.startsWith(":")) {
+				item.name += " " + name + " " + exp.get(3).toLisp();
+			} else {
+				item.name += " " + name;
+			}
+		}
+		
+		if (item.name.equals("")) {
+			if (exp.params.size() >= 2) {
+				if (exp.get(1).toLisp().startsWith(":")) {
+					item.name = 
+						exp.get(1).toLisp() + " " + exp.get(2).toLisp();
+				} else {
+					item.name = exp.get(1).toLisp();
+				}
+			}
+		}
+	
+		return item;
+	}
+	
+	public static TopLevelItem getSectionItem(LispComment comment, int offset){
+		if ( comment.isSectionComment() ) {
+			TopLevelItem item = new TopLevelItem();
+			
+			item.type = "section";
+			item.name = comment.SectionName();
+			item.offset = comment.offset;
+			return item;
+		} else {
+			return null;
+		}
+	}
+	
 	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file, 
 			String pkg, int offset){
 		ArrayList<TopLevelItem> items = 
 			new ArrayList<TopLevelItem>(file.params.size());
 		String curpkg = pkg;
 		for (LispNode exp: file.params) {
-			//System.out.println(exp);
-			TopLevelItem item = new TopLevelItem();
-			
-			item.type = exp.get(0).value.toLowerCase();
-			item.name = exp.get(1).toLisp();
-			item.offset = exp.offset + offset;
-			item.offsetEnd = exp.endOffset + offset;
-			item.pkg = curpkg;
-			if (! item.type.startsWith("def")) {
-				item.name = item.type;
-				if (item.type.equals("in-package")) {
-					item.name = "in-package " + exp.get(1).toLisp();
-					curpkg = LispUtil.formatPackage(exp.get(1).toLisp());
-				}
-			} else if (item.type.equals("defstruct")) {
-				LispNode name = exp.get(1); 
-				if (!name.value.equals("")) {
-					item.name = name.value;
-				} else {
-					item.name = name.get(0).value;
-				}
-			} else if (item.type.equals("defmethod")) {
-				String name = exp.get(2).toLisp();
-				if (name.startsWith(":")) {
-					item.name += " " + name + " " + exp.get(3).toLisp();
-				} else {
-					item.name += " " + name;
-				}
+			TopLevelItem item = getTopLevelItem(exp,curpkg,offset);
+			if( item.type.equals("in-package") ){
+				curpkg = LispUtil.formatPackage(exp.get(1).toLisp());
 			}
-			
-			if (item.name.equals("")) {
-				if (exp.params.size() >= 2) {
-					if (exp.get(1).toLisp().startsWith(":")) {
-						item.name = 
-							exp.get(1).toLisp() + " " + exp.get(2).toLisp();
-					} else {
-						item.name = exp.get(1).toLisp();
-					}
-				}
-			}
-			
+
 			if (! item.name.equals("")) {
 				items.add(item);
 			}
@@ -566,19 +599,11 @@ public class LispUtil {
 		
 		// add section comments
 		for ( LispComment comment: file.comments ) {
-			if ( comment.isSectionComment() ) {
-				TopLevelItem item = new TopLevelItem();
-				
-				item.type = "section";
-				item.name = comment.SectionName();
-				item.offset = comment.offset + offset 
-				  + LispComment.SECTION_START.length();
-				if (! item.name.equals("")) {
-					items.add(item);
-				}
+			TopLevelItem item = getSectionItem(comment,offset);
+			if( item != null && !item.name.equals("")){
+				items.add(item);				
 			}
-		}
-		
+		}		
 		return items;
 	}
 
