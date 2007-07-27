@@ -530,6 +530,7 @@ public class LispUtil {
 		
 		item.type = exp.get(0).value.toLowerCase();
 		item.name = exp.get(1).toLisp();
+		item.nameOffset = exp.get(1).offset;
 		item.offset = exp.offset + offset;
 		item.offsetEnd = exp.endOffset + offset;
 		item.pkg = pkg;

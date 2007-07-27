@@ -18,6 +18,8 @@ public interface PreferenceConstants {
 	public static final String COLOR_SYMBOL        = "colorSymbol";
 	public static final String COLOR_UCW           = "colorUcw";
 
+	public static final String SHOW_OUTLINE_HINT = "showOutlineHint";
+	
 	public static final String LISP_EXE = "lispExecutable";
 	public static final String LISP_INI = "lispIni";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";

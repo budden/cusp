@@ -4,6 +4,7 @@ public class TopLevelItem implements Comparable<TopLevelItem> {
 	public String name;
 	public int offset;
 	public int offsetEnd;
+	public int nameOffset;
 	public String type;
 	public String pkg;
 	
@@ -13,6 +14,6 @@ public class TopLevelItem implements Comparable<TopLevelItem> {
 	}
 	
 	public String toString(){
-		return type+":"+name+" ("+offset+")";
+		return "{"+type+","+name+" ("+offset+")}";
 	}
 }

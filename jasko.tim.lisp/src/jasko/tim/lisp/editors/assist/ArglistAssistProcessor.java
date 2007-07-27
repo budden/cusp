@@ -214,10 +214,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 	protected boolean makeInstanceInfoFound = false;
 	protected boolean defmethodInfoFound = false;
 
-	public IContextInformation[] computeContextInformation(ITextViewer viewer,
-			int offset) {
-		
-		String function = LispUtil.getCurrentFunction(viewer.getDocument(), offset);
+	public String computeContextInfoString(IDocument doc, int offset) {
+		String function = LispUtil.getCurrentFunction(doc, offset);
 		
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
 		String info = "";
@@ -225,7 +223,7 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 		// Special arglist assistance for make-instance
 		if (function.equals("make-instance")) {
 			LispNode exp = LispParser.parse(LispUtil
-					.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
+					.getCurrentUnfinishedExpression(doc, offset));
 			System.out.println("*" + exp);
 			if (exp.get(0).params.size() >= 2) {
 				String className = exp.get(0).params.get(1).value;
@@ -235,7 +233,7 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				if (editor != null) {
 					info = LispPlugin.getDefault().getSwank()
 						.getMakeInstanceArglist(className, 
-								LispUtil.getPackage(viewer.getDocument().get(),offset), TIMEOUT);
+								LispUtil.getPackage(doc.get(),offset), TIMEOUT);
 				} else {
 					info = LispPlugin.getDefault().getSwank()
 						.getMakeInstanceArglist(className, TIMEOUT);
@@ -244,14 +242,14 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 			}
 		} else if (function.equals("defmethod")) {
 			LispNode exp = LispParser.parse(LispUtil
-					.getCurrentUnfinishedExpression(viewer.getDocument(), offset));
+					.getCurrentUnfinishedExpression(doc, offset));
 			if (exp.get(0).params.size() >= 2) {
 				String arg0 = exp.get(0).params.get(1).value;
 				
 				if (editor != null) {
 					info = LispPlugin.getDefault().getSwank()
 						.getSpecialArglist("defmethod", arg0, 
-								LispUtil.getPackage(viewer.getDocument().get(),offset), TIMEOUT);
+								LispUtil.getPackage(doc.get(),offset), TIMEOUT);
 				} else {
 					info = LispPlugin.getDefault().getSwank()
 						.getSpecialArglist("defmethod", arg0, TIMEOUT);
@@ -270,9 +268,9 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				docString = swank.getDocumentation(function, 1000);
 			} else {
 				info = swank.getArglist(function, 3000, 
-						LispUtil.getPackage(viewer.getDocument().get(),offset));
+						LispUtil.getPackage(doc.get(),offset));
 				docString = swank.getDocumentation(function, 
-						LispUtil.getPackage(viewer.getDocument().get(),offset), 1000);
+						LispUtil.getPackage(doc.get(),offset), 1000);
 			}
 			if (!docString.equals("")) {
 				String[] lines = docString.split("\n");
@@ -288,6 +286,14 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 				}
 			}
 		}
+		return info;
+	}
+	
+	public IContextInformation[] computeContextInformation(ITextViewer viewer,
+			int offset) {
+		
+		String info = computeContextInfoString(viewer.getDocument(),offset);
+		
 		if (info != null && !info.equals("") && !info.equals("nil")) {
 			return new IContextInformation[] {
 				new ContextInformation(info, info)
@@ -322,7 +328,8 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 	 * @author Tim
 	 *
 	 */
-	private class ArglistContext implements IContextInformationValidator, IContextInformationPresenter {
+	private class ArglistContext 
+	  implements IContextInformationValidator, IContextInformationPresenter {
 		private ITextViewer viewer;
 		IContextInformation info;
 

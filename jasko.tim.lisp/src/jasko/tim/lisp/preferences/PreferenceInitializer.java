@@ -50,6 +50,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 		store.setDefault(MANAGE_PACKAGES, true);
 		store.setDefault(BUILD_TYPE, USE_ECLIPSE_BUILD);
 		
+		store.setDefault(SHOW_OUTLINE_HINT, true);
+		
 		store.setDefault(SHOW_EVAL_IN_REPL, false);
 		store.setDefault(USE_CTRL_ENTER, false);
         store.setDefault(PAIR_EDIT_BRACKETS, false);

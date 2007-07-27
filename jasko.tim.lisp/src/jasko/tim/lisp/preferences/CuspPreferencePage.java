@@ -34,6 +34,12 @@ public class CuspPreferencePage extends FieldEditorPreferencePage implements IWo
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
+
+        addField(new BooleanFieldEditor(
+                PreferenceConstants.SHOW_OUTLINE_HINT,
+                "Show docstrings (if available) if point mouse to a function in outline",
+                getFieldEditorParent()));
+	
 	}
 
 	/* (non-Javadoc)
