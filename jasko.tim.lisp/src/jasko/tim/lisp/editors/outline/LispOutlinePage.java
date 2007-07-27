@@ -9,6 +9,12 @@ import jasko.tim.lisp.util.TopLevelItemSort.Sort;
 
 import java.util.*;
 
+import jasko.tim.lisp.editors.assist.*;
+import jasko.tim.lisp.editors.assist.LispTextHoverControlCreator.InfoPresenter;
+
+import org.eclipse.jface.text.contentassist.IContextInformation;
+import org.eclipse.swt.layout.*;
+import org.eclipse.swt.graphics.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.viewers.*;
@@ -33,7 +39,7 @@ import org.eclipse.ui.views.contentoutline.*;
  *
  */
 public class LispOutlinePage extends ContentOutlinePage 
-	implements MouseListener, KeyListener {
+	implements MouseListener, KeyListener, MouseTrackListener{
 	
 	Sort sort = Sort.Position;
 	IAction sortType;
@@ -41,6 +47,7 @@ public class LispOutlinePage extends ContentOutlinePage
 	IAction sortPosition;
 	
 	LispEditor editor;
+	IInformationControl tooltip;
 	
 	private ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>();
 	private HashMap<TopLevelItem,Position> itemPos = 
@@ -518,16 +525,23 @@ public class LispOutlinePage extends ContentOutlinePage
 	
 	public void createControl(Composite parent) {
 		super.createControl(parent);
-		
+
 		IDocument doc = editor.getDocumentProvider().getDocument(
 				  editor.getEditorInput());
-		LispNode file = LispParser.parse(doc.get() + "\n)");
+
+		Tree tree = getTreeViewer().getTree();
 		
 		getTreeViewer().getControl().addMouseListener(this);
-		getTreeViewer().getControl().addKeyListener(this);
+		getTreeViewer().getControl().addKeyListener(this);		
+		tree.addMouseTrackListener(this);
 		
+		LispTextHoverControlCreator tooltipCreator = new LispTextHoverControlCreator();
+		tooltip = tooltipCreator.createInformationControl(tree.getShell());
+		
+		LispNode file = LispParser.parse(doc.get() + "\n)");
 		fillTree(file);
 	}
+
 	
 	private void fillTree(LispNode file) {
 		items = LispUtil.getTopLevelItems(file,"");
@@ -591,8 +605,7 @@ public class LispOutlinePage extends ContentOutlinePage
 		}
 		
 		getControl().setRedraw(true);
-	}
-	
+	}	
 	
 	private TopLevelItem lastSelection;
 	
@@ -688,6 +701,74 @@ public class LispOutlinePage extends ContentOutlinePage
 	public void keyReleased(KeyEvent e) {
 		// powers of meh combine!
 	}
-	
 
+	public void mouseEnter(MouseEvent e){
+	}
+	
+	//dispose tooltip: doesn't work reliably - why?
+	public void mouseExit(MouseEvent e){
+		Tree tree = getTreeViewer().getTree();
+		Rectangle rt = tree.getClientArea();
+		if( e.x <= 0 || e.y <= 0 
+				|| e.x >= rt.width || e.y >= rt.height ){
+			tooltip.setVisible(false);
+			tooltipItem = null;
+		}
+	}
+	
+	//show tooltip
+	private TreeItem tooltipItem = null;
+	
+	public void mouseHover(MouseEvent e){
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+		Boolean showToolTip = prefs.getBoolean(PreferenceConstants.SHOW_OUTLINE_HINT);
+		
+		if( showToolTip ){
+			Point pt = new Point(e.x,e.y);
+			Tree tree = getTreeViewer().getTree();
+			TreeItem item = tree.getItem(pt);
+			
+			if( item != null && item != tooltipItem){
+				tooltipItem = item;
+				// get item data
+				if( item.getData() != null ){
+					TopLevelItem tr = (TopLevelItem)(item.getData());
+					if( !tr.type.equals("section") ){
+						Position pos = itemPos.get(tr);
+						if( pos != null ){
+							IDocument doc = editor.getDocument();
+							int offset = tr.nameOffset + 1;
+							String pkg = LispUtil
+							   .getPackage(doc.get(), offset);
+							String variable = LispUtil.getCurrentFullWord(doc, offset);
+							SwankInterface swank = LispPlugin.getDefault().getSwank();
+							String args = swank.getArglist(variable, 1000, pkg);
+							String docstr = swank.getDocumentation(variable, pkg, 1000);
+							String info = args;
+							if(docstr != null && !docstr.equals("") 
+									&& !docstr.equals("nil")){
+								info = info+"\n"+docstr;
+							}
+							if( info != null && !info.equals("") 
+									&& !info.equals("nil") ){
+								tooltip.setLocation(tree.toDisplay(pt));
+								tooltip.setInformation(info);
+								Point size = tooltip.computeSizeHint();
+								tooltip.setSize(size.x, size.y);
+								tooltip.setVisible(true);
+							} else {
+								tooltip.setVisible(false);
+							}
+						} else {
+							tooltip.setVisible(false);						
+						}
+					} else {
+						tooltip.setVisible(false);					
+					}
+				} else {
+					tooltip.setVisible(false);
+				}
+			}			
+		}
+	}
 }
