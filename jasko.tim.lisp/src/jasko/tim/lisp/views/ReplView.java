@@ -241,6 +241,12 @@ public class ReplView extends ViewPart implements SelectionListener {
         SelectCurrentExpressionAction selCurrentAction = new SelectCurrentExpressionAction(in);
         selCurrentAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction");
         keys.registerAction(selCurrentAction);
+        JumpForwardAction jumpForeAction = new JumpForwardAction(in);
+        jumpForeAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.JumpForwardAction");
+        keys.registerAction(jumpForeAction);
+        JumpBackAction jumpBackAction = new JumpBackAction(in);
+        jumpBackAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.JumpBackAction");
+        keys.registerAction(jumpBackAction);
  		/*in.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
 				try {

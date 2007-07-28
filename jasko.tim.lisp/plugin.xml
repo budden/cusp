@@ -37,7 +37,6 @@
 	
 
 	<!-- Builder for lisp files -->
-	<!-- Currently, it only checks for basic mismatched parentheses-->
 	<extension point="org.eclipse.core.resources.builders"
 		id="lispBuilder"
 		name="Lisp Project Builder">
@@ -677,6 +676,66 @@
 				label="Select Current Expression"
 				menubarPath="Lisp/grpMisc"
 				tooltip="Select Current Expression">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Jump Forward -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Jump forward to next word or sexp"
+			id="jasko.tim.lisp.editors.actions.JumpForwardAction"
+			name="Jump Forward"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.JumpForwardAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Ctrl+Alt+Right"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.JumpForwardAction"
+				definitionId="jasko.tim.lisp.editors.actions.JumpForwardAction"
+				id="jasko.tim.lisp.editors.actions.JumpForwardAction"
+				label="Jump Forward"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Jump Forward">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Jump Back -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Jump backward to previous word or sexp"
+			id="jasko.tim.lisp.editors.actions.JumpBackAction"
+			name="Jump Back"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.JumpBackAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Ctrl+Alt+Left"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.JumpBackAction"
+				definitionId="jasko.tim.lisp.editors.actions.JumpBackAction"
+				id="jasko.tim.lisp.editors.actions.JumpBackdAction"
+				label="Jump Back"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Jump Back">
 			</action>
 		</editorContribution>
 	</extension>
