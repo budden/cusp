@@ -10,10 +10,7 @@ import jasko.tim.lisp.util.TopLevelItemSort.Sort;
 import java.util.*;
 
 import jasko.tim.lisp.editors.assist.*;
-import jasko.tim.lisp.editors.assist.LispTextHoverControlCreator.InfoPresenter;
 
-import org.eclipse.jface.text.contentassist.IContextInformation;
-import org.eclipse.swt.layout.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
@@ -25,7 +22,7 @@ import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.views.contentoutline.*;
 
 /**
- * TODO: Make this not clear out and repopulate every time we save the document.
+ *  DONE: Make this not clear out and repopulate every time we save the document.
  *  A clever man could get it to only remove those items which were removed and 
  *  add only those which we added.
  *  A <i>really</i> clever man could get it to update <i>as the user types</i>.
