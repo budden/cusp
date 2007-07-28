@@ -114,39 +114,56 @@ public class LispUtil {
 		return sb.toString();
 	}
 	
-//	public static int[] getCurrentFullWordRange 
-	                  
-	public static int[] getCurrentFullWordRange (IDocument doc, int offset) {
+	public static int[] getCurrentFullWordRange(IDocument doc, int offset, 
+			boolean ignoreComments) {
         int start = -1, end = -1;
 		String source = doc.get();
 
-		for (int i = offset - 1; i >= 0; --i) {
-			char c = source.charAt(i);
-			if (Character.isWhitespace(c) || c == '(' || c ==')') {
-				break;
+		try{
+			if( !ignoreComments && offset < doc.getLength() 
+					&& doc.getPartition(offset)
+					     .getType().equals(LispPartitionScanner.LISP_COMMENT)) {
+				ITypedRegion partition = doc.getPartition(offset); 
+				start = partition.getOffset();
+				int length = partition.getLength();
+				return new int[] {start, length};
 			} else {
-                start = i;
+				for (int i = offset - 1; i >= 0; --i) {
+					char c = source.charAt(i);
+					if (Character.isWhitespace(c) || c == '(' || c ==')') {
+						break;
+					} else {
+		                start = i;
+					}
+				}
+		        
+				for (int i = offset; i < source.length(); ++i) {
+					char c = source.charAt(i);
+					if (Character.isWhitespace(c) || c == '(' || c ==')') {
+		                break;
+					} else {
+		                end = i + 1;
+					}
+				}
+		        
+		        if (start == -1 && end == -1) {
+		            return null;
+		        } else if (start == -1) {
+		            start = offset;
+		        } else if (end == -1) {
+		            end = offset;
+		        }
+		        
+		        return new int[] { start, end - start };				
 			}
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return null;
 		}
-        
-		for (int i = offset; i < source.length(); ++i) {
-			char c = source.charAt(i);
-			if (Character.isWhitespace(c) || c == '(' || c ==')') {
-                break;
-			} else {
-                end = i + 1;
-			}
-		}
-        
-        if (start == -1 && end == -1) {
-            return null;
-        } else if (start == -1) {
-            start = offset;
-        } else if (end == -1) {
-            end = offset;
-        }
-        
-        return new int[] { start, end - start };
+	}
+    
+	public static int[] getCurrentFullWordRange (IDocument doc, int offset) {
+		return getCurrentFullWordRange(doc,offset,true);
 	}
     
     public static String getCurrentFullWord (IDocument doc, int offset) {

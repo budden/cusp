@@ -32,7 +32,7 @@ public class ExpandSelectionAction extends LispAction {
                 if (doc.getChar(offset) == '(' || doc.getChar(offset - 1) == ')') {
                     range = LispUtil.getCurrentExpressionRange(doc, offset);
                 } else {
-                    range = LispUtil.getCurrentFullWordRange(doc, offset);
+                    range = LispUtil.getCurrentFullWordRange(doc, offset, false);
                 }
             } catch (BadLocationException ex) {
                 ex.printStackTrace();
