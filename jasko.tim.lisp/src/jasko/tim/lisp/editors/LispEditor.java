@@ -256,17 +256,16 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 		
 		public void documentChanged(DocumentEvent event){
-			if(useAutoBuild){
-				try{
-					event.fDocument.addPosition(CHANGED_POS_FOR_COMPILE, 
+			try{
+				event.fDocument.addPosition(CHANGED_POS_FOR_OUTLINE, 
 						new Position(event.fOffset,event.fText.length()));
-					event.fDocument.addPosition(CHANGED_POS_FOR_OUTLINE, 
+				if(useAutoBuild){
+						event.fDocument.addPosition(CHANGED_POS_FOR_COMPILE, 
 							new Position(event.fOffset,event.fText.length()));
-				} catch (Exception e){
-					e.printStackTrace();				
-				}	
-			}
-			//update outline positions
+				}
+			} catch (Exception e){
+				e.printStackTrace();				
+			}	
 		}
 	}
 	
@@ -478,18 +477,13 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 		
 		LispNode contents = LispParser.parse(getDocument().get() + "\n)");
-		outline.update(contents);
 		updateTasks();
-		//updateFolding(contents); TODO: change outline in same way as folding now
 		processAutoBuild(contents);
 	}
 
 	
 	public void doSaveNoCompile(){
 		super.doSave(null);
-		
-		LispNode contents = LispParser.parse(getDocument().get() + "\n)");
-		outline.update(contents);
 		updateTasks();		
 	}
 	
