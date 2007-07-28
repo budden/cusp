@@ -22,7 +22,23 @@ public class PackageDialog extends Dialog implements KeyListener {
 	private Label lblSearch;
 	private String search = "";
 	
-	public PackageDialog(Shell parentShell, ArrayList<String> packages, String currPackage, boolean loadDialog) {
+	public PackageDialog(Shell parentShell, ArrayList<String> packages,
+			ArrayList<String> infos, String currPackage, boolean loadDialog) {
+		super(parentShell);
+		this.currPackage = currPackage;
+		this.packages = packages;
+		if(loadDialog){
+			title = "Load package";
+			groupTitle = "Installed packages";
+		} else {
+			groupTitle = "Current Package: " + currPackage;
+			title = "Change Package";
+		}
+		Collections.sort(this.packages);
+	}
+	
+	public PackageDialog(Shell parentShell, ArrayList<String> packages, 
+			String currPackage, boolean loadDialog) {
 		super(parentShell);
 		this.currPackage = currPackage;
 		this.packages = packages;
@@ -84,32 +100,6 @@ public class PackageDialog extends Dialog implements KeyListener {
 			}
 		});
 		lstEnums.addKeyListener(this);
-		/*lstEnums.addKeyListener(new KeyListener() {
-
-			private String acc = "";
-			
-			public void keyPressed(KeyEvent e) {
-				System.out.println(e);
-
-				System.out.println(new Character(e.character).toString());
-				String[] items = lstEnums.getItems();
-				for (int i=0; i<items.length; ++i) {
-					String item = items[i];
-					
-					acc += new Character(e.character).toString().toUpperCase();
-					if (item.startsWith(acc)) {
-						lstEnums.select(i);
-						lstEnums.showSelection();
-						return;
-					}
-					acc = "";
-				}
-			}
-
-			public void keyReleased(KeyEvent e) {
-			}
-			
-		});*/
 		
 		lblSearch = new Label(grpEnum, SWT.SHADOW_IN);
 		gridData = new GridData();
@@ -144,8 +134,8 @@ public class PackageDialog extends Dialog implements KeyListener {
 	}
 	
 	private boolean isSearchable(char c) {
-		if ("1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_-=+{}|[]\\:;\"\'<>?,./`~".indexOf(
-				Character.toLowerCase(c)) >= 0) {
+		if ("1234567890qwertyuiopasdfghjklzxcvbnm!@#$%^&*()_-=+{}|[]\\:;\"\'<>?,./`~"
+				.indexOf(Character.toLowerCase(c)) >= 0) {
 			return true;
 		} else {
 			return false;

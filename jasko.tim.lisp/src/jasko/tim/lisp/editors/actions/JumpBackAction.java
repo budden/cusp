@@ -38,8 +38,9 @@ public class JumpBackAction extends LispAction {
         	if( c == '\n' ){
         		jumpTo = offset - 1;
         	} else {
+        		boolean justSpace = false;
             	if( c == ')'){
-                    int[] range = LispUtil.getCurrentExpressionRange(doc, offset-1);
+                    int[] range = LispUtil.getCurrentExpressionRange(doc, offset);
                     if( range == null ){
                     	jumpTo = 0;
                     } else {
@@ -47,17 +48,19 @@ public class JumpBackAction extends LispAction {
                     }
             	} else if( Character.isWhitespace(c) ){
             		jumpTo = offset - 1;
+            		justSpace = true;
             	} else if (c == '('){
             			jumpTo = offset-1;
             	} else {
                 	int[] range = 
-                		LispUtil.getCurrentFullWordRange(doc, offset-1, false);
+                		LispUtil.getCurrentFullWordRange(doc, offset, false);
                 	if( range == null ){
                 		jumpTo = 0;
                 	} else {
                     	jumpTo = range[0];
                 	}
             	}
+            	int jump = jumpTo;
             	if( jumpTo < docLen && jumpTo > 0){
             		c = doc.getChar(jumpTo-1);
             	
@@ -66,7 +69,10 @@ public class JumpBackAction extends LispAction {
     	        		--jumpTo;
                 		c = doc.getChar(jumpTo-1);
     	        	}
-            	}        		
+            	}
+            	if( !justSpace && c == '\n'){
+            		jumpTo = jump;
+            	}
         	}        	
         } catch (BadLocationException ex) {
             ex.printStackTrace();
