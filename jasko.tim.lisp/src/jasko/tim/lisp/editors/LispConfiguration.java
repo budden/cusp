@@ -88,15 +88,12 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 
     
     public static void callUrl(String url, int offset, IDocument doc) {
-/*		ITextSelection ts = (ITextSelection) source.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
-		IDocument doc = source.getDocument();
-	*/	
 		String identifier = LispUtil.getCurrentFullWord(doc, offset);
 		identifier = identifier.replace("'", "");
 		identifier = identifier.replace("`", "");
 		
-		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
+		IWorkbenchBrowserSupport browser =
+			LispPlugin.getDefault().getWorkbench().getBrowserSupport();
 		try {
 			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
 					url.replace("%s", identifier)));
