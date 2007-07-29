@@ -462,13 +462,14 @@ public class ReplView extends ViewPart implements SelectionListener {
 					swank.getInstalledPackagesWithInfo(2000);
 				ArrayList<String> loadedPkgs = swank.getAvailablePackages(2000);
 				
-				ArrayList<String> pk = new ArrayList<String>();
-				ArrayList<String> pkdoc = new ArrayList<String>();
+				ArrayList<String> pkgs = new ArrayList<String>();
+				ArrayList<String> pkgsdoc = new ArrayList<String>();
+				ArrayList<String> pkgslinks = new ArrayList<String>();
 				if( installedPkgsWithInfo.params.size() > 0 ){
 					for( LispNode nd : 
 						    installedPkgsWithInfo.params.get(0).params ){
 						if( nd.params.size() >= 3 ){
-							pk.add(nd.get(0).value);
+							pkgs.add(nd.get(0).value);
 							LispNode infos = nd.get(1);
 							String strinfo = "";
 							for( LispNode info: infos.params ){
@@ -477,14 +478,22 @@ public class ReplView extends ViewPart implements SelectionListener {
 									strinfo += info.value + "\n";
 								}
 							}
-							pkdoc.add(strinfo);
+							pkgsdoc.add(strinfo);
+							LispNode links = nd.get(2);
+							String strlinks = "";
+							for( LispNode link: links.params ){
+								String strlink = link.get(1).value;
+								strlinks += strlink+";";
+							}							
+							pkgslinks.add(strlinks);
 						}
 					}					
 				}
 				
 				PackageDialog pd = 
 					new PackageDialog(ReplView.this.getSite().getShell(),
-						loadedPkgs, pk, pkdoc, swank.getPackage());
+						loadedPkgs, pkgs, pkgsdoc, pkgslinks,
+						swank.getPackage());
 				if (pd.open() == Dialog.OK) {
 					String pkg = pd.getPackage();
 					swank.sendLoadPackage(pd.getPackage());

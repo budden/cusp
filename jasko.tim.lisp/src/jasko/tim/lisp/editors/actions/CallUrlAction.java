@@ -41,16 +41,5 @@ public class CallUrlAction extends LispAction {
 	
 	public void run() {
 		editor.callUrl(url);
-		/*String identifier = getSymbol();
-		IWorkbenchBrowserSupport browser = LispPlugin.getDefault().getWorkbench().getBrowserSupport();
-		try {
-			browser.createBrowser("jasko.tim.lisp.lispdoc").openURL(new URL(
-					url.replace("%s", identifier)));
-		} catch (PartInitException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}*/
-		
 	}
 }
