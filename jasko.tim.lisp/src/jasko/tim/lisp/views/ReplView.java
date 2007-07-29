@@ -452,25 +452,39 @@ public class ReplView extends ViewPart implements SelectionListener {
 	private Action loadPackageButton;
 	
 	protected void fillToolBar(Composite parent) {
-		IToolBarManager tbm = this.getViewSite().getActionBars().getToolBarManager();
+		IToolBarManager tbm = 
+			this.getViewSite().getActionBars().getToolBarManager();
 		
 		loadPackageButton = new Action("Load Package") {
 			public void run() {
 				this.setToolTipText("Load Installed Package");
-				ArrayList<String> installedPkgs = swank.getInstalledPackages(2000);
+				LispNode installedPkgsWithInfo = 
+					swank.getInstalledPackagesWithInfo(2000);
 				ArrayList<String> loadedPkgs = swank.getAvailablePackages(2000);
-				ArrayList<String> pkgs = new ArrayList<String>();
 				
-				if(installedPkgs != null){
-					for( String pkg: installedPkgs ){
-						if(!loadedPkgs.contains(pkg.toUpperCase())){
-							pkgs.add(pkg);
+				ArrayList<String> pk = new ArrayList<String>();
+				ArrayList<String> pkdoc = new ArrayList<String>();
+				if( installedPkgsWithInfo.params.size() > 0 ){
+					for( LispNode nd : 
+						    installedPkgsWithInfo.params.get(0).params ){
+						if( nd.params.size() >= 3 ){
+							pk.add(nd.get(0).value);
+							LispNode infos = nd.get(1);
+							String strinfo = "";
+							for( LispNode info: infos.params ){
+								if( !info.value.equals("") 
+										&& !info.value.equalsIgnoreCase("nil")){
+									strinfo += info.value + "\n";
+								}
+							}
+							pkdoc.add(strinfo);
 						}
 					}					
 				}
 				
-				PackageDialog pd = new PackageDialog(ReplView.this.getSite().getShell(),
-						pkgs, swank.getPackage(),true);
+				PackageDialog pd = 
+					new PackageDialog(ReplView.this.getSite().getShell(),
+						loadedPkgs, pk, pkdoc, swank.getPackage());
 				if (pd.open() == Dialog.OK) {
 					String pkg = pd.getPackage();
 					swank.sendLoadPackage(pd.getPackage());
@@ -485,17 +499,21 @@ public class ReplView extends ViewPart implements SelectionListener {
 		connectButton = new Action("Reconnect") {
 			public void run() {
 				if (!swank.isConnected() 
-						|| MessageDialog.openQuestion(ReplView.this.getSite().getShell(),
-						"Reconnect", "Are you sure you want to restart your Lisp session?")) {
+						|| MessageDialog.openQuestion(
+								ReplView.this.getSite().getShell(),
+						"Reconnect", 
+						"Are you sure you want to restart your Lisp session?")){
 					this.setImageDescriptor(
-							LispImages.getImageDescriptor(LispImages.DISCONNECTED));										
+							LispImages.getImageDescriptor(
+									LispImages.DISCONNECTED));										
 					appendText("Reconnecting...");
 					swank.reconnect();
 					appendText("done.\n");
 					scrollDown();
 					
 					this.setImageDescriptor(
-							LispImages.getImageDescriptor(LispImages.RECONNECT));
+							LispImages.getImageDescriptor(
+									LispImages.RECONNECT));
 					swank.runAfterLispStart();
 					loadPackageButton.setEnabled(swank.managePackages);
 					
@@ -508,8 +526,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		Action packageButton = new Action("Change Package") {
 			public void run() {
-				PackageDialog pd = new PackageDialog(ReplView.this.getSite().getShell(),
-						swank.getAvailablePackages(5000), swank.getPackage(),false);
+				PackageDialog pd = 
+					new PackageDialog(ReplView.this.getSite().getShell(),
+						swank.getAvailablePackages(1000), swank.getPackage());
 				if (pd.open() == Dialog.OK) {
 					switchPackage(pd.getPackage());
 					replPackage.setText("Current package: "+pd.getPackage());
@@ -525,7 +544,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 				getSwank().sendInterrupt(null);
 			}
 		};
-		pauseButton.setImageDescriptor(LispImages.getImageDescriptor(LispImages.THREAD_DEBUG));
+		pauseButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.THREAD_DEBUG));
 		pauseButton.setToolTipText("Interrupt execution");
 		
 		
@@ -534,7 +554,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 				history.clear();
 			}
 		};
-		clearButton.setImageDescriptor(LispImages.getImageDescriptor(LispImages.CLEAR));
+		clearButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.CLEAR));
 		clearButton.setToolTipText("Clear Console");
 		
 		tbm.add(clearButton);
@@ -633,7 +654,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 			public void run() {
 				if( !swank.isConnected() ){
 					connectButton.setImageDescriptor(
-							LispImages.getImageDescriptor(LispImages.DISCONNECTED));					
+							LispImages.getImageDescriptor(
+									LispImages.DISCONNECTED));					
 				}
 			}
 		});
@@ -666,7 +688,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected class ReturnHandler extends SwankRunnable {
 		public void run() {
 			System.out.println(result);
-			LispNode returns = result.getf(":return").getf(":ok").getf(":present");
+			LispNode returns = 
+				result.getf(":return").getf(":ok").getf(":present");
 			for (LispNode r: returns.params) {
 				String res = r.get(0).value;
 				appendText(res + "\n");
@@ -687,7 +710,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 		LispNode n = LispParser.parse(replCmd);
 		if (n.car().car().value.toUpperCase().equalsIgnoreCase("IN-PACKAGE")) {
 			String packageName = n.car().cadr().value.toUpperCase();
-			if (packageName.startsWith(":")) packageName = packageName.substring(1);
+			if (packageName.startsWith(":")) 
+				packageName = packageName.substring(1);
 			if (!packageName.equals(swank.getPackage())) {
 				ArrayList<String> packages = swank.getAvailablePackages(5000);
 				if (packages.contains(packageName.toUpperCase())){
@@ -775,7 +799,8 @@ public class ReplView extends ViewPart implements SelectionListener {
         public void verifyKey (VerifyEvent evt) {
             if (evt.keyCode == 'a') {
                 if (evt.stateMask == SWT.CONTROL ||
-                        (evt.stateMask == SWT.COMMAND && Platform.getOS().equals(Platform.OS_MACOSX))) {
+                        (evt.stateMask == SWT.COMMAND 
+                        		&& Platform.getOS().equals(Platform.OS_MACOSX))) {
                     in.setSelectedRange(0, in.getDocument().getLength());
                 }
             }
@@ -980,12 +1005,15 @@ public class ReplView extends ViewPart implements SelectionListener {
 				appendText("\t" + i + ": [" + option.car().value + "] "
 						+ option.cadr().value + "\n");
 				TreeItem item = new TreeItem(debugTree, 0);
-				item.setText(i + ": [" + option.car().value + "] " + option.cadr().value);
+				item.setText(i + ": [" + option.car().value + "] " 
+						+ option.cadr().value);
 				item.setData(i);
 				if ( i == 0) {
 					firstItem = item;
 				}
-				if ( i == 0 || option.cadr().value.equalsIgnoreCase("Return to SLIME's top level.") ) {
+				if ( i == 0 
+						|| option.cadr().value.equalsIgnoreCase(
+								"Return to SLIME's top level.") ) {
 					quickOption = item;
 				}
 			} // for
