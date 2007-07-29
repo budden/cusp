@@ -268,3 +268,60 @@ pathnames as well."
       (walk-directory dir #'(lambda (x) (push (pathname-name x) files))
                       :test #'(lambda (x) (equal (pathname-type x) "asd"))))
     files))
+
+(defun get-asd-descriptions (xx)
+  (with-open-file (stream (second xx))
+                  (let ((docs 
+                          (ignore-errors (loop for x = (read stream) then (read stream)
+                                               when (and (>= (length x) 2) 
+                                                         (equal (first x) 'defsystem)
+                                                         (equalp (string (second x)) (first xx))) 
+                                               return (list (getf x :description)
+                                                            (getf x :long-description))))))
+                    (if docs 
+                        docs 
+                        '(nil nil)))))
+
+(defun get-doc-links (xx)
+  (list (list "readme" 
+              (file-exists-p (make-pathname :name "readme" :type nil 
+                                            :defaults xx)))
+        (list "readme.html"
+              (file-exists-p (make-pathname :name "readme" :type "html"
+                                            :defaults xx)))
+        (list "doc.html"
+              (file-exists-p (make-pathname :name (pathname-name xx) 
+                                            :type "html"
+                                            :defaults xx)))
+        (list "index.html"
+              (file-exists-p (merge-pathnames #p"doc/index.html" xx)))))
+
+(defun get-asd-docs (xx h)
+  (list (first xx)
+        (append (list (gethash (first xx) h))
+                (get-asd-descriptions xx))
+        (get-doc-links (second xx))))
+
+(defun get-specials-hash ()
+  (let ((h (make-hash-table :test 'equalp)))
+    (mapcar #'(lambda (xx) (setf (gethash (string (first xx)) h) (second xx))) 
+            (eval (let ((specials-file (some #'(lambda (path) 
+                                                 (let ((x (merge-pathnames path "specials.lisp"))) 
+                                                   (if (file-exists-p x) x nil))) 
+                                             *top-level-directories*)))
+                    (when specials-file
+                      (with-open-file (stream specials-file)
+                                      (ignore-errors (loop for x = (read stream) then (read stream)
+                                                           when (and (>= (length x) 3)
+                                                                     (equal (first x) 'defvar)
+                                                                     (equal (second x) '*lib-designators*))
+                                                           return (third x)))))))) h))
+
+(defun get-inst ()
+  (let ((files ())
+        (h (get-specials-hash)))
+    (dolist (dir *top-level-directories*)
+      (walk-directory dir #'(lambda (x) (push (list (pathname-name x) x) files))
+                      :test #'(lambda (x) (equalp (pathname-type x) "asd"))))
+    (mapcar #'(lambda (x) (get-asd-docs x h)) 
+            (sort files #'string-lessp :key #'first) )))

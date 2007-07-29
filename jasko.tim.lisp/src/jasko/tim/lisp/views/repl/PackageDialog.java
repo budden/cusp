@@ -9,10 +9,13 @@ import org.eclipse.swt.layout.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.custom.*;
 
 
 public class PackageDialog extends Dialog implements KeyListener {
+	ArrayList<String> loadedPkgs;
 	ArrayList<String> packages;
+	private HashMap<String,String> infoMap = new HashMap<String,String>();
 	String result = "";
 	String currPackage;
 	String title = "";
@@ -20,35 +23,41 @@ public class PackageDialog extends Dialog implements KeyListener {
 
 	private List lstEnums;
 	private Label lblSearch;
+	private Label lblLoaded;
+	private StyledText txtDoc;
 	private String search = "";
+	boolean loadDialog;
 	
-	public PackageDialog(Shell parentShell, ArrayList<String> packages,
-			ArrayList<String> infos, String currPackage, boolean loadDialog) {
+	//load package dialog
+	public PackageDialog(Shell parentShell, ArrayList<String> loadedPkgs,
+			ArrayList<String> packages,	ArrayList<String> infos,
+			String currPackage) {
 		super(parentShell);
 		this.currPackage = currPackage;
 		this.packages = packages;
-		if(loadDialog){
-			title = "Load package";
-			groupTitle = "Installed packages";
+		this.loadedPkgs = loadedPkgs;
+		title = "Load package";
+		groupTitle = "Installed packages";
+		if( packages.size() == infos.size() ){
+			for(int i = 0; i < packages.size(); ++i){
+				infoMap.put(packages.get(i), infos.get(i));
+			}
 		} else {
-			groupTitle = "Current Package: " + currPackage;
-			title = "Change Package";
+			infoMap.clear();
 		}
+		loadDialog = true;
 		Collections.sort(this.packages);
 	}
 	
+	//change package dialog
 	public PackageDialog(Shell parentShell, ArrayList<String> packages, 
-			String currPackage, boolean loadDialog) {
+			String currPackage) {
 		super(parentShell);
 		this.currPackage = currPackage;
 		this.packages = packages;
-		if(loadDialog){
-			title = "Load package";
-			groupTitle = "Installed packages";
-		} else {
-			groupTitle = "Current Package: " + currPackage;
-			title = "Change Package";
-		}
+		groupTitle = "Current Package: " + currPackage;
+		title = "Change Package";
+		loadDialog = false;
 		Collections.sort(this.packages);
 	}
 	
@@ -60,8 +69,8 @@ public class PackageDialog extends Dialog implements KeyListener {
 	protected Control createDialogArea(Composite parent) {
 		Composite comp = (Composite)super.createDialogArea(parent);
 	
-		
-		comp.setLayout(new GridLayout());
+		GridLayout compLayout = new GridLayout();
+		comp.setLayout(compLayout);
 	
 		GridData gridData;
 
@@ -76,7 +85,8 @@ public class PackageDialog extends Dialog implements KeyListener {
 		gridData.horizontalAlignment = GridData.FILL;
 		grpEnum.setLayoutData(gridData);
 	
-		lstEnums = new List(grpEnum, SWT.LEFT | SWT.BORDER | SWT.V_SCROLL | SWT.SINGLE);
+		lstEnums = new List(grpEnum, SWT.LEFT | SWT.BORDER 
+				| SWT.V_SCROLL | SWT.SINGLE);
 		for(String p: packages) {
 			lstEnums.add(p);
 		}
@@ -86,7 +96,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 		gridData.grabExcessVerticalSpace = true;
 		gridData.horizontalAlignment = GridData.FILL;
 		gridData.verticalAlignment = GridData.FILL;
-		gridData.heightHint = 200;
+		gridData.heightHint = 100;
 		lstEnums.setLayoutData(gridData);
 		lstEnums.addMouseListener(new MouseListener() {
 
@@ -109,6 +119,39 @@ public class PackageDialog extends Dialog implements KeyListener {
 		lblSearch.setLayoutData(gridData);
 		lblSearch.setVisible(false);
 		
+		if( loadDialog ){
+			lstEnums.addSelectionListener(new SelectionListener(){
+				public void widgetDefaultSelected(SelectionEvent e){
+					widgetSelected(e);
+				};
+				
+				public void widgetSelected(SelectionEvent e){
+					displayInfo();
+				};
+			});
+
+			lblLoaded = new Label(grpEnum, SWT.SHADOW_IN);
+			gridData = new GridData();
+			gridData.grabExcessHorizontalSpace = true;
+			gridData.grabExcessVerticalSpace = false;
+			gridData.horizontalAlignment = GridData.FILL;
+			lblLoaded.setLayoutData(gridData);
+			lblLoaded.setVisible(false);
+			
+			txtDoc = new StyledText(grpEnum,
+					SWT.BORDER | SWT.V_SCROLL );
+			gridData = new GridData();
+			gridData.grabExcessHorizontalSpace = true;
+			gridData.grabExcessVerticalSpace = true;
+			gridData.horizontalAlignment = GridData.FILL;
+			gridData.verticalAlignment = GridData.FILL;
+			gridData.heightHint = 70;
+			gridData.widthHint = 400;
+			txtDoc.setLayoutData(gridData);
+			txtDoc.setEditable(false);
+			txtDoc.setWordWrap(true);			
+		}
+		
 		Composite grpButtons = new Composite(grpEnum, SWT.SHADOW_NONE);
 		GridLayout layButtons = new GridLayout();
 		layButtons.numColumns = 2;
@@ -118,19 +161,46 @@ public class PackageDialog extends Dialog implements KeyListener {
 		gridData.horizontalAlignment = GridData.FILL;
 		grpButtons.setLayoutData(gridData);
 		
-		
-		
 		return comp;
 	}
 	
 	protected void okPressed() {
-		result = lstEnums.getSelection()[0];
-		super.okPressed();
+		String pkg = lstEnums.getSelection()[0];
+		if( loadDialog && loadedPkgs.contains(pkg.toUpperCase()) ){
+			lblLoaded.setText("Package " + pkg 
+					+ " is loaded. Press Esc to cancel.");
+			lblLoaded.setVisible(true);
+			return;
+		} else {
+			result = lstEnums.getSelection()[0];
+			super.okPressed();			
+		}
 	}
 	
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(title);
+	}
+	
+	private void displayInfo(){
+		int sel = lstEnums.getSelectionIndex(); 
+		if( sel < 0 ){
+			lblLoaded.setVisible(false);
+			txtDoc.setText("");
+			return;
+		}
+		if( infoMap.size() == packages.size() ){
+			String pkg = packages.get(sel);
+			String txt = infoMap.get(pkg);
+			txtDoc.setText(txt);
+			txtDoc.setToolTipText(txt);
+			if( loadedPkgs.contains(pkg.toUpperCase()) ){
+				lblLoaded.setText("Package "+pkg + " is loaded");
+			} else {
+				lblLoaded.setText("Package "+pkg + " is NOT loaded");
+			}
+			lblLoaded.setVisible(true);
+		}
 	}
 	
 	private boolean isSearchable(char c) {

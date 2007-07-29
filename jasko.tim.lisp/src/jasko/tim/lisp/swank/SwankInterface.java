@@ -1015,7 +1015,7 @@ public class SwankInterface {
 
 			java.util.ArrayList<String> packageNames = new java.util.ArrayList<String>();
 
-			String res = sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:get-installed-packages)",3000);
+			String res = sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:get-installed-packages)",timeout);
 			String[] packages = res.replaceAll("[()\"]", "").split(" ");
 			
 			if(packages.length == 1 && packages[0].equalsIgnoreCase("nil")){
@@ -1030,6 +1030,22 @@ public class SwankInterface {
 			}
 			
 			return packageNames;			
+		} else {
+			return null;
+		}
+	}
+	
+	public synchronized LispNode getInstalledPackagesWithInfo(long timeout) {
+		if ( managePackages ){
+			
+			SyncCallback callback = new SyncCallback();
+			++messageNum;
+			syncJobs.put(new Integer(messageNum).toString(), callback);
+
+			String res = sendEvalAndGrab("(get-inst)",
+					"com.gigamonkeys.asdf-extensions", timeout);
+			LispNode resnode = LispParser.parse(res);
+			return resnode;
 		} else {
 			return null;
 		}
