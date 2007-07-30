@@ -1,7 +1,6 @@
 package jasko.tim.lisp.editors.actions;
 
 import jasko.tim.lisp.editors.ILispEditor;
-import jasko.tim.lisp.util.LispUtil;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.*;
@@ -29,7 +28,14 @@ public class CommentingAction extends LispAction {
         
         // if selection length > 0, comment out
         if( ts.getLength() > 0 ){
-        	String txt = "#|" + ts.getText() + "|#";
+        	String oldtxt = ts.getText();
+        	String txt = "";
+        	if( oldtxt.length() > 4 
+        			&& oldtxt.startsWith("#|") && oldtxt.endsWith("|#") ){
+        		txt = oldtxt.substring(2, oldtxt.length()-2);
+        	} else {
+            	txt = "#|" + ts.getText() + "|#";        		
+        	}
         	try{
         		doc.replace(offset, ts.getLength(), txt);
         		editor.getSelectionProvider()
@@ -38,10 +44,6 @@ public class CommentingAction extends LispAction {
         	catch (BadLocationException e){
                 e.printStackTrace();        		
         	}
-        } else {  
-    	// if selection length = 0 and caret is before #| or after |#
-        // remove commenting symbols
-        	        	
         }
     }
     
