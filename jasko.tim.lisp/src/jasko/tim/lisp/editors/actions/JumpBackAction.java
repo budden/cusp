@@ -8,6 +8,7 @@ import org.eclipse.jface.text.*;
 import org.eclipse.ui.IEditorPart;
 
 public class JumpBackAction extends LispAction {
+	public static final String ID = "jasko.tim.lisp.actions.JumpBackAction";
 
     private ILispEditor editor;
     

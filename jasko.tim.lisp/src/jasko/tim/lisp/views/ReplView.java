@@ -61,7 +61,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected Label replPackage;
 	
 	public static void switchToRepl() {
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		IWorkbenchPage page = 
+			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		try {
 			page.showView(ReplView.ID);
 		} catch (PartInitException e) {
@@ -235,6 +236,9 @@ public class ReplView extends ViewPart implements SelectionListener {
         ParameterHintsAction hintsAction = new ParameterHintsAction(in);
         hintsAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ParameterHintsAction");
         keys.registerAction(hintsAction);
+        IndentAction indentAction = new IndentAction(in);
+        indentAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.Indent");
+        keys.registerAction(indentAction);
         ExpandSelectionAction expSelAction = new ExpandSelectionAction(in);
         expSelAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ExpandSelectionAction");
         keys.registerAction(expSelAction);
@@ -247,6 +251,7 @@ public class ReplView extends ViewPart implements SelectionListener {
         JumpBackAction jumpBackAction = new JumpBackAction(in);
         jumpBackAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.JumpBackAction");
         keys.registerAction(jumpBackAction);
+
  		/*in.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
 				try {
@@ -844,7 +849,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				hist.add(command);
 			}
 		}
-					
+
 		HistoryDialog hd = new HistoryDialog(ReplView.this.getSite().getShell(),
 				hist);
 		if (hd.open() == Dialog.OK) {
