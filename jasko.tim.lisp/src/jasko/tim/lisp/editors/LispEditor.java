@@ -344,12 +344,12 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	 */
 	protected void createActions() {
 		super.createActions();
-		
+		/*
 		IKeyBindingService keys = this.getSite().getKeyBindingService();
 		IndentAction indent = new IndentAction(this);
 		indent.setActionDefinitionId(IndentAction.ID);
 		keys.registerAction(indent);
-		
+		*/
 		/*CompileAction compile = new CompileAction(this);
 		compile.setActionDefinitionId("jasko.tim.lisp.actions.CompileAction");
 		keys.registerAction(compile);

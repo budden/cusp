@@ -619,63 +619,63 @@
 			</action>
 		</editorContribution>
 	</extension>
-	
-	<!-- Expand Selection -->
+
+	<!-- Indent -->
 	<extension point="org.eclipse.ui.commands">
 		<command
 			categoryId="jasko.tim.lisp.category1"
-			description="Expands the selection to the next outer atom/s-expression"
-			id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-			name="Expand Selection"/>
+			description="Indents the current selection/line."
+			id="jasko.tim.lisp.editors.actions.IndentAction"
+			name="Indent line"/>
 	</extension>
 	<extension point="org.eclipse.ui.bindings">
 		<key
-			commandId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+			commandId="jasko.tim.lisp.editors.actions.IndentAction"
 			contextId="jasko.tim.lisp.context1"
 			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Enter"/>
+			sequence="Tab"/>
 	</extension>
 	<extension point="org.eclipse.ui.editorActions">
 		<editorContribution
 			targetID="jasko.tim.lisp.editors.LispEditor"
 			id="jasko.tim.lisp.menus">
 			<action
-				class="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-				definitionId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-				id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-				label="Expand Selection"
+				class="jasko.tim.lisp.editors.actions.IndentAction"
+				definitionId="jasko.tim.lisp.editors.actions.IndentAction"
+				id="jasko.tim.lisp.editors.actions.IndentAction"
+				label="Indent line"
 				menubarPath="Lisp/grpMisc"
-				tooltip="Expand Selection">
+				tooltip="Indent line">
 			</action>
 		</editorContribution>
 	</extension>
-	
-	<!-- Select Current Expression -->
+
+	<!-- Commenting -->
 	<extension point="org.eclipse.ui.commands">
 		<command
 			categoryId="jasko.tim.lisp.category1"
-			description="Selects the current s-expression"
-			id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-			name="Select Current Expression"/>
+			description="Comments out or removes commenting out"
+			id="jasko.tim.lisp.editors.actions.CommentingAction"
+			name="Commenting"/>
 	</extension>
 	<extension point="org.eclipse.ui.bindings">
 		<key
-			commandId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+			commandId="jasko.tim.lisp.editors.actions.CommentingAction"
 			contextId="jasko.tim.lisp.context1"
 			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Shift+Enter"/>
+			sequence="Alt+;"/>
 	</extension>
 	<extension point="org.eclipse.ui.editorActions">
 		<editorContribution
 			targetID="jasko.tim.lisp.editors.LispEditor"
 			id="jasko.tim.lisp.menus">
 			<action
-				class="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-				definitionId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-				id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-				label="Select Current Expression"
+				class="jasko.tim.lisp.editors.actions.CommentingAction"
+				definitionId="jasko.tim.lisp.editors.actions.CommentingAction"
+				id="jasko.tim.lisp.editors.actions.CommentingAction"
+				label="Commenting"
 				menubarPath="Lisp/grpMisc"
-				tooltip="Select Current Expression">
+				tooltip="Commenting">
 			</action>
 		</editorContribution>
 	</extension>
@@ -736,6 +736,66 @@
 				label="Jump Back"
 				menubarPath="Lisp/grpMisc"
 				tooltip="Jump Back">
+			</action>
+		</editorContribution>
+	</extension>
+
+	<!-- Expand Selection -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Expands the selection to the next outer atom/s-expression"
+			id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+			name="Expand Selection"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+Enter"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+				definitionId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+				id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+				label="Expand Selection"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Expand Selection">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Select Current Expression -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Selects the current s-expression"
+			id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+			name="Select Current Expression"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+Shift+Enter"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+				definitionId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+				id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
+				label="Select Current Expression"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Select Current Expression">
 			</action>
 		</editorContribution>
 	</extension>
@@ -1080,22 +1140,6 @@
 				tooltip="Go to the symbol's definition.">
 			</action>
 		</editorContribution>
-	</extension>
-	
-	<!-- Indent -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Indents the current selection/line."
-			id="jasko.tim.lisp.actions.IndentAction"
-			name="Indent line"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.IndentAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Tab"/>
 	</extension>
 	
 	<!-- Dissassemble -->

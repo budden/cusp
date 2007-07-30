@@ -1,10 +1,13 @@
 package jasko.tim.lisp.editors.actions;
 
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.editors.LispPartitionScanner;
 import jasko.tim.lisp.editors.assist.*;
 
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.*;
+import org.eclipse.ui.IEditorPart;
 
 /**
  * This is probably not the right place to do indentation, but it's a lot easier to do it here than in
@@ -15,14 +18,19 @@ import org.eclipse.jface.text.*;
  * @see jasko.tim.lisp.editors.assist.LispIndenter
  */
 public class IndentAction extends LispAction {
-	public static final String ID = "jasko.tim.lisp.actions.IndentAction";
-	
+
+    private ILispEditor editor;
+	    
 	public IndentAction() {
 	}
 	
-	public IndentAction(LispEditor editor) {
-		super(editor);
-	}
+    public IndentAction(ILispEditor editor) {
+        this.editor = editor;
+    }
+	    
+	public void setActiveEditor(IAction action, IEditorPart targetEditor) {
+        editor = (ILispEditor)targetEditor;
+    }    
 	
 	private int getIndent(String str){
 		int i = 0;
