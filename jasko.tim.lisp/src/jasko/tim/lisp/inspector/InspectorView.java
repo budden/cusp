@@ -26,8 +26,10 @@ public class InspectorView extends ViewPart {
 	
 
 	
-	public static void showInspector(String title, String type, LispNode content) {
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+	public static void showInspector(String title, 
+			String type, LispNode content) {
+		IWorkbenchPage page = PlatformUI.getWorkbench()
+		    .getActiveWorkbenchWindow().getActivePage();
 		try {
 			IViewPart view = page.showView(InspectorView.ID);
 			if (view != null && view instanceof InspectorView) {
@@ -73,7 +75,7 @@ public class InspectorView extends ViewPart {
 		
 		for (LispNode item : content.params) {
 			if (item.isString) {
-				output.appendText(item.value);
+				output.appendTextForInspector(item.value);
 			} else {
 				output.appendInspectable(item.getf(":value").value, item.get(2).value);
 			}
