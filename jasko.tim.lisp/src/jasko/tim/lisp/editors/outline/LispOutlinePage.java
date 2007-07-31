@@ -726,54 +726,65 @@ public class LispOutlinePage extends ContentOutlinePage
 			Point pt = new Point(e.x,e.y);
 			Tree tree = getTreeViewer().getTree();
 			TreeItem item = tree.getItem(pt);
+			Point ptHint = 
+				new Point(e.x,item.getBounds().y 
+						+ (int)Math.round(1.5*item.getBounds().height));
 			
-			if( item != null && item != tooltipItem){
-				tooltipItem = item;
-				// get item data
-				if( item.getData() != null ){
-					TopLevelItem tr = (TopLevelItem)(item.getData());
-					if( !tr.type.equals("section") ){
-						Position pos = itemPos.get(tr);
-						if( pos != null ){
-							IDocument doc = editor.getDocument();
-							int offset = tr.nameOffset + 1;
-							String pkg = LispUtil
-							   .getPackage(doc.get(), offset);
-							String variable = 
-								LispUtil.getCurrentFullWord(doc, offset);
-							SwankInterface swank = 
-								LispPlugin.getDefault().getSwank();
-							String args = swank.getArglist(variable, 1000, pkg);
-							String docstr = 
-								swank.getDocumentation(variable, pkg, 1000);
-							String info = args;
-							if( info.equalsIgnoreCase("nil") ){
-								info = "";
-							}
-							if(docstr != null && !docstr.equals("") 
-									&& !docstr.equals("nil")){
-								info = info+"\n"+docstr;
-							}
-							if( info != null && !info.equals("") 
-									&& !info.equals("nil") ){
-								tooltip.setLocation(tree.toDisplay(pt));
-								tooltip.setInformation(info);
-								Point size = tooltip.computeSizeHint();
-								tooltip.setSize(size.x, size.y);
-								tooltip.setVisible(true);
+			if( item != null ){
+				if( item != tooltipItem ){
+					tooltipItem = item;
+					if( item.getData() != null ){
+						TopLevelItem tr = (TopLevelItem)(item.getData());
+						if( !tr.type.equals("section") ){
+							Position pos = itemPos.get(tr);
+							if( pos != null ){
+								IDocument doc = editor.getDocument();
+								int offset = tr.nameOffset + 1;
+								String pkg = LispUtil
+								   .getPackage(doc.get(), offset);
+								String variable = 
+									LispUtil.getCurrentFullWord(doc, offset);
+								SwankInterface swank = 
+									LispPlugin.getDefault().getSwank();
+								String args = 
+									swank.getArglist(variable, 1000, pkg);
+								String docstr = 
+									swank.getDocumentation(variable, pkg, 1000);
+								String info = args;
+								if( info.equalsIgnoreCase("nil") ){
+									info = "";
+								}
+								if(docstr != null && !docstr.equals("") 
+										&& !docstr.equals("nil")){
+									if( info.equals("") ){
+										info = docstr;
+									} else {
+										info = info+"\n"+docstr;										
+									}
+								}
+								if( info != null && !info.equals("") 
+										&& !info.equals("nil") ){
+									tooltip.setInformation(info);
+									Point size = tooltip.computeSizeHint();
+									tooltip.setSize(size.x, size.y);
+									tooltip.setLocation(tree.toDisplay(ptHint));
+									tooltip.setVisible(true);
+								} else {
+									tooltip.setVisible(false);
+								}
 							} else {
-								tooltip.setVisible(false);
+								tooltip.setVisible(false);						
 							}
 						} else {
-							tooltip.setVisible(false);						
+							tooltip.setVisible(false);					
 						}
 					} else {
-						tooltip.setVisible(false);					
+						tooltip.setVisible(false);
 					}
 				} else {
-					tooltip.setVisible(false);
+					tooltip.setLocation(tree.toDisplay(ptHint));
 				}
-			}			
+			}
 		}
 	}
 }
