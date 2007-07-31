@@ -130,6 +130,15 @@ public class ReplHistory extends SourceViewer
 		}
 	}
 
+	public void appendTextForInspector(String text) {
+		IDocument doc = getDocument();
+		try {
+			doc.replace(doc.getLength(), 0, text);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private int parseLineForComment(String line){
 		boolean inString = false;
 		for( int i = 0 ; i < line.length(); ++i ){
