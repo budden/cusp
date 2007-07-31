@@ -1,6 +1,7 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.inspector.InspectorView;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.*;
@@ -792,6 +793,8 @@ public class SwankInterface {
 	// Inspection related
 	
 	public synchronized void sendInspectReplResult(String num, SwankRunnable callBack) {
+		InspectorView.getInspector().initLevel();
+		
 		registerCallback(callBack);
 		String msg = "(swank:init-inspector \"(swank:get-repl-result #10r" + num 
 			+ ")\" :reset t :eval t :dwim-mode nil)";
@@ -800,10 +803,26 @@ public class SwankInterface {
 	}
 	
 	public synchronized void sendInspectInspectedPart(String partNum, SwankRunnable callBack) {
-		registerCallback(callBack);
-		String msg = "(swank:init-inspector \"(swank:get-repl-result '(:inspected-part " 
-			+ partNum + "))\" :reset t :eval t :dwim-mode nil)";
+		InspectorView.getInspector().incrNewLevel();
 		
+		registerCallback(callBack);
+		String msg = "(swank:inspect-nth-part " + partNum + ")";
+		
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendInspectorPop(SwankRunnable callBack) {
+		InspectorView.getInspector().decrLevel();
+		
+		registerCallback(callBack);
+		String msg = "(swank:inspector-pop)";
+		emacsRex(msg);
+	}
+	
+	public synchronized void sendInspectorNext(SwankRunnable callBack) {
+		InspectorView.getInspector().incrLevel();
+		registerCallback(callBack);
+		String msg = "(swank:inspector-next)";
 		emacsRex(msg);
 	}
 	
