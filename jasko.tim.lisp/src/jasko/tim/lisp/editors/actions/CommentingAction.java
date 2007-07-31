@@ -45,6 +45,5 @@ public class CommentingAction extends LispAction {
                 e.printStackTrace();        		
         	}
         }
-    }
-    
+    }    
 }

@@ -61,6 +61,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 			}
 		} else {
 			infoMap.clear();
+			linkMap.clear();
 		}
 		loadDialog = true;
 		Collections.sort(this.packages);
@@ -297,9 +298,9 @@ public class PackageDialog extends Dialog implements KeyListener {
 			}
 			return;
 		}
-		if( infoMap.size() == packages.size() ){
-			String pkg = packages.get(sel);
-			String txt = infoMap.get(pkg);
+		String pkg = packages.get(sel);
+		String txt = infoMap.get(pkg);
+		if( txt != null ){
 			txtDoc.setText(txt);
 			txtDoc.setToolTipText(txt);
 			if( loadedPkgs.contains(pkg.toUpperCase()) ){
@@ -308,9 +309,12 @@ public class PackageDialog extends Dialog implements KeyListener {
 				lblLoaded.setText("Package "+pkg + " is NOT loaded");
 			}
 			lblLoaded.setVisible(true);
-			
-			//process links
-			String[] links = linkMap.get(pkg).split(";");
+		}
+		
+		//process links
+		String linkstxt = linkMap.get(pkg);
+		if( linkstxt != null ){
+			String[] links = linkstxt.split(";");
 			int j = 0;
 			for( int i = 0; i < Math.min(4, links.length); ++i ){
 				if( !links[i].equals("") && !links[i].equalsIgnoreCase("nil") ){
@@ -323,7 +327,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 			}
 			for( int i = j; i < 4; ++i ){
 				hlinks[i].setVisible(false);
-			}
+			}			
 		}
 	}
 	
