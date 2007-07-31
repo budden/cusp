@@ -28,8 +28,10 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 
 	public String getHoverInfo(ITextViewer textViewer, IRegion hoverRegion) {
 		IDocument doc = textViewer.getDocument();
-		String function = LispUtil.getCurrentFullWord(doc, hoverRegion.getOffset());
-		int[] range = LispUtil.getCurrentFullWordRange(doc, hoverRegion.getOffset());
+		String function = 
+			LispUtil.getCurrentFullWord(doc, hoverRegion.getOffset());
+		int[] range = 
+			LispUtil.getCurrentFullWordRange(doc, hoverRegion.getOffset());
 		if (function.equals("")) {
 			return null;
 		} else if (function.equals(prev) && range[0] == prevOffset) {
@@ -39,21 +41,30 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 		String result = "";
 		if (editor != null) {
 			result = swank.getArglist(function,3000, 
-					LispUtil.getPackage(textViewer.getDocument().get(),hoverRegion.getOffset()));
+					LispUtil.getPackage(textViewer.getDocument().get(),
+							hoverRegion.getOffset()));
 		} else {
 			result = swank.getArglist(function,3000);
 		}
-		
-		if (!result.contains("not available") && !result.equals("nil")) {
+
+		if (!result.contains("not available")) {
+			if( result.equalsIgnoreCase("nil") ){
+				result = "";
+			}
 			String docString = "";
 			if (editor != null) {
  				docString = swank.getDocumentation(function, 
- 						LispUtil.getPackage(textViewer.getDocument().get(),hoverRegion.getOffset()), 1000);
+ 						LispUtil.getPackage(textViewer.getDocument().get(),
+ 								hoverRegion.getOffset()), 1000);
  			} else {
  				docString = swank.getDocumentation(function, 1000);
  			}
-			if (!docString.equals("")) {
-				result += "\n" + docString;
+			if (!docString.equals("") && !docString.equalsIgnoreCase("nil")) {
+				if( result.equals("") ){
+					result = docString;
+				} else {
+					result += "\n" + docString;					
+				}
 			}
 			
 			// Cache the last result, save some swanking

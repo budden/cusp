@@ -31,7 +31,7 @@ import org.eclipse.ui.views.contentoutline.*;
  *
  * SK: I am <i>really</i> clever man! :) Actually once you figure how to be 
  * clever, to get to <i>really</i> part is trivial. However code is a mess and
- * will definitely require refactoring for it to be supportable.
+ * will definitely require refactoring for it to be maintanable.
  * Hopefully the code does not contains too many bugs.
  *
  */
@@ -363,7 +363,7 @@ public class LispOutlinePage extends ContentOutlinePage
 		return false;
 	}
 	
-	//works on tree up to 2 levels deep (exactly what we use for LispOutlinePage)
+//works on tree up to 2 levels deep (exactly what we use for LispOutlinePage)
 	private void removeDeletedItems(){
 		Tree tree = getTreeViewer().getTree();
 		TreeItem[] items = tree.getItems();
@@ -532,7 +532,8 @@ public class LispOutlinePage extends ContentOutlinePage
 		getTreeViewer().getControl().addKeyListener(this);		
 		tree.addMouseTrackListener(this);
 		
-		LispTextHoverControlCreator tooltipCreator = new LispTextHoverControlCreator();
+		LispTextHoverControlCreator tooltipCreator = 
+			new LispTextHoverControlCreator();
 		tooltip = tooltipCreator.createInformationControl(tree.getShell());
 		
 		LispNode file = LispParser.parse(doc.get() + "\n)");
@@ -718,7 +719,8 @@ public class LispOutlinePage extends ContentOutlinePage
 	
 	public void mouseHover(MouseEvent e){
 		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-		Boolean showToolTip = prefs.getBoolean(PreferenceConstants.SHOW_OUTLINE_HINT);
+		Boolean showToolTip = 
+			prefs.getBoolean(PreferenceConstants.SHOW_OUTLINE_HINT);
 		
 		if( showToolTip ){
 			Point pt = new Point(e.x,e.y);
@@ -737,11 +739,17 @@ public class LispOutlinePage extends ContentOutlinePage
 							int offset = tr.nameOffset + 1;
 							String pkg = LispUtil
 							   .getPackage(doc.get(), offset);
-							String variable = LispUtil.getCurrentFullWord(doc, offset);
-							SwankInterface swank = LispPlugin.getDefault().getSwank();
+							String variable = 
+								LispUtil.getCurrentFullWord(doc, offset);
+							SwankInterface swank = 
+								LispPlugin.getDefault().getSwank();
 							String args = swank.getArglist(variable, 1000, pkg);
-							String docstr = swank.getDocumentation(variable, pkg, 1000);
+							String docstr = 
+								swank.getDocumentation(variable, pkg, 1000);
 							String info = args;
+							if( info.equalsIgnoreCase("nil") ){
+								info = "";
+							}
 							if(docstr != null && !docstr.equals("") 
 									&& !docstr.equals("nil")){
 								info = info+"\n"+docstr;
