@@ -23,17 +23,15 @@ public class LispTextHoverControlCreator implements IInformationControlCreator {
 	}
 	
 	
-	public class InfoPresenter implements DefaultInformationControl.IInformationPresenter {
+	public class InfoPresenter 
+	  implements DefaultInformationControl.IInformationPresenter {
 		public String updatePresentation(Display display, String hoverInfo, 
 				TextPresentation pres, int maxWidth, int maxHeight) {
-			/*int endOfLine = hoverInfo.indexOf('\n');
-			if (endOfLine < 0) {
-				endOfLine = hoverInfo.length();
+			if( hoverInfo.length() > 0 && hoverInfo.startsWith("(")){
+				LispNode stuff = LispParser.parse(hoverInfo);
+				pres.addStyleRange(new StyleRange(0, stuff.get(0).endOffset+1, 
+						null, null, SWT.BOLD));				
 			}
-			pres.addStyleRange(new StyleRange(0, endOfLine, null, null, SWT.BOLD));*/
-			LispNode stuff = LispParser.parse(hoverInfo);
-			pres.addStyleRange(new StyleRange(0, stuff.get(0).endOffset, 
-					null, null, SWT.BOLD));
 			return hoverInfo;
 		}
 		
