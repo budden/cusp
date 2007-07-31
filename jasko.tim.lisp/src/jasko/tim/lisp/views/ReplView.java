@@ -625,6 +625,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	public void appendInspectable(String text, String id) {
+		System.out.println("Append inspectable: val = "+text+", id = "+id);
 		history.appendInspectable(text, id);
 	}
 	
@@ -641,6 +642,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		public ReplView rv;
 		
 		public void run() {
+			System.out.println("DisplayRunnable: "+result.toString());
 			if (result.params.size() <= 3) {
 				rv.appendText(result.get(1).value);
 			} else {

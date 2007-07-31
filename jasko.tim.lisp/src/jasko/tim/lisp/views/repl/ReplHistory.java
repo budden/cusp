@@ -257,7 +257,8 @@ public class ReplHistory extends SourceViewer
 	}
 	
 	protected void sendInspect(String id) {
-		LispPlugin.getDefault().getSwank().sendInspectReplResult(id, new InspectorRunnable());
+		LispPlugin.getDefault().getSwank()
+		  .sendInspectReplResult(id, new InspectorRunnable());
 	}
 
 	public void widgetDisposed(DisposeEvent e) {

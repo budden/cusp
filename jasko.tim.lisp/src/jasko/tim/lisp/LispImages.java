@@ -42,6 +42,8 @@ public class LispImages {
 	public static final String THREAD_DEBUG = "thread-debug";
 	public static final String THREAD_KILL = "thread-kill";
 	public static final String REFRESH = "refresh";
+	public static final String FORWARD_NAV = "forward-nav";
+	public static final String BACKWARD_NAV = "backward-nav";
 
 	static {
 		ImageRegistry imageReg = LispPlugin.getDefault().getImageRegistry();
@@ -85,6 +87,8 @@ public class LispImages {
 		imageReg.put(LispImages.THREAD_DEBUG, loadImageDescriptor("thread-debug.gif"));
 		imageReg.put(LispImages.THREAD_KILL, loadImageDescriptor("thread-kill.gif"));
 		imageReg.put(LispImages.REFRESH, loadImageDescriptor("refresh.gif"));
+		imageReg.put(LispImages.FORWARD_NAV, loadImageDescriptor("forward_nav.gif"));
+		imageReg.put(LispImages.BACKWARD_NAV, loadImageDescriptor("backward_nav.gif"));
 		
 	}
 	

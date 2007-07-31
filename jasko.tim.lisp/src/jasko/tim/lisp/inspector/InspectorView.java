@@ -2,6 +2,8 @@ package jasko.tim.lisp.inspector;
 
 import java.util.*;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
@@ -11,6 +13,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import jasko.tim.lisp.LispImages;
+import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.swank.*;
 
 public class InspectorView extends ViewPart {
@@ -21,10 +25,53 @@ public class InspectorView extends ViewPart {
 	String type;
 	LispNode content;
 	
+	private int level = 0;
+	private int maxlevel = 0;
+	
 	ArrayList<Integer> offsets = new ArrayList<Integer>();
 	ArrayList<Control> controls = new ArrayList<Control>();
 	
-
+	public void initLevel(){
+		level = 0;
+		maxlevel = 0;
+		setEnabledDisabled();
+	}
+	
+	public void incrNewLevel(){
+		++level;
+		maxlevel = level;
+		setEnabledDisabled();
+	}
+	
+	public void incrLevel(){
+		++level;
+		maxlevel = Math.max(level, maxlevel);
+		setEnabledDisabled();
+	}
+	
+	public void decrLevel(){
+		if( level > 0 ){
+			--level;
+		}
+		setEnabledDisabled();
+	}
+	
+	public static InspectorView getInspector() {
+		IWorkbenchPage page = PlatformUI.getWorkbench()
+		    .getActiveWorkbenchWindow().getActivePage();
+		try {
+			IViewPart view = page.showView(InspectorView.ID);
+			if (view != null && view instanceof InspectorView) {
+				InspectorView me = (InspectorView) view;
+				return me;
+			} else {
+				return null;
+			}
+		} catch (PartInitException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	
 	public static void showInspector(String title, 
 			String type, LispNode content) {
@@ -63,8 +110,49 @@ public class InspectorView extends ViewPart {
 		
 		output.appendText("You're not currently inspecting anything.\n");
 		output.appendText("Click on underlined objects in the REPL to inspect them.\n");
+		
+		fillToolBar(comp);
+	}
+
+	private Action backButton;
+	private Action foreButton;
+
+	private void setEnabledDisabled(){
+	//	backButton.setEnabled(level==0);
+	//	foreButton.setEnabled(level == maxlevel);
 	}
 	
+	protected void fillToolBar(Composite parent) {
+		IToolBarManager tbm = 
+			this.getViewSite().getActionBars().getToolBarManager();
+		
+		backButton = new Action("Go back to the previous object") {
+			public void run() {
+				LispPlugin.getDefault().getSwank()
+				  .sendInspectorPop(new InspectorRunnable());
+				setEnabledDisabled();
+			}
+		};
+		backButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.BACKWARD_NAV));
+		backButton.setToolTipText("Go back to the previous object");
+		backButton.setEnabled(true);
+				
+		foreButton = new Action("Go forward to next object") {
+			public void run() {
+				LispPlugin.getDefault().getSwank()
+				  .sendInspectorNext(new InspectorRunnable());				
+				setEnabledDisabled();
+			}
+		};
+		foreButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.FORWARD_NAV));
+		foreButton.setToolTipText("Go forward to next object");
+		foreButton.setEnabled(true);
+
+		tbm.add(backButton);
+		tbm.add(foreButton);
+	}	
 	
 	public void populate(String title, String type, LispNode content) {
 		output.clear();
@@ -72,6 +160,10 @@ public class InspectorView extends ViewPart {
 		this.type = type;
 		this.content = content;
 		this.setPartName(title + " (" + type + ")");
+		
+		if( content == null ){
+			return;
+		}
 		
 		for (LispNode item : content.params) {
 			if (item.isString) {
