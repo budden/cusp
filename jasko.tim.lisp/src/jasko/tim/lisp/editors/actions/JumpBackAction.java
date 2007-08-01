@@ -37,11 +37,16 @@ public class JumpBackAction extends LispAction {
         try {
         	char c = doc.getChar(offset-1);
         	if( c == '\n' ){
-        		jumpTo = offset - 1;
+        		if( doc.getChar(offset-2) == '\r' ){
+        			jumpTo = offset - 2;
+        		} else {
+            		jumpTo = offset - 1;        			
+        		}
         	} else {
         		boolean justSpace = false;
             	if( c == ')'){
-                    int[] range = LispUtil.getCurrentExpressionRange(doc, offset);
+                    int[] range = 
+                    	LispUtil.getCurrentExpressionRange(doc, offset);
                     if( range == null ){
                     	jumpTo = 0;
                     } else {
@@ -81,7 +86,7 @@ public class JumpBackAction extends LispAction {
         
         
         editor.getSelectionProvider()
-            .setSelection(new TextSelection(doc, jumpTo, 0));
+            .setSelection(new TextSelection(doc, Math.max(0,jumpTo), 0));
     }
     
 }

@@ -38,11 +38,12 @@ public class JumpForwardAction extends LispAction {
         
         try {
         	char c = doc.getChar(offset);
-        	if( c == '\n' && offset < docLen ){
-        		jumpTo = offset+1;
+        	if( c == '\n' || c == '\r' ){
+        		jumpTo = offset + 1;        			
         	} else {
             	if( c == '('){
-                    int[] range = LispUtil.getCurrentExpressionRange(doc, offset);
+                    int[] range = 
+                    	LispUtil.getCurrentExpressionRange(doc, offset);
                     if( range == null ){
                     	jumpTo = docLen;
                     } else {
@@ -58,7 +59,8 @@ public class JumpForwardAction extends LispAction {
             		}
             	} else if ( c == ';' ){
             		int line = doc.getLineOfOffset(offset);
-            		jumpTo = doc.getLineOffset(line) + doc.getLineLength(line) - 1;
+            		jumpTo = 
+            			doc.getLineOffset(line) + doc.getLineLength(line) - 1;
             	} else {
                 	int[] range = 
                 		LispUtil.getCurrentFullWordRange(doc, offset, false);   
@@ -70,15 +72,14 @@ public class JumpForwardAction extends LispAction {
             	}
             	if( jumpTo < docLen ){
             		c = doc.getChar(jumpTo);
-            	
     	        	while( jumpTo < docLen && Character.isWhitespace(c) 
-    	            		&& c != '\n'){
+    	            		&& c != '\n' && c != '\r'){
     	        		++jumpTo;
-    	            	if(jumpTo < docLen - 1){
+    	            	if(jumpTo < docLen){
     	            		c = doc.getChar(jumpTo);
-    	            	}        		
+    	            	}
     	        	}
-            	}        		
+            	}
         	}        	
         } catch (BadLocationException ex) {
             ex.printStackTrace();
@@ -86,7 +87,8 @@ public class JumpForwardAction extends LispAction {
         
         
         editor.getSelectionProvider()
-            .setSelection(new TextSelection(doc, jumpTo, 0));
+            .setSelection(new TextSelection(doc, 
+            		Math.min(doc.getLength(), jumpTo), 0));
     }
     
 }
