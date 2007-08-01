@@ -41,7 +41,8 @@ public class IndentAction extends LispAction {
 	}
 	
 	public void run() {
-		ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
+		ITextSelection ts = 
+			(ITextSelection) editor.getSelectionProvider().getSelection();
 		int offset = ts.getOffset();
 		IDocument doc = editor.getDocument();
 
@@ -50,13 +51,18 @@ public class IndentAction extends LispAction {
 			int lastLine = doc.getLineOfOffset(offset+ts.getLength());
 			// get first line indent0
 			IRegion firstLineInfo = doc.getLineInformation(firstLine);
-			int firstIndent = getIndent(doc.get(firstLineInfo.getOffset(),firstLineInfo.getLength()));
+			int firstIndent = 
+				getIndent(doc.get(firstLineInfo.getOffset(),
+						firstLineInfo.getLength()));
 			// get first line trimmed offset
-			int firstTrimedOffset = Math.max(0, offset - firstLineInfo.getOffset() - firstIndent);
+			int firstTrimedOffset = 
+				Math.max(0, offset - firstLineInfo.getOffset() - firstIndent);
 			
 			// get last line indent0
 			IRegion lastLineInfo = doc.getLineInformation(lastLine);
-			int lastIndent = getIndent(doc.get(lastLineInfo.getOffset(),lastLineInfo.getLength()));
+			int lastIndent = 
+				getIndent(doc.get(lastLineInfo.getOffset(),
+						lastLineInfo.getLength()));
 			// get last line trimmed position
 			int lastTrimedOffset = Math.max(0, 
 					offset + ts.getLength() - lastLineInfo.getOffset() - lastIndent);
