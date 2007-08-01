@@ -25,36 +25,8 @@ public class InspectorView extends ViewPart {
 	String type;
 	LispNode content;
 	
-	private int level = 0;
-	private int maxlevel = 0;
-	
 	ArrayList<Integer> offsets = new ArrayList<Integer>();
 	ArrayList<Control> controls = new ArrayList<Control>();
-	
-	public void initLevel(){
-		level = 0;
-		maxlevel = 0;
-		setEnabledDisabled();
-	}
-	
-	public void incrNewLevel(){
-		++level;
-		maxlevel = level;
-		setEnabledDisabled();
-	}
-	
-	public void incrLevel(){
-		++level;
-		maxlevel = Math.max(level, maxlevel);
-		setEnabledDisabled();
-	}
-	
-	public void decrLevel(){
-		if( level > 0 ){
-			--level;
-		}
-		setEnabledDisabled();
-	}
 	
 	public static InspectorView getInspector() {
 		IWorkbenchPage page = PlatformUI.getWorkbench()
@@ -116,11 +88,6 @@ public class InspectorView extends ViewPart {
 
 	private Action backButton;
 	private Action foreButton;
-
-	private void setEnabledDisabled(){
-	//	backButton.setEnabled(level==0);
-	//	foreButton.setEnabled(level == maxlevel);
-	}
 	
 	protected void fillToolBar(Composite parent) {
 		IToolBarManager tbm = 
@@ -130,25 +97,21 @@ public class InspectorView extends ViewPart {
 			public void run() {
 				LispPlugin.getDefault().getSwank()
 				  .sendInspectorPop(new InspectorRunnable());
-				setEnabledDisabled();
 			}
 		};
 		backButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.BACKWARD_NAV));
 		backButton.setToolTipText("Go back to the previous object");
-		backButton.setEnabled(true);
 				
 		foreButton = new Action("Go forward to next object") {
 			public void run() {
 				LispPlugin.getDefault().getSwank()
 				  .sendInspectorNext(new InspectorRunnable());				
-				setEnabledDisabled();
 			}
 		};
 		foreButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.FORWARD_NAV));
 		foreButton.setToolTipText("Go forward to next object");
-		foreButton.setEnabled(true);
 
 		tbm.add(backButton);
 		tbm.add(foreButton);
@@ -177,7 +140,4 @@ public class InspectorView extends ViewPart {
 
 	public void setFocus() {
 	}
-	
-	
-
 }
