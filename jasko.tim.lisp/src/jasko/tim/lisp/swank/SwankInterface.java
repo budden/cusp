@@ -57,7 +57,7 @@ public class SwankInterface {
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
 	
-	public String getCurrPackage(){
+	public String getCurrPackage() {
 		return currPackage;
 	}
 	
@@ -120,10 +120,6 @@ public class SwankInterface {
 	public Hashtable<String, Integer> indents;
 	public Hashtable<String, String> handlerCaseIndents;
 
-	/**
-	 * TODO: Indentation is very dumb right now, and needs to be made smarter.
-	 *
-	 */
 	private void initIndents() {
 		// for forms that get indented like flet
 		fletIndents = new Hashtable<String, String>();
@@ -141,6 +137,7 @@ public class SwankInterface {
 		//  The indenting we do for fletIndents happens when those forms are the great-grandparents
 		specialIndents = new Hashtable<String, String>();
 		specialIndents.put("",				" ");
+		specialIndents.put("progn",			"  ");
 		specialIndents.put("if",			"    ");
 		specialIndents.put("when",			"  ");
 		specialIndents.put("unless",		"  ");
@@ -194,18 +191,14 @@ public class SwankInterface {
 			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
 			managePackages = prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
 			if( managePackages){
-				String asdfext = LispPlugin.getDefault().getPluginPath() 
+				/*String asdfext = LispPlugin.getDefault().getPluginPath() 
 					+ "asdf-extensions/asdf-extensions.lisp";
 				System.out.printf("asdf path: %s\n", asdfext);
 				String baseDir = LispPlugin.getDefault().getPluginPath();;
 				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
 				sendEvalAndGrab("(progn "
 						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
-						+ baseDir +"libraries\")"
-						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
-						+ baseDir +"sbcl/site\")"
-						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
-						+ baseDir +"sbcl/site-systems\"))"
+						+ baseDir +"libraries\"))"
 						,1000);
 				String sysdirs[] = prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
 				for(String sysdir: sysdirs){
@@ -213,6 +206,37 @@ public class SwankInterface {
 						sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
 								+ sysdir.replace('\\', '/') +"\")",1000);						
 					}
+				}*/
+				
+				String path = LispPlugin.getDefault().getPluginPath() + "libraries";
+				
+				File dir = new File(path);
+			    
+			    // This filter only returns directories
+			    FileFilter dirFilter = new FileFilter() {
+			        public boolean accept(File file) {
+			            return file.isDirectory();
+			        }
+			    };
+				
+				File[] children = dir.listFiles(dirFilter);
+				if (children == null) {
+					// Either dir does not exist or is not a directory
+					System.out.println("*libraries dir not found! " + path);
+				} else {
+					String code = "(progn\n";
+					code += "  (push #P\"" + path + "/\" asdf:*central-registry*)\n";
+					for (int i = 0; i < children.length; i++) {
+						File child = children[i];
+						String name = child.getAbsolutePath().replace("\\", "/");
+						if (!name.endsWith("/")) {
+							name += "/";
+						}
+						code += "  (push #P\"" + name + "\" asdf:*central-registry*)\n"; 
+					}
+					code += ")";
+					System.out.println("code: " + code);
+					System.out.println(sendEvalAndGrab(code, 1000));
 				}
 			}
 			
