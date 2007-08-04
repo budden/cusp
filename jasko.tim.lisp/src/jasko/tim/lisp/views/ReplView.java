@@ -465,48 +465,63 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		loadPackageButton = new Action("Load Package") {
 			public void run() {
-				this.setToolTipText("Load Installed Package");
-				LispNode installedPkgsWithInfo = 
-					swank.getInstalledPackagesWithInfo(2000);
-				ArrayList<String> loadedPkgs = swank.getAvailablePackages(2000);
-				
-				ArrayList<String> pkgs = new ArrayList<String>();
-				ArrayList<String> pkgsdoc = new ArrayList<String>();
-				ArrayList<String> pkgslinks = new ArrayList<String>();
-				if( installedPkgsWithInfo.params.size() > 0 ){
-					for( LispNode nd : 
-						    installedPkgsWithInfo.params.get(0).params ){
-						if( nd.params.size() >= 3 ){
-							pkgs.add(nd.get(0).value);
-							LispNode infos = nd.get(1);
-							String strinfo = "";
-							for( LispNode info: infos.params ){
-								if( !info.value.equals("") 
-										&& !info.value.equalsIgnoreCase("nil")){
-									strinfo += info.value + "\n";
+				swank.sendGetInstalledPackagesWithInfo(new SwankRunnable() {
+					public void run() {
+				//LispNode installedPkgsWithInfo = 
+				//	swank.getInstalledPackagesWithInfo(2000);
+				//ArrayList<String> loadedPkgs = swank.getAvailablePackages(2000);
+						
+						final LispNode installedPkgsWithInfo = result.getf(":return").getf(":ok");
+						
+						swank.sendGetAvailablePackages(new SwankRunnable() {
+							public void run() {
+								LispNode packages = result.getf(":return").getf(":ok");
+								ArrayList<String> loadedPkgs = new ArrayList<String>();
+								for (LispNode p : packages.params) {
+									loadedPkgs.add(p.value);
+								}
+								
+								
+								ArrayList<String> pkgs = new ArrayList<String>();
+								ArrayList<String> pkgsdoc = new ArrayList<String>();
+								ArrayList<String> pkgslinks = new ArrayList<String>();
+								if( installedPkgsWithInfo.params.size() > 0 ){
+									for( LispNode nd : installedPkgsWithInfo.params ){
+										if( nd.params.size() >= 3 ){
+											pkgs.add(nd.get(0).value);
+											LispNode infos = nd.get(1);
+											String strinfo = "";
+											for( LispNode info: infos.params ){
+												if( !info.value.equals("") 
+														&& !info.value.equalsIgnoreCase("nil")){
+													strinfo += info.value + "\n";
+												}
+											}
+											pkgsdoc.add(strinfo);
+											LispNode links = nd.get(2);
+											String strlinks = "";
+											for( LispNode link: links.params ){
+												String strlink = link.get(1).value;
+												strlinks += strlink+";";
+											}							
+											pkgslinks.add(strlinks);
+										}
+									}					
+								}
+								
+								PackageDialog pd = 
+									new PackageDialog(ReplView.this.getSite().getShell(),
+										loadedPkgs, pkgs, pkgsdoc, pkgslinks,
+										swank.getPackage());
+								if (pd.open() == Dialog.OK) {
+									String pkg = pd.getPackage();
+									swank.sendLoadPackage(pd.getPackage());
+									appendText("Loaded package "+pkg);
 								}
 							}
-							pkgsdoc.add(strinfo);
-							LispNode links = nd.get(2);
-							String strlinks = "";
-							for( LispNode link: links.params ){
-								String strlink = link.get(1).value;
-								strlinks += strlink+";";
-							}							
-							pkgslinks.add(strlinks);
-						}
-					}					
-				}
-				
-				PackageDialog pd = 
-					new PackageDialog(ReplView.this.getSite().getShell(),
-						loadedPkgs, pkgs, pkgsdoc, pkgslinks,
-						swank.getPackage());
-				if (pd.open() == Dialog.OK) {
-					String pkg = pd.getPackage();
-					swank.sendLoadPackage(pd.getPackage());
-					appendText("Loaded package "+pkg);
-				}
+						});
+					}
+				});
 			}
 		};
 		loadPackageButton.setImageDescriptor(
