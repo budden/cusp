@@ -1,5 +1,5 @@
 (defpackage :com.gigamonkeys.asdf-extensions 
-  (:use :cl :asdf)
+  (:use :cl)
   (:export :register-source-directory :get-installed-packages))
 
 (in-package :com.gigamonkeys.asdf-extensions)
@@ -8,7 +8,7 @@
 
 (defvar *top-level-directories* ())
 
-(defun sysdef-crawl-directories (system)
+#|(defun sysdef-crawl-directories (system)
   (let ((name (asdf::coerce-name system)))
     (block found
       (flet ((found-p (file)
@@ -17,44 +17,16 @@
                       (equal (pathname-type file) "asd"))
                  (return-from found file))))
         (dolist (dir *top-level-directories*)
-          (walk-directory dir #'found-p))))))
+          (walk-directory dir #'found-p))))))|#
 
 (defun register-source-directory (dir)
+  (push (pathname-as-directory dir) asdf:*central-registry*)
   (push (pathname-as-directory dir) *top-level-directories*))
 
-(push 'sysdef-crawl-directories *system-definition-search-functions* )
+;(push 'sysdef-crawl-directories *system-definition-search-functions* )
 
 ;;; Build FASLs into a implementation specific directory.
 
-(defparameter *fasl-directory* 
-  (merge-pathnames
-   (make-pathname
-    :directory `(:relative ".cusp" "fasl" ,(swank-loader::unique-directory-name)))
-   (user-homedir-pathname)))
-
-(defmethod output-files :around ((operation compile-op) (c source-file))
-  (let ((defaults (merge-pathnames 
-                   (make-relative (component-pathname c))
-                   *fasl-directory*)))
-    (flet ((relocate-fasl (file)
-             (make-pathname
-              :type (pathname-type file) :defaults defaults)))
-      (mapcar #'relocate-fasl (call-next-method)))))
-
-;; Static files
-
-(defmethod output-files :around ((operation compile-op) (c static-file))
-  (list
-   (merge-pathnames (make-relative (component-pathname c)) *fasl-directory*)))
-
-(defmethod perform :after ((operation compile-op) (c static-file))
-  (let ((source-file (component-pathname c))
-	(output-file (car (output-files operation c))))
-    (ensure-directories-exist output-file)
-    (with-open-file (in source-file :element-type '(unsigned-byte 8))
-      (with-open-file (out output-file :element-type '(unsigned-byte 8) :direction :output :if-exists :supersede)
-        (loop for octet = (read-byte in nil nil)
-             while octet do (write-byte octet out))))))
 
 
 (defun make-relative (pathname)

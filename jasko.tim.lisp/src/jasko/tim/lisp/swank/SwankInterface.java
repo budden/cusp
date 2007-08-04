@@ -208,6 +208,11 @@ public class SwankInterface {
 					}
 				}*/
 				
+				String asdfext = LispPlugin.getDefault().getPluginPath() 
+					+ "asdf-extensions/asdf-extensions.lisp";
+				System.out.printf("asdf path: %s\n", asdfext);
+				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
+				
 				String path = LispPlugin.getDefault().getPluginPath() + "libraries";
 				
 				File dir = new File(path);
@@ -225,18 +230,20 @@ public class SwankInterface {
 					System.out.println("*libraries dir not found! " + path);
 				} else {
 					String code = "(progn\n";
-					code += "  (push #P\"" + path + "/\" asdf:*central-registry*)\n";
+					code += "  (com.gigamonkeys.asdf-extensions:register-source-directory\"" + path + "/\")\n";
 					for (int i = 0; i < children.length; i++) {
 						File child = children[i];
 						String name = child.getAbsolutePath().replace("\\", "/");
 						if (!name.endsWith("/")) {
 							name += "/";
 						}
-						code += "  (push #P\"" + name + "\" asdf:*central-registry*)\n"; 
+						code += "  (com.gigamonkeys.asdf-extensions:register-source-directory\"" + name + "\")\n"; 
 					}
 					code += ")";
 					System.out.println("code: " + code);
 					System.out.println(sendEvalAndGrab(code, 1000));
+					
+					
 				}
 			}
 			
@@ -1017,6 +1024,13 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	public synchronized void sendGetAvailablePackages(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:list-all-package-names t)";
+		
+		emacsRex(msg);
+	}
+	
 	public synchronized ArrayList<String> getAvailablePackages(long timeout) {
 		SyncCallback callback = new SyncCallback();
 		++messageNum;
@@ -1068,6 +1082,17 @@ public class SwankInterface {
 			return packageNames;			
 		} else {
 			return null;
+		}
+	}
+	
+	public synchronized void sendGetInstalledPackagesWithInfo(SwankRunnable callBack) {
+		if (managePackages) {
+			registerCallback(callBack);
+			String msg = "(com.gigamonkeys.asdf-extensions::get-inst)";
+			emacsRex(msg);
+		} else {
+			callBack.result = null;
+			callBack.run();
 		}
 	}
 	
