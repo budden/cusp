@@ -94,6 +94,10 @@ public class LispNode {
 		}
 	}
 	
+	public int getNumberOfSubSexps(){
+		return params.size();
+	}
+	
 	/**
 	 * Treats this node as a plist.
 	 * @param key

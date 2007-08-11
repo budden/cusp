@@ -27,8 +27,6 @@
 
 ;;; Build FASLs into a implementation specific directory.
 
-
-
 (defun make-relative (pathname)
   (make-pathname
    :directory (cons :relative (rest (pathname-directory pathname)))
@@ -234,14 +232,9 @@ pathnames as well."
 (pushnew :com.gigamonkeys.asdf-extensions *features*)
 
 ;;;; added by SK
-(defun get-installed-packages ()
-  (let ((files ()))
-    (dolist (dir *top-level-directories*)
-      (walk-directory dir #'(lambda (x) (push (pathname-name x) files))
-                      :test #'(lambda (x) (equal (pathname-type x) "asd"))))
-    files))
-
 (defun get-asd-descriptions (xx)
+  "With xx = (system-name, path-to-asd-file),
+returns (:description :long-description) from defsystem"
   (with-open-file (stream (second xx))
                   (let ((docs 
                           (ignore-errors (loop for x = (read stream) then (read stream)
@@ -255,6 +248,8 @@ pathnames as well."
                         '(nil nil)))))
 
 (defun get-doc-links (xx)
+  "With xx = (system-name, path-to-asd-file),
+finds links to possible documentation files"
   (list (list "readme" 
               (file-exists-p (make-pathname :name "readme" :type nil 
                                             :defaults xx)))
@@ -269,16 +264,22 @@ pathnames as well."
               (file-exists-p (merge-pathnames #p"doc/index.html" xx)))))
 
 (defun get-asd-docs (xx h)
+  "With xx = (system-name path-to-asd-file),
+and h - hash table of description obtained from specials file (see function
+get-specials-hash), 
+returns a list (system-name, list-of-doc-strings, list-of-doc-links)"
   (list (first xx)
         (append (list (gethash (first xx) h))
                 (get-asd-descriptions xx))
         (get-doc-links (second xx))))
 
 (defun get-specials-hash ()
+  "Reads library descriptions from specials.lisp file.
+Returns hash table: system-name -> description-string"
   (let ((h (make-hash-table :test 'equalp)))
     (mapcar #'(lambda (xx) (setf (gethash (string (first xx)) h) (second xx))) 
             (eval (let ((specials-file (some #'(lambda (path) 
-                                                 (let ((x (merge-pathnames path "specials.lisp"))) 
+                                                 (let ((x (merge-pathnames path "cusp-specials.lisp"))) 
                                                    (if (file-exists-p x) x nil))) 
                                              *top-level-directories*)))
                     (when specials-file
@@ -289,11 +290,13 @@ pathnames as well."
                                                                      (equal (second x) '*lib-designators*))
                                                            return (third x)))))))) h))
 
-(defun get-inst ()
-  (let ((files ())
-        (h (get-specials-hash)))
-    (dolist (dir *top-level-directories*)
-      (walk-directory dir #'(lambda (x) (push (list (pathname-name x) x) files))
-                      :test #'(lambda (x) (equalp (pathname-type x) "asd"))))
-    (mapcar #'(lambda (x) (get-asd-docs x h)) 
-            (sort files #'string-lessp :key #'first) )))
+(defun get-installed-packages ()
+  "Gets all installed systems and their infos"
+  (mapcar #'(lambda (x) (get-asd-docs x (get-specials-hash)))
+          (sort (mapcan #'(lambda (dir) 
+                            (mapcan #'(lambda (x)
+                                        (when (equalp (pathname-type x) "asd")
+                                          (list (list (pathname-name x) x)))) 
+                                    (list-directory dir)))
+                        *top-level-directories*)
+                #'string-lessp :key #'first)))      
