@@ -465,13 +465,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		loadPackageButton = new Action("Load Package") {
 			public void run() {
-				swank.sendGetInstalledPackagesWithInfo(new SwankRunnable() {
+				swank.sendGetInstalledPackages(new SwankRunnable() {
 					public void run() {
-				//LispNode installedPkgsWithInfo = 
-				//	swank.getInstalledPackagesWithInfo(2000);
-				//ArrayList<String> loadedPkgs = swank.getAvailablePackages(2000);
-						
-						final LispNode installedPkgsWithInfo = result.getf(":return").getf(":ok");
+						final LispNode installedPkgsWithInfo = 
+							LispParser.parse(result.getf(":return").getf(":ok").get(1).value);
 						
 						swank.sendGetAvailablePackages(new SwankRunnable() {
 							public void run() {
@@ -481,33 +478,32 @@ public class ReplView extends ViewPart implements SelectionListener {
 									loadedPkgs.add(p.value);
 								}
 								
+								LispNode instPkgs = installedPkgsWithInfo;
 								
 								ArrayList<String> pkgs = new ArrayList<String>();
 								ArrayList<String> pkgsdoc = new ArrayList<String>();
 								ArrayList<String> pkgslinks = new ArrayList<String>();
-								if( installedPkgsWithInfo.params.size() > 0 ){
-									for( LispNode nd : installedPkgsWithInfo.params ){
-										if( nd.params.size() >= 3 ){
-											pkgs.add(nd.get(0).value);
-											LispNode infos = nd.get(1);
-											String strinfo = "";
-											for( LispNode info: infos.params ){
-												if( !info.value.equals("") 
-														&& !info.value.equalsIgnoreCase("nil")){
-													strinfo += info.value + "\n";
-												}
+								for( LispNode nd : instPkgs.get(0).params ){
+									if( nd.params.size() >= 3 ){
+										pkgs.add(nd.get(0).value);
+										LispNode infos = nd.get(1);
+										String strinfo = "";
+										for( LispNode info: infos.params ){
+											if( !info.value.equals("") 
+													&& !info.value.equalsIgnoreCase("nil")){
+												strinfo += info.value + "\n";
 											}
-											pkgsdoc.add(strinfo);
-											LispNode links = nd.get(2);
-											String strlinks = "";
-											for( LispNode link: links.params ){
-												String strlink = link.get(1).value;
-												strlinks += strlink+";";
-											}							
-											pkgslinks.add(strlinks);
 										}
-									}					
-								}
+										pkgsdoc.add(strinfo);
+										LispNode links = nd.get(2);
+										String strlinks = "";
+										for( LispNode link: links.params ){
+											String strlink = link.get(1).value;
+											strlinks += strlink+";";
+										}							
+										pkgslinks.add(strlinks);
+									}
+								}					
 								
 								PackageDialog pd = 
 									new PackageDialog(ReplView.this.getSite().getShell(),
@@ -1297,4 +1293,3 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 	}
 }
-		

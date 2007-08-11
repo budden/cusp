@@ -188,35 +188,20 @@ public class SwankInterface {
 	
 	public void runAfterLispStart() {
 		if( isConnected() ){
-			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-			managePackages = prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
+			IPreferenceStore prefs = 
+				LispPlugin.getDefault().getPreferenceStore();
+			managePackages = 
+				prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
 			if( managePackages){
-				/*String asdfext = LispPlugin.getDefault().getPluginPath() 
-					+ "asdf-extensions/asdf-extensions.lisp";
-				System.out.printf("asdf path: %s\n", asdfext);
-				String baseDir = LispPlugin.getDefault().getPluginPath();;
-				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
-				sendEvalAndGrab("(progn "
-						+ "(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
-						+ baseDir +"libraries\"))"
-						,1000);
-				String sysdirs[] = prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
-				for(String sysdir: sysdirs){
-					if(!sysdir.equals("")){
-						sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:register-source-directory \"" 
-								+ sysdir.replace('\\', '/') +"\")",1000);						
-					}
-				}*/
 				
 				String asdfext = LispPlugin.getDefault().getPluginPath() 
 					+ "asdf-extensions/asdf-extensions.lisp";
 				System.out.printf("asdf path: %s\n", asdfext);
 				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
 				
-				String path = LispPlugin.getDefault().getPluginPath() + "libraries";
-				
-				File dir = new File(path);
-			    
+				String path = 
+					LispPlugin.getDefault().getPluginPath() + "libraries";
+
 			    // This filter only returns directories
 			    FileFilter dirFilter = new FileFilter() {
 			        public boolean accept(File file) {
@@ -224,15 +209,39 @@ public class SwankInterface {
 			        }
 			    };
 				
-				File[] children = dir.listFiles(dirFilter);
-				if (children == null) {
+				File dir = new File(path);
+				ArrayList<File> subdirs = new ArrayList<File>();
+				
+				subdirs.add(dir);
+				for( File subdir : dir.listFiles(dirFilter) ){
+					if( !subdirs.contains(subdir) ){
+						subdirs.add(subdir);						
+					}
+				}
+				
+				String sysdirs[] = 
+					prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
+				for(String sysdir: sysdirs){
+					if(!sysdir.equals("")){
+						dir = new File(sysdir);
+						if( !subdirs.contains(dir) ){
+							subdirs.add(dir);						
+						}
+						for( File subdir : dir.listFiles(dirFilter) ){
+							if( !subdirs.contains(subdir) ){
+								subdirs.add(subdir);						
+							}
+						}
+					}
+				}
+			    
+				if (subdirs.size() == 0) {
 					// Either dir does not exist or is not a directory
 					System.out.println("*libraries dir not found! " + path);
 				} else {
 					String code = "(progn\n";
-					code += "  (com.gigamonkeys.asdf-extensions:register-source-directory\"" + path + "/\")\n";
-					for (int i = 0; i < children.length; i++) {
-						File child = children[i];
+					for (int i = 0; i < subdirs.size(); i++) {
+						File child = subdirs.get(i);
 						String name = child.getAbsolutePath().replace("\\", "/");
 						if (!name.endsWith("/")) {
 							name += "/";
@@ -242,8 +251,6 @@ public class SwankInterface {
 					code += ")";
 					System.out.println("code: " + code);
 					System.out.println(sendEvalAndGrab(code, 1000));
-					
-					
 				}
 			}
 			
@@ -1056,54 +1063,26 @@ public class SwankInterface {
 		return packageNames;
 	}
 	
-	public synchronized ArrayList<String> getInstalledPackages(long timeout) {
-		if ( managePackages ){
-			
-			SyncCallback callback = new SyncCallback();
-			++messageNum;
-			syncJobs.put(new Integer(messageNum).toString(), callback);
-
-			java.util.ArrayList<String> packageNames = new java.util.ArrayList<String>();
-
-			String res = sendEvalAndGrab("(com.gigamonkeys.asdf-extensions:get-installed-packages)",timeout);
-			String[] packages = res.replaceAll("[()\"]", "").split(" ");
-			
-			if(packages.length == 1 && packages[0].equalsIgnoreCase("nil")){
-				return null;
-			}
-			
-			for(String pkg : packages){
-				String pkgTmp = pkg.toLowerCase().trim();
-				if( !packageNames.contains(pkgTmp) ){
-					packageNames.add(pkgTmp);
-				}
-			}
-			
-			return packageNames;			
-		} else {
-			return null;
-		}
-	}
-	
-	public synchronized void sendGetInstalledPackagesWithInfo(SwankRunnable callBack) {
+	public synchronized void sendGetInstalledPackages(SwankRunnable callBack) {
 		if (managePackages) {
 			registerCallback(callBack);
-			String msg = "(com.gigamonkeys.asdf-extensions::get-inst)";
-			emacsRex(msg);
+			String msg = "(swank:eval-and-grab-output \"" 
+				+ formatCode("(get-installed-packages)") + "\")";
+			emacsRex(msg,"com.gigamonkeys.asdf-extensions");
 		} else {
 			callBack.result = null;
 			callBack.run();
 		}
 	}
 	
-	public synchronized LispNode getInstalledPackagesWithInfo(long timeout) {
+	public synchronized LispNode getInstalledPackages(long timeout) {
 		if ( managePackages ){
 			
 			SyncCallback callback = new SyncCallback();
 			++messageNum;
 			syncJobs.put(new Integer(messageNum).toString(), callback);
 
-			String res = sendEvalAndGrab("(get-inst)",
+			String res = sendEvalAndGrab("(get-installed-packages)",
 					"com.gigamonkeys.asdf-extensions", timeout);
 			LispNode resnode = LispParser.parse(res);
 			return resnode;
