@@ -59,10 +59,17 @@ public class SBCLImplementation extends LispImplementation {
 	{
 		String pluginDir = LispPlugin.getDefault().getPluginPath();
 		File sbclFolder = new File(pluginDir + "sbcl/");
-		if (sbclFolder.exists())
-			return sbclFolder;
-		else
-			return null;
+		if (sbclFolder.exists()){
+			return sbclFolder;			
+		}
+		else{
+			String dir = System.getenv("SBCL_HOME");
+			if( dir != null ){
+				sbclFolder = new File(dir);
+				return sbclFolder;
+			}
+			return null;			
+		}
 	}
 	
 	/**
