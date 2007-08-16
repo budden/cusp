@@ -1,9 +1,13 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * This is a class for finding and starting Steel Bank Common Lisp.
@@ -37,7 +41,8 @@ public class SBCLImplementation extends LispImplementation {
 				execName = "sbcl.exe";
 			else
 				execName = "sbcl";
-			File possibleExecutable = new File(implementafoltionFolder.getPath() + File.separator + execName);
+			File possibleExecutable = new File(implementafoltionFolder.getPath() 
+					+ File.separator + execName);
 			
 			if (possibleExecutable.exists())
 				return possibleExecutable;
@@ -50,7 +55,7 @@ public class SBCLImplementation extends LispImplementation {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @return the SBCL directory on the host computer
@@ -60,15 +65,55 @@ public class SBCLImplementation extends LispImplementation {
 		String pluginDir = LispPlugin.getDefault().getPluginPath();
 		File sbclFolder = new File(pluginDir + "sbcl/");
 		if (sbclFolder.exists()){
-			return sbclFolder;			
-		}
-		else{
-			String dir = System.getenv("SBCL_HOME");
-			if( dir != null ){
-				sbclFolder = new File(dir);
+			System.out.println(">>> Found default sbcl folder: "+sbclFolder.toString());
+			return sbclFolder;
+		} else {
+			
+			File pluginsFolder = new File(pluginDir).getParentFile();
+			
+			sbclFolder = new File(pluginsFolder.getPath() + "/sbcl/");
+			
+			if (sbclFolder.exists()){
+				System.out.println(">>> Found next default sbcl folder: "
+						+sbclFolder.toString());
 				return sbclFolder;
-			}
-			return null;			
+			} else {
+			    // This filter only returns directories that start with sbcl
+			    FileFilter dirFilter = new FileFilter() {
+			        public boolean accept(File file) {
+			            return (file.isDirectory() 
+			            		 && file.getName().startsWith("sbcl"));
+			        }
+			    };
+				
+			    ArrayList<File> sbclFolders = new ArrayList<File>();
+			    
+			    for( File dir : pluginsFolder.listFiles(dirFilter)){
+			    	System.out.println(">>> Possible sbcl folder: "+dir.toString());
+			    	sbclFolders.add(dir);
+			    }
+			    
+			    if( sbclFolders.size() > 0 ){
+				    Collections.sort(sbclFolders);
+				    
+					sbclFolder = new 
+						File(sbclFolders.get(sbclFolders.size()-1).toString()+"/sbcl/");
+					System.out.println(">>> Found feature sbcl folder: "
+							+sbclFolder.toString());
+					return sbclFolder;
+			    } else {
+					String dir = System.getenv("SBCL_HOME");
+					if( dir != null ){
+						sbclFolder = new File(dir);
+						System.out.println(">>> Found SBCL_HOME sbcl folder: "
+								+sbclFolder.toString());
+						return sbclFolder;
+					}		    	
+			    }
+			    
+				System.out.println(">>> Did not find sbcl folder");
+				return null;				
+			}			
 		}
 	}
 	
