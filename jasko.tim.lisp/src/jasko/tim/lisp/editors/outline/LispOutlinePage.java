@@ -44,6 +44,7 @@ public class LispOutlinePage extends ContentOutlinePage
 	IAction sortPosition;
 	
 	LispEditor editor;
+	LispTextHoverControlCreator tooltipCreator;
 	IInformationControl tooltip;
 	
 	private ArrayList<TopLevelItem> items = new ArrayList<TopLevelItem>();
@@ -532,8 +533,7 @@ public class LispOutlinePage extends ContentOutlinePage
 		getTreeViewer().getControl().addKeyListener(this);		
 		tree.addMouseTrackListener(this);
 		
-		LispTextHoverControlCreator tooltipCreator = 
-			new LispTextHoverControlCreator();
+		tooltipCreator = new LispTextHoverControlCreator();
 		tooltip = tooltipCreator.createInformationControl(tree.getShell());
 		
 		LispNode file = LispParser.parse(doc.get() + "\n)");
@@ -703,15 +703,15 @@ public class LispOutlinePage extends ContentOutlinePage
 	public void mouseEnter(MouseEvent e){
 	}
 	
-	//dispose tooltip: doesn't work reliably - why?
+	// Still allows the user to escape the outline by moving over the tooltip
 	public void mouseExit(MouseEvent e){
-		Tree tree = getTreeViewer().getTree();
-		Rectangle rt = tree.getClientArea();
-		if( e.x <= 0 || e.y <= 0 
-				|| e.x >= rt.width || e.y >= rt.height ){
+		//Tree tree = getTreeViewer().getTree();
+		//Rectangle rt = tree.getClientArea();
+		//if( e.x <= rt.x || e.y <= rt.y 
+		//		|| e.x >= rt.x + rt.width || e.y >=rt.y + rt.height ){
 			tooltip.setVisible(false);
 			tooltipItem = null;
-		}
+		//}
 	}
 	
 	//show tooltip
@@ -724,60 +724,59 @@ public class LispOutlinePage extends ContentOutlinePage
 		
 		if( showToolTip ){
 			Point pt = new Point(e.x,e.y);
-			Tree tree = getTreeViewer().getTree();
+			final Tree tree = getTreeViewer().getTree();
 			TreeItem item = tree.getItem(pt);
-			Point ptHint = 
+			final Point ptHint = 
 				new Point(e.x,item.getBounds().y 
 						+ (int)Math.round(1.5*item.getBounds().height));
 			
-			if( item != null ){
-				if( item != tooltipItem ){
-					tooltipItem = item;
-					if( item.getData() != null ){
-						TopLevelItem tr = (TopLevelItem)(item.getData());
-						if( !tr.type.equals("section") ){
-							Position pos = itemPos.get(tr);
-							if( pos != null ){
-								IDocument doc = editor.getDocument();
-								int offset = tr.nameOffset + 1;
-								String pkg = LispUtil
-								   .getPackage(doc.get(), offset);
-								String variable = 
-									LispUtil.getCurrentFullWord(doc, offset);
-								SwankInterface swank = 
-									LispPlugin.getDefault().getSwank();
-								String args = 
-									swank.getArglist(variable, 1000, pkg);
-								String docstr = 
-									swank.getDocumentation(variable, pkg, 1000);
-								String info = args;
-								if( info.equalsIgnoreCase("nil") ){
-									info = "";
-								}
-								if(docstr != null && !docstr.equals("") 
-										&& !docstr.equals("nil")){
-									if( info.equals("") ){
-										info = docstr;
-									} else {
-										info = info+"\n"+docstr;										
+			if( item != null && item != tooltipItem && item.getData() != null ){
+				tooltipItem = item;
+				TopLevelItem tr = (TopLevelItem)(item.getData());
+				if( !tr.type.equals("section") ){
+					Position pos = itemPos.get(tr);
+					if( pos != null ){
+						IDocument doc = editor.getDocument();
+						int offset = tr.nameOffset + 1;
+						final String pkg = LispUtil.getPackage(doc.get(), offset);
+						final String variable = LispUtil.getCurrentFullWord(doc, offset);
+						final SwankInterface swank = LispPlugin.getDefault().getSwank();
+						swank.sendGetArglist(variable, pkg, new SwankRunnable() {
+							public void run() {
+										
+								final String args = getReturn().value; //swank.getArglist(variable, 1000, pkg);
+								swank.sendGetDocumentation(variable, pkg, new SwankRunnable() {
+									public void run() {
+										
+										String docstr = getReturn().value; //swank.getDocumentation(variable, pkg, 1000);
+										String info = args;
+										if( info.equalsIgnoreCase("nil") ){
+											info = "";
+										}
+										if(docstr != null && !docstr.equals("") 
+												&& !docstr.equals("nil")){
+											if( info.equals("") ){
+												info = docstr;
+											} else {
+												info = info+"\n"+docstr;										
+											}
+										}
+										if( info != null && !info.equals("") 
+												&& !info.equals("nil") ){
+											tooltip.dispose();
+											tooltip = tooltipCreator.createInformationControl(tree.getShell());
+											tooltip.setInformation(info);
+											Point size = tooltip.computeSizeHint();
+											tooltip.setSize(size.x, size.y);
+											tooltip.setLocation(tree.toDisplay(ptHint));
+											tooltip.setVisible(true);
+										} else {
+											tooltip.setVisible(false);
+										}
 									}
-								}
-								if( info != null && !info.equals("") 
-										&& !info.equals("nil") ){
-									tooltip.setInformation(info);
-									Point size = tooltip.computeSizeHint();
-									tooltip.setSize(size.x, size.y);
-									tooltip.setLocation(tree.toDisplay(ptHint));
-									tooltip.setVisible(true);
-								} else {
-									tooltip.setVisible(false);
-								}
-							} else {
-								tooltip.setVisible(false);						
+								});
 							}
-						} else {
-							tooltip.setVisible(false);					
-						}
+						});
 					} else {
 						tooltip.setVisible(false);
 					}

@@ -643,7 +643,6 @@ public class SwankInterface {
 		return getArglist(function, timeout, currPackage);
 	}
 	
-	
 	public synchronized String getArglist(String function, long timeout, String currPackage) {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
@@ -665,6 +664,13 @@ public class SwankInterface {
 			e.printStackTrace();
 			return "";
 		}
+	}
+	
+	public synchronized void sendGetArglist(String function, String currPackage, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:arglist-for-echo-area (quote (\"" + formatCode(function) + "\")))";
+		
+		emacsRex(msg, currPackage);
 	}
 	
 	public synchronized String getMakeInstanceArglist(String className, long timeout) {
@@ -721,6 +727,13 @@ public class SwankInterface {
 			e.printStackTrace();
 			return "";
 		}
+	}
+	
+	public synchronized void sendGetDocumentation(String function, String pkg, SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:documentation-symbol \"" + formatCode(function) + "\")";
+		
+		emacsRex(msg, pkg);
 	}
 	
 	public synchronized String getDocumentation(String function, long timeout) {
