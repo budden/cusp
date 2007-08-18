@@ -538,6 +538,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 					swank.reconnect();
 					appendText("done.\n");
 					scrollDown();
+					replPackage.setText("Current package: " + swank.getCurrPackage());
 					
 					this.setImageDescriptor(
 							LispImages.getImageDescriptor(
@@ -905,7 +906,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	protected State currState() {
+		if (states.isEmpty()) { // Shouldn't ever happen, but it has
+			states.push(new EvalState());
+		}
 		return states.peek();
+		
 	}
 	
 	private void applyCurrentState() {
