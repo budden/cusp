@@ -1,0 +1,9 @@
+Well - kinda script - for humans :)
+
+remove LW libs
+copy file specials.lisp from starter-pack to root of this folder
+rename specials.lisp to cusp-specials.lisp
+remove starter-pack
+remove gzip-stream/_darcs
+extract clsql-3.8.5/doc/html.tar.gz such that index.html is in clsql-3.8.5/doc
+build help in cxml/doc
