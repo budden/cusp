@@ -1,0 +1,25 @@
+These steps should be automated sometime, but now it all goes as follows:
+
+1. Check out the following projects into Eclipse:
+  - cusp_update
+  - jasko.tim.lisp
+  - jasko.tim.lisp.feature
+  - jasko.tim.lisp.libs
+  - jasko.tim.lisp.libs.feature
+  - sbcl-linux
+  - sbcl-linux.feature
+  - sbcl-ocx
+  - sbcl-ocx.feature
+  - sbcl-win32
+  - sbcl-win32.feature
+  - sbcl.installer
+  
+2. If sbcl.installer is modified, then open its manifest.mf and select Export wizard.
+Export to jar file and copy that file to sbcl-linux.feature, sbcl-osx.feature and 
+sbcl-win32.feature as sbcl.installer.jar
+
+3. If one of plugins is changed, it is required to change version number of
+its corresponding feature and that feature with new version added to site.xml
+in cusp_update.
+
+4. To update site cusp_update, go to site.xml and hit Build all.
