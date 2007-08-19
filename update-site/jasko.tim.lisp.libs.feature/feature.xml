@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="jasko.tim.lisp.libs"
+      label="Lisp Libraries"
+      version="1.0.0">
+
+   <description>
+      Lisp libraries.
+   </description>
+
+   <copyright>
+      Lisp libraries
+   </copyright>
+
+   <license>
+      Lisp libraries.
+   </license>
+
+   <plugin
+         id="jasko.tim.lisp.libs"
+         download-size="0"
+         install-size="20000"
+         version="0.0.0"/>
+
+</feature>
