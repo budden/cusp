@@ -2,7 +2,7 @@
 <feature
       id="jasko.tim.lisp"
       label="Cusp Plug-in (svn version)"
-      version="0.8.146">
+      version="0.8.174">
 
    <description>
       Cusp is a development environment for Lisp.
@@ -44,6 +44,10 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 OF THE POSSIBILITY OF SUCH DAMAGE.
    </license>
+
+   <url>
+      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
+   </url>
 
    <includes
          id="sbcl_linux"
