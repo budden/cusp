@@ -30,6 +30,10 @@ SBCL freely, as long as copyright notices of MIT, Symbolics,
 Xerox and Gerd Moellmann are retained.
    </license>
 
+   <url>
+      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
+   </url>
+
    <plugin
          id="sbcl_win32"
          download-size="0"
