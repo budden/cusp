@@ -16,6 +16,10 @@
       Lisp libraries.
    </license>
 
+   <url>
+      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
+   </url>
+
    <plugin
          id="jasko.tim.lisp.libs"
          download-size="0"
