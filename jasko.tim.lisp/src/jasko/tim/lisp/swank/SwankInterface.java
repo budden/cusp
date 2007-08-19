@@ -202,36 +202,47 @@ public class SwankInterface {
 				String path = 
 					LispPlugin.getDefault().getPluginPath() + "libraries";
 
+			    // This filter only returns directories of type jasko.tim.lisp.libs
+			    FileFilter libPluginFilter = new FileFilter() {
+			        public boolean accept(File file) {
+			            return (file.isDirectory()
+			            		&& file.toString().matches(".*jasko\\.tim\\.lisp\\.libs.*"));
+			        }
+			    };
+			    			    
+			    ArrayList<File> topLevelDirs = new ArrayList<File>();
+			    topLevelDirs.add(new File(path));
+			    
+				String sysdirs[] = 
+					prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
+				
+				for(String sysdir: sysdirs){
+					if( sysdir != null && !sysdir.equals("")){
+						topLevelDirs.add(new File(sysdir));			
+					}
+				}
+			    
+				File pluginsDir = (new File(LispPlugin.getDefault().getPluginPath())).getParentFile();
+			    for( File dir : pluginsDir.listFiles(libPluginFilter)){
+			    	topLevelDirs.add(new File(dir.getAbsolutePath()+"/libs"));
+			    }
+				
 			    // This filter only returns directories
 			    FileFilter dirFilter = new FileFilter() {
 			        public boolean accept(File file) {
 			            return file.isDirectory();
 			        }
 			    };
-				
-				File dir = new File(path);
+
 				ArrayList<File> subdirs = new ArrayList<File>();
-				
-				subdirs.add(dir);
-				for( File subdir : dir.listFiles(dirFilter) ){
-					if( !subdirs.contains(subdir) ){
-						subdirs.add(subdir);						
-					}
-				}
-				
-				String sysdirs[] = 
-					prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
-				for(String sysdir: sysdirs){
-					if(!sysdir.equals("")){
-						dir = new File(sysdir);
-						if( !subdirs.contains(dir) ){
-							subdirs.add(dir);						
-						}
+				for( File dir : topLevelDirs){
+					if( dir.isDirectory() ){
+						subdirs.add(dir);
 						for( File subdir : dir.listFiles(dirFilter) ){
-							if( !subdirs.contains(subdir) ){
-								subdirs.add(subdir);						
+							if( subdir != null && !subdirs.contains(subdir) ){
+								subdirs.add(subdir);			
 							}
-						}
+						}						
 					}
 				}
 			    
