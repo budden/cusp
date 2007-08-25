@@ -66,8 +66,12 @@ public class LispEditor extends TextEditor implements ILispEditor {
     	"jasko.tim.lisp.doc.top_lvl_pos";
     
     public void addOutlinePosition(Position pos){
+		IDocument doc = getDocument();
+		if( null == doc ){
+			return;
+		}
     	try{
-    		getDocument().addPosition(TOP_LVL_POS, pos);
+    		doc.addPosition(TOP_LVL_POS, pos);
     	} catch ( Exception e ){
     		e.printStackTrace();
     	}
@@ -75,6 +79,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
     
     public void clearOutlinePositions(){
 		IDocument doc = getDocument();
+		if( null == doc ){
+			return;
+		}
 		try{
 			doc.removePositionCategory(TOP_LVL_POS);
 			doc.addPositionCategory(TOP_LVL_POS);
@@ -86,6 +93,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
     public Position[] getAndClearChangedPosForOutline(){
 		Position[] pos = null;
 		IDocument doc = getDocument();
+		if( null == doc ){
+			return null;
+		}
 		try{
 			pos = doc.getPositions(CHANGED_POS_FOR_OUTLINE);
 			doc.removePositionCategory(CHANGED_POS_FOR_OUTLINE);
@@ -288,20 +298,22 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		licm.install(this.getSourceViewer().getTextWidget());
 
 		IDocument doc = getDocument();
-		doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
-		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_FOR_COMPILE));
-		doc.addPositionCategory(CHANGED_POS_FOR_OUTLINE);
-		doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_FOR_OUTLINE));
-		doc.addPositionCategory(TOP_LVL_POS);
-		doc.addPositionUpdater(new DefaultPositionUpdater(TOP_LVL_POS));
-		doc.addDocumentListener(new changesListener());
-		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
-		  .getString(PreferenceConstants.BUILD_TYPE)
-			.equals(PreferenceConstants.USE_AUTO_BUILD);
-		topForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()+"\n"),
-				LispPlugin.getDefault().getSwank().getCurrPackage());
-		TopLevelItemSort sorter = new TopLevelItemSort();
-		sorter.sortItems(topForms, TopLevelItemSort.Sort.Position);		
+		if(null != doc){
+			doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
+			doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_FOR_COMPILE));
+			doc.addPositionCategory(CHANGED_POS_FOR_OUTLINE);
+			doc.addPositionUpdater(new DefaultPositionUpdater(CHANGED_POS_FOR_OUTLINE));
+			doc.addPositionCategory(TOP_LVL_POS);
+			doc.addPositionUpdater(new DefaultPositionUpdater(TOP_LVL_POS));
+			doc.addDocumentListener(new changesListener());
+			useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
+			  .getString(PreferenceConstants.BUILD_TYPE)
+				.equals(PreferenceConstants.USE_AUTO_BUILD);
+			topForms = LispUtil.getTopLevelItems(LispParser.parse(doc.get()+"\n"),
+					LispPlugin.getDefault().getSwank().getCurrPackage());
+			TopLevelItemSort sorter = new TopLevelItemSort();
+			sorter.sortItems(topForms, TopLevelItemSort.Sort.Position);			
+		}
 	}
 	
 	

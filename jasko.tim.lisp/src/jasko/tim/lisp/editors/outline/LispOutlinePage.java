@@ -62,6 +62,10 @@ public class LispOutlinePage extends ContentOutlinePage
 		// get changed offsets
 		ArrayList<Integer> changedTopLevelPos;
 		IDocument doc = editor.getDocument();
+		if( null == doc ){
+			return;
+		}
+		
 		Position[] changedPos = editor.getAndClearChangedPosForOutline();
 		changedTopLevelPos = new ArrayList<Integer>();
 		int cachedOffset = -1;
@@ -526,6 +530,10 @@ public class LispOutlinePage extends ContentOutlinePage
 
 		IDocument doc = editor.getDocumentProvider().getDocument(
 				  editor.getEditorInput());
+		
+		if( null == doc ){
+			return;
+		}
 
 		Tree tree = getTreeViewer().getTree();
 		
