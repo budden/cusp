@@ -1,0 +1,96 @@
+0.9.0, TBD
+    * Update site for cusp, lisp libraries and sbcl
+    * Support for Unicode (UTF-8)
+    * More keybindings for new and old Lisp Actions
+    * Many features are now customizable through Preferences->Lisp:
+        - Customizable font coloring
+        - Which lisp implementation to use
+        - Controlling contents assist features
+        - Repl customization options
+        - Initialization file (file that evaluated after lisp start)
+    * Improved work with lisp implementations
+        - Works with all major lisp implementations (CLisp, Allegro, LispWorks)
+        - Can connect to lisp remotely
+        - More robust handling of start/quit sbcl on Windows (still not perfect)
+    * Improved and new development tools
+        - New Debugger (almost like in SLIME but using Eclipse widgets), 
+            - Pressing q works same way as in SLIME
+            - automatically jumps to code location when selecting backtraces
+        - New Threads viewer with ability to pause and kill threads
+        - New Profiling functions
+        - New SLIME like inspector
+        - Improved compilation warnings and errors
+        - New several file compilation modes
+            - Eclipse mode - when a file is saved all its content is recompiled
+            - Compile on save - only changed forms are recompiled when file is saved
+            - Slime mode - nothing is compiled when file is saved
+    * Improved REPL
+        - (in-package) now changes package in REPL
+        - A button in Repl to interrupt the currently executing command
+        - Show expression evaluated from file in REPL (customizable)
+        - History is now shown in dialog box, rather than menu, and can be used without mouse
+        - Option to log compiler comments to console (not very robust yet)
+    * New Library/package management system
+        - Contains set of basic libraries
+        - Allows adding a folder to look up libraries (then just put your library there and it will be available)
+        - Load Package dialog can be used to load libraries - it shows all available libraries, for each library it shows short info and links to documentation
+    * Improved Editor
+        - New Actions:
+            - Evaluate Current Expression
+            - Select Current Expression
+            - Expand Selection
+            - Evaluate File
+            - Jump Forward (to next s-expression)
+            - Jump Back (to previous s-expression)
+            - Commenting (wraps/unwraps selection into #| |#)
+        - More robust coloring
+        - More robust indentation
+        - Highlighting of current s-expression
+        - Folding is updated as documents is changed, not when it is saved
+        - Folds on "sections"
+        - Option to autoclose (), "", #| |#
+        - Fixed double clicking to select whole identifier rather than word between '-'
+        - Ctrl+Click navigates to definition of a symbol
+    * Improved Outline
+        - Updates as document is changed, now when it is saved
+        - New sort by position
+        - New "sections" as possible outlining elements (A "section" is specified by ';;;;< Section name > description' comment)
+        - Shows quick doc tooltip (if available) when hover mouse over an element of outline
+    * Improved Navigator
+        - Popup menu item to load a file
+        - Lisp project wizard can specify the location of the project
+    * Quick assist improvements
+        - Entire argument list is in bold
+        - Fuzzy autocompletions
+        - Quick doc for symbols in autocompletion list
+        - Improved ListDialog used in dislyaing OpenDefinition, Find Calles, FindCallers:
+            - Displays images next to each choice
+            - Has type-ahead find
+    * New Task list (comments with TODO: automatically added to task list)
+    * Lots of bugfixes and small improvements
+
+0.8.0, Feb 14, 2007
+
+    * Fresh SBCL build (1.0.2.21).
+    * Added "Find Callees" and "Find Callers."
+    * Added a "Load Asd" context menu option to .asd files.
+    * Added a "Delete .fasls" context menu option to projects.
+    * Now open source.
+
+0.7.5, Nov 12, 2006
+
+    * As always, includes the latest and greatest SBCL build (0.9.18.45).
+    * Repl should work properly when in read mode (for example, when you execute (read-line)).
+    * Repl will now change color to indicate what mode it's in
+    * Tooltips are specialized for make-instance to tell you precisely what initargs that object has.
+    * More better Lisp indentation: should work properly for labels, flet, and macrolet now.
+
+0.7.0, Nov 5, 2006
+
+    * Includes the latest and greatest SBCL build, naturally.
+    * New lisp projects will now be automatically created with an asd and defpackage file.
+    * Added the ability to change the font size of the REPL.
+    * Various UI improvements to the Outline view.
+    * The button to restart the Lisp instance should work now.
+    * Alt+E should now properly display the result of evaluating the current expression.
+    * Fixed a display bug that sometimes caused certain outputs to not show up.
