@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="jasko.tim.lisp"
-      label="Cusp Plug-in (svn version)"
-      version="0.8.174">
+      label="Cusp Plug-in"
+      version="0.9.189">
 
    <description>
       Cusp is a development environment for Lisp.
@@ -46,7 +46,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
    </license>
 
    <url>
-      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
+      <update label="Cusp Update" url="http://www.paragent.com/lisp/cusp/update/"/>
    </url>
 
    <includes

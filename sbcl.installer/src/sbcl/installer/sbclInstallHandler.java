@@ -56,8 +56,8 @@ public class sbclInstallHandler extends BaseInstallHandler {
 			String os = System.getProperty("os.name").toLowerCase();
 			String cmd = "";
 			if (os.contains("windows")){
-				cmd = "msiexec /qb! /i "+getMsiPath(consumer);
-				cmd += " INSTALLDIR=\""+(getSbclInstallPath(consumer)+"/sbcl/").replace('/', '\\')+"\"";
+				cmd = "msiexec /qb! /i \""+getMsiPath(consumer);
+				cmd += "\" INSTALLDIR=\""+(getSbclInstallPath(consumer)+"/sbcl/").replace('/', '\\')+"\"";
 				System.out.println(cmd);
 			} else {
 				cmd = "unzip "+getArchivePath(consumer)+" -d ";

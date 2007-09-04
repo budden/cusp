@@ -48,14 +48,14 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 		}
         
 		store.setDefault(MANAGE_PACKAGES, true);
-		store.setDefault(BUILD_TYPE, USE_ECLIPSE_BUILD);
+		store.setDefault(BUILD_TYPE, USE_AUTO_BUILD);
 		
 		store.setDefault(SHOW_OUTLINE_HINT, true);
 		
 		store.setDefault(SHOW_EVAL_IN_REPL, false);
 		store.setDefault(USE_CTRL_ENTER, false);
-        store.setDefault(PAIR_EDIT_BRACKETS, false);
-        store.setDefault(PAIR_SMART_BRACKETS, false);
+        store.setDefault(PAIR_EDIT_BRACKETS, true);
+        store.setDefault(PAIR_SMART_BRACKETS, true);
         store.setDefault(PAIR_EDIT_BRACES, false);
         store.setDefault(PAIR_EDIT_QUOTES, false);
         store.setDefault(PAIR_EDIT_COMMENTS, false);
@@ -63,7 +63,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         store.setDefault(AUTO_POPUP_COMPLETIONS_DELAY, 700);
         store.setDefault(AUTO_INSERT_COMPLETIONS, false);
         store.setDefault(AUTO_FUZZY_COMPLETIONS, false);
-        store.setDefault(DOCS_IN_COMPLETIONS, false);
+        store.setDefault(DOCS_IN_COMPLETIONS, true);
         store.setDefault(MAX_HINT_LINES, 10);
         store.setDefault(ARGLIST_BELOW, false);
         

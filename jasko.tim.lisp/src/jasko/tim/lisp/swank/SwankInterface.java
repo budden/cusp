@@ -139,6 +139,7 @@ public class SwankInterface {
 		specialIndents.put("",				" ");
 		specialIndents.put("progn",			"  ");
 		specialIndents.put("if",			"    ");
+		specialIndents.put("cond",			"  ");
 		specialIndents.put("when",			"  ");
 		specialIndents.put("unless",		"  ");
 		specialIndents.put("let",			"  ");

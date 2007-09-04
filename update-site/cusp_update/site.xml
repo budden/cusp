@@ -1,22 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/sbcl_linux_1.0.2.jar" id="sbcl_linux" version="1.0.2" os="linux">
-      <category name="sbcl"/>
-   </feature>
-   <feature url="features/sbcl_osx_1.0.2.jar" id="sbcl_osx" version="1.0.2" os="macosx" arch="x86">
+   <feature url="features/sbcl_linux_1.0.9.13.jar" id="sbcl_linux" version="1.0.9.13" os="linux">
       <category name="sbcl"/>
    </feature>
    <feature url="features/sbcl_win32_1.0.6.jar" id="sbcl_win32" version="1.0.6" os="win32">
       <category name="sbcl"/>
    </feature>
-   <feature url="features/jasko.tim.lisp_0.8.146.jar" id="jasko.tim.lisp" version="0.8.146">
-      <category name="cusp"/>
-   </feature>
-   <feature url="features/jasko.tim.lisp_0.8.174.jar" id="jasko.tim.lisp" version="0.8.174">
-      <category name="cusp"/>
-   </feature>
    <feature url="features/sbcl_osx_1.0.8.48.jar" id="sbcl_osx" version="1.0.8.48" os="macosx" arch="x86">
       <category name="sbcl"/>
+   </feature>
+   <feature url="features/jasko.tim.lisp_0.9.189.jar" id="jasko.tim.lisp" version="0.9.189">
+      <category name="cusp"/>
    </feature>
    <category-def name="cusp" label="Cusp"/>
    <category-def name="sbcl" label="Don&apos;t install. Cusp will install this feature."/>
