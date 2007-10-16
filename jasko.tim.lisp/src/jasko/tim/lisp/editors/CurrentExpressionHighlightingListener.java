@@ -20,10 +20,17 @@ public class CurrentExpressionHighlightingListener implements KeyListener, Mouse
     																    false, "");
     private int[] currentHighlightRange;
     
+    private final Annotation outerAnnotation1 = new Annotation("jasko.tim.lisp.editors.LispEditor.outer-sexp",
+		    false, "");
+    private final Annotation outerAnnotation2 = new Annotation("jasko.tim.lisp.editors.LispEditor.outer-sexp",
+		    false, "");
+    
     private ISourceViewer installedOn;
     
     private void removeHighlight () {
         installedOn.getAnnotationModel().removeAnnotation(highlightAnnotation);
+        installedOn.getAnnotationModel().removeAnnotation(outerAnnotation1);
+        installedOn.getAnnotationModel().removeAnnotation(outerAnnotation2);
     }
     
     public void install (ISourceViewer viewer) {
@@ -49,6 +56,15 @@ public class CurrentExpressionHighlightingListener implements KeyListener, Mouse
                 } else {
                     removeHighlight();
                     installedOn.getAnnotationModel().addAnnotation(highlightAnnotation, new Position(range[0], range[1]));
+                    int start = range[0] - 1;
+                	if (start >= 0) {
+                		int outerRange[] = LispUtil.getCurrentExpressionRange(installedOn.getDocument(), start);
+                		if (outerRange != null) {
+                			int firstLen = range[0] - outerRange[0];
+                    		installedOn.getAnnotationModel().addAnnotation(outerAnnotation1, new Position(outerRange[0], firstLen));
+                    		installedOn.getAnnotationModel().addAnnotation(outerAnnotation2, new Position(range[0] + range[1], outerRange[1] - (firstLen + range[1])));
+                    	}
+                    }
                 }
             } finally {
                 currentHighlightRange = range;
