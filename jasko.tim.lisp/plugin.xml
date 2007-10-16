@@ -1302,4 +1302,30 @@
 	    includeOnPreferencePage="true"
 	    overviewRulerPreferenceKey="jasko.tim.lisp.editors.LispEditor.current-sexp.overviewruler" />
 </extension> 
+
+
+<extension point="org.eclipse.ui.editors.annotationTypes">
+    <type name="jasko.tim.lisp.editors.LispEditor.outer-sexp"/>
+</extension>
+<extension point="org.eclipse.ui.editors.markerAnnotationSpecification">
+	<specification
+	    annotationType="jasko.tim.lisp.editors.LispEditor.outer-sexp"
+	    colorPreferenceValue="240,240,240"
+	    colorPreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.color"
+	    contributesToHeader="false"
+	    overviewRulerPreferenceValue="false"
+	    presentationLayer="4"
+	    label="Outer Lisp Expression"
+	    textPreferenceValue="true"
+	    textPreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.text"
+	    highlightPreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.highlight"
+	    highlightPreferenceValue="true"
+	    textStylePreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.text.style"
+	    textStylePreferenceValue="BOX"
+	    verticalRulerPreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.verticalruler"
+	    verticalRulerPreferenceValue="false"
+	    includeOnPreferencePage="true"
+	    overviewRulerPreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.overviewruler" />
+</extension>
+
 </plugin>
