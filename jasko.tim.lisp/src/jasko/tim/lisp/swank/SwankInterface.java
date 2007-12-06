@@ -185,8 +185,15 @@ public class SwankInterface {
 	
 
 	public boolean managePackages = false;
-	
-	
+
+	public String translateRemoteFilePath(String path) {
+		if (implementation != null) {
+			return implementation.translateRemoteFilePath(path);
+		} else {
+			return path;
+		}
+	}
+
 	public void runAfterLispStart() {
 		if( isConnected() ){
 			IPreferenceStore prefs = 
@@ -288,9 +295,13 @@ public class SwankInterface {
 		
 		synchronized(port) {
 			++port;
+			implementation = null;
 			
 			// Find an implementation and start a lisp process
 			// the pecking order of lisps:
+			if (implementation == null) {
+				implementation = RemoteImplementation.findImplementation();
+			}
 			if (implementation == null) {
 				implementation = SiteWideImplementation.findImplementation();
  			}
@@ -305,7 +316,7 @@ public class SwankInterface {
 			String slimePath = pluginDir + "slime/swank-loader.lisp";
 			if (implementation != null) {
 				try {
-					lispEngine = implementation.start(slimePath);
+					lispEngine = implementation.start(slimePath, port);
 				} catch (IOException e3) {
 					e3.printStackTrace();
 					return false;
@@ -340,7 +351,7 @@ public class SwankInterface {
 						int val = lispEngine.exitValue();
 						System.out.println("exit: " + val);
 						
-						lispEngine = implementation.startHarder(slimePath);
+						lispEngine = implementation.startHarder(slimePath, port);
 						connectStreams(slimePath);
 					} catch (IllegalThreadStateException e2) {
 						System.out.println("lisp instance still loading...");
@@ -389,9 +400,23 @@ public class SwankInterface {
 		try {
 			commandInterface = new DataOutputStream(lispEngine.getOutputStream());
 			//commandInterface.writeBytes("(progn (swank:create-swank-server " + port + " nil) (quit))\n");
-			commandInterface.writeBytes("(load \"" + slimePath.replace("\\", "\\\\") + "\")\n");
+			//commandInterface.writeBytes("(load \"" + slimePath.replace("\\", "\\\\") + "\")\n");
+			String slimeLoadCmd = implementation.getLoadSwankCommand();
+			if (slimeLoadCmd != null) {
+				commandInterface.writeBytes(slimeLoadCmd);
+			}
 			commandInterface.writeBytes("(swank:create-server :coding-system \"utf-8\" :port " + port + ")\n");
 			commandInterface.flush();
+			
+			// FIXME: at this point we should wait for "Swank started" message on standard output
+			// for now, simply sleep a bit. This is only necessary with RemoteLispImplementation
+			// because SSH tunnel will allow a successful connection for echoSocket, but will
+			// send a reset later.
+			try {
+				Thread.sleep(1000);
+			} catch(Exception e) {
+				// ignore
+			}
 			
 		} catch (IOException e2) {
 			e2.printStackTrace();
@@ -406,7 +431,10 @@ public class SwankInterface {
 	public void disconnect() {
 		System.out.println("*disconnect");
 		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-			lispEngine.destroy();
+			if (lispEngine != null) {
+				lispEngine.destroy();
+				lispEngine = null;
+			}
 		}
 		
 		/*try {
@@ -1014,6 +1042,7 @@ public class SwankInterface {
 	public synchronized void sendCompileFile(String filePath, SwankRunnable callBack) {
 		registerCallback(new CompileRunnable(callBack));
 		filePath = filePath.replace('\\', '/');
+		filePath = implementation.translateLocalFilePath(filePath);
 		String msg = "(swank:compile-file-for-emacs \""
 			+ filePath + "\" t)";
 		
@@ -1022,7 +1051,8 @@ public class SwankInterface {
 	
 	public synchronized void sendLoadASDF(String fileFullPath, SwankRunnable callBack) {
  		fileFullPath = fileFullPath.replace('\\', '/');
- 		String[] fpathparts = fileFullPath.split("/");  
+ 		fileFullPath = implementation.translateLocalFilePath(fileFullPath);
+ 		String[] fpathparts = fileFullPath.split("/");
  		if( fpathparts.length > 0 && fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
  			/*String tmp = */sendEvalAndGrab("(load \"" + fileFullPath + "\")",2000);
  			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
@@ -1193,9 +1223,6 @@ public class SwankInterface {
 		return sendRaw(msg);
 	}
 	
-	public synchronized void sync() {
-		return;
-	}
 	
 	public synchronized boolean emacsRex(String message, String pkg) {
 		String msg = "(:emacs-rex " + message + " " + cleanPackage(pkg) + " :repl-thread " + messageNum + ")";
@@ -1286,12 +1313,26 @@ public class SwankInterface {
 					if (true) {
 						StringBuilder sb = new StringBuilder();
 						for (int i=0; i<6; ++i) {
-							sb.append((char)in.read());
+							int c = in.read();
+							if (c >= 0) {
+								sb.append((char)c);
+							} else {
+								System.out.println("Connection closed");
+								signalListeners(disconnectListeners, new LispNode());
+								return;
+							}
 						}
 						int length = Integer.parseInt(sb.toString(), 16);
 						sb = new StringBuilder();
 						for (int i=0; i<length; ++i) {
-							sb.append((char) in.read());
+							int c = in.read();
+							if (c >= 0) {
+								sb.append((char)c);
+							} else {
+								System.out.println("Connection closed");
+								signalListeners(disconnectListeners, new LispNode());
+								return;
+							}
 						}
 						String reply = sb.toString();
 					/*String reply = in.readLine();
@@ -1333,6 +1374,7 @@ public class SwankInterface {
 				} catch (IOException e) {
 					e.printStackTrace();
 					signalListeners(disconnectListeners, new LispNode());
+					return;
 				}
 			} // while
 			System.out.println("Done listening");
@@ -1368,8 +1410,12 @@ public class SwankInterface {
 			int lines = 0;
 			while (running) {
 				try {
-					char c = (char)in.read();
-					if (c == '\n') {
+					int cint = in.read();
+					char c = (char)cint;
+					if (cint < 0) {
+						System.out.println("Display input pipe closed.");
+						return;
+					} else if (c == '\n') {
 						acc.append(c);
 						// Things are much faster display-wise if we grab several lines at a time
 						if (lines > 5 || !in.ready()) {

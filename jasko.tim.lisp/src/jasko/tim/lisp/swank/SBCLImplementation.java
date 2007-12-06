@@ -136,6 +136,7 @@ public class SBCLImplementation extends LispImplementation {
 
 	File executable = null;
 	File path = null;
+	String loadPath = null;
 	
 	/**
 	 * Constructs an instance of an SBCL implementation.  Does NOT start an SBCL process,
@@ -158,7 +159,7 @@ public class SBCLImplementation extends LispImplementation {
 
 	public boolean isValid() { return executable != null && path != null; }
 	
-	public Process start(String loadPath) throws IOException
+	public Process start(String loadPath, int port) throws IOException
 	{
 		System.out.println("start");
 		
@@ -172,6 +173,7 @@ public class SBCLImplementation extends LispImplementation {
 			};
 			
 			pb = new ProcessBuilder(commandLine);
+			this.loadPath = loadPath;
 			pb.environment().put("SBCL_HOME", path.getPath());
 			return pb.start();
 		}
@@ -188,7 +190,12 @@ public class SBCLImplementation extends LispImplementation {
 		};
 		
 		pb = new ProcessBuilder(commandLine);
+		this.loadPath = loadPath;
 		pb.environment().put("SBCL_HOME", path.getPath());
 		return pb.start();
+	}
+	
+	public String getLoadSwankCommand() {
+		return "(load \"" + this.loadPath.replace("\\", "\\\\") + "\")\n";
 	}
 }

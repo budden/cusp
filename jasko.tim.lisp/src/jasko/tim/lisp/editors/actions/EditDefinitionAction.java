@@ -87,6 +87,8 @@ public class EditDefinitionAction extends LispAction {
 			int position = location.getf(":position").asInt();
 			String snippet = location.getf(":snippet").value;
 			
+			path = getSwank().translateRemoteFilePath(path);
+			
 			LispEditor.jumpToDefinition(path, position, snippet, symbol);
 			
 		}

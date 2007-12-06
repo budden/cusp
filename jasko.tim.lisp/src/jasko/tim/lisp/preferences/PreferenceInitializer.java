@@ -72,6 +72,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         store.setDefault(REPL_FONT_SIZE, 9);
         
         store.setDefault(OUTLINE_SORT, 0);
+        
+        store.setDefault(SSH_COMMAND, "ssh");
+        store.setDefault(REMOTE_LISP_EXE, "sbcl");
+        store.setDefault(REMOTE_INI, "~/.sbcl/slime/swank-loader.lisp");
+        
 	}
 
 	/**

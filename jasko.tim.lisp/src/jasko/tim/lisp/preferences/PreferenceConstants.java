@@ -31,6 +31,15 @@ public interface PreferenceConstants {
 	public static final String USE_SLIME_BUILD = "useSlimeBuild";
 	public static final String BUILD_TYPE = "buildType";
 	public static final String SLIME_TYPE_PACK_EVAL = "slimeTypePackEval";
+	
+	public static final String USE_REMOTE_LISP = "useRemoteLisp";
+	public static final String SSH_COMMAND = "sshCommand";
+	public static final String REMOTE_HOST = "remoteHost";
+	public static final String REMOTE_USER = "remoteUser";
+	public static final String REMOTE_LISP_EXE = "remoteLispExecutable";
+	public static final String REMOTE_INI = "remoteLispIni";
+	public static final String REMOTE_LOCAL_PATH_PREFIX = "localPathPrefix";
+	public static final String REMOTE_REMOTE_PATH_PREFIX = "remotePathPrefix";
 
 	public static final String PAIR_EDIT_BRACKETS = "pairEditBrackets";
 	public static final String PAIR_SMART_BRACKETS = "pairSmartBrackets";

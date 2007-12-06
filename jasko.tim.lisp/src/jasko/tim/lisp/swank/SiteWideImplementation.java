@@ -17,6 +17,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 public class SiteWideImplementation extends LispImplementation {
 	
 	private File executable = null;
+	private String loadPath = null;
 
 	/**
 	 * @return Lisp implementation found in the preferences, or null if none is found
@@ -47,7 +48,7 @@ public class SiteWideImplementation extends LispImplementation {
 		return executable != null; 
 	}
 	
-	public Process start(String loadPath) throws IOException {
+	public Process start(String loadPath, int port) throws IOException {
 		if (isValid()) {
 			ProcessBuilder pb;
 			String[] commandLine = new String[] {
@@ -56,8 +57,13 @@ public class SiteWideImplementation extends LispImplementation {
 			};
 			
 			pb = new ProcessBuilder(commandLine);
+			this.loadPath = loadPath;
 			return pb.start();
 		}
 		return null;
+	}
+	
+	public String getLoadSwankCommand() {
+		return "(load \"" + this.loadPath.replace("\\", "\\\\") + "\")\n";
 	}
 }

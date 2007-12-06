@@ -66,7 +66,7 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 				"Use Cusp to Manage Packages (requires Lisp restart)", getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(PreferenceConstants.CONSOLE_COMPILER_LOG, 
-				"Write compiler log to Console", getFieldEditorParent()));		
+				"Write compiler log to Console", getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)
