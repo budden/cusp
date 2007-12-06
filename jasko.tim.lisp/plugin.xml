@@ -1271,6 +1271,11 @@
           class="jasko.tim.lisp.preferences.ImplementationsPreferencePage"
           id="jasko.tim.lisp.preferences.CuspPreferencePage"
           name="Implementations"/>
+    <page
+           category="jasko.tim.lisp.preferences.CuspPreferencePage"
+           class="jasko.tim.lisp.preferences.RemoteLispPreferencePage"
+           id="jasko.tim.lisp.preferences.CuspPreferencePage"
+           name="Remote Lisp"/>
  </extension>
  <extension
        point="org.eclipse.core.runtime.preferences">

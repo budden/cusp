@@ -18,7 +18,7 @@ public abstract class LispImplementation {
 	 * @return running SBCL process
 	 * @throws IOException 
 	 */
-	public abstract Process start(String loadPath) throws IOException;
+	public abstract Process start(String loadPath, int swankPort) throws IOException;
 	
 	public String getQuitForm() { return "(quit)"; }
 	
@@ -30,8 +30,37 @@ public abstract class LispImplementation {
 	 * @return
 	 * @throws IOException
 	 */
-	public Process startHarder(String loadPath) throws IOException {
-		return start(loadPath);
+	public Process startHarder(String loadPath, int swankPort) throws IOException {
+		return start(loadPath, swankPort);
 	}
 
+	/**
+	 * This returns lisp commands neccessary to execute on the console to
+	 * load swank file.
+	 * 
+	 * @return
+	 */
+	public abstract String getLoadSwankCommand();
+	
+	/**
+	 * This performs any translations necessary on a local file name / directory name
+	 * to feed it into the implementation.
+	 * 
+	 * @param filePath
+	 * @return
+	 */
+	public String translateLocalFilePath(String filePath) {
+		return filePath;
+	}
+	
+	/**
+	 * This performs any translations necessary on a remote file name /  directory name
+	 * received from the implementation.
+	 * 
+	 * @param filePath
+	 * @return
+	 */
+	public String translateRemoteFilePath(String filePath) {
+		return filePath;
+	}
 }

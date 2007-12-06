@@ -89,6 +89,7 @@ public class AllegroImplementation extends LispImplementation {
 
 	File executable = null;
 	File path = null;
+	String loadPath = null;
 	
 	/**
 	 * Constructs an instance of an AllegroImplementation.  Does NOT start a process
@@ -107,7 +108,7 @@ public class AllegroImplementation extends LispImplementation {
 	
 	public boolean isValid() { return executable != null && path != null; }
 	
-	public Process start(String loadPath) throws IOException
+	public Process start(String loadPath, int port) throws IOException
 	{
 		if (isValid())
 		{
@@ -116,6 +117,8 @@ public class AllegroImplementation extends LispImplementation {
 			};
 
 			ProcessBuilder pb = new ProcessBuilder(commandLine);
+			this.loadPath = loadPath;
+			
 			return pb.start();
 		}
 		else
@@ -124,4 +127,8 @@ public class AllegroImplementation extends LispImplementation {
 		}
 	}
 	public String getQuitForm() { return "(exit)"; }
+	
+	public String getLoadSwankCommand() {
+		return "(load \"" + this.loadPath.replace("\\", "\\\\") + "\")\n";
+	}
 }
