@@ -562,7 +562,7 @@ public class SwankInterface {
 		if(usefuzzy){
 			msg = "(let ((lst (mapcar #'first (let ((x (swank:fuzzy-completions ";
 		} else {
-			msg = "(let ((lst (first (swank:completions ";
+			msg = "(let ((lst (first (swank:simple-completions ";
 		}
 		msg += "\"" + start + "\" ";
 		if( pkg == null ){
@@ -578,7 +578,7 @@ public class SwankInterface {
 			msg += "))) (if (listp (first (first x))) (first x) x)";
 		}
 		msg += "))))";
-		msg += "(list lst (mapcar #'(lambda (x) (swank:arglist-for-echo-area (cons x nil))) lst)" +
+		msg += "(list lst (mapcar #'(lambda (x) (swank:operator-arglist x " + cleanPackage(pkg) + ")) lst)" +
 				" (mapcar #'(lambda (x) (swank:documentation-symbol x)) lst)))";
 		LispNode resNode = LispParser.parse(sendEvalAndGrab(msg, usepkg, timeout));
 		LispNode compl = resNode.car().get(0);
@@ -640,7 +640,7 @@ public class SwankInterface {
 			msg = "(swank:fuzzy-completions \"" + start + "\" " + cleanPackage(pkg) 
 				+ " :limit " + nlimit + " :time-limit-in-msec "+ tlimit + ")";			
 		} else {
-			msg = "(swank:completions \"" + start + "\" " + cleanPackage(pkg) + ")";			
+			msg = "(swank:simple-completions \"" + start + "\" " + cleanPackage(pkg) + ")";			
 		}
 		
 		try {
@@ -688,7 +688,7 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		
-		String msg = "(swank:arglist-for-echo-area (quote (\"" + formatCode(function) + "\")))";
+		String msg = "(swank:operator-arglist \"" + formatCode(function) + "\" " + cleanPackage(currPackage) + " )";
 		
 		try {
 			synchronized (callBack) {
@@ -708,7 +708,7 @@ public class SwankInterface {
 	
 	public synchronized void sendGetArglist(String function, String currPackage, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:arglist-for-echo-area (quote (\"" + formatCode(function) + "\")))";
+		String msg = "(swank:operator-arglist \"" + formatCode(function) + "\" + " + cleanPackage(currPackage) + ")";
 		
 		emacsRex(msg, currPackage);
 	}
@@ -1210,7 +1210,7 @@ public class SwankInterface {
 	
 	
 	private String cleanPackage(String pkg) {
-		if (pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
+		if (pkg == null || pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
 			return "nil";
 		} else {
 			return "\"" + formatCode(pkg) + "\"";
