@@ -196,6 +196,17 @@ public class SwankInterface {
 
 	public void runAfterLispStart() {
 		if( isConnected() ){
+			
+			String contribs = "(progn (swank:swank-require :swank-fuzzy)"
+				+ "(swank:swank-require :swank-asdf)"
+				+ "(swank:swank-require :swank-presentations)"
+				+ "(swank:swank-require :swank-fancy-inspector)"
+				+ "(swank:swank-require :swank-presentations)"
+				+ "(swank:swank-require :swank-arglists)"
+				+ ")";
+			sendEval(contribs, null);
+			sendEval("(swank:fancy-inspector-init)", null);
+			
 			IPreferenceStore prefs = 
 				LispPlugin.getDefault().getPreferenceStore();
 			managePackages = 
@@ -722,8 +733,8 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		//(swank:arglist-for-echo-area (quote ((:make-instance "some-class" "make-instance"))))
-		String msg = "(swank:arglist-for-echo-area (quote ((:make-instance \""
-			+ formatCode(className) + "\" \"make-instance\"))))";
+		String msg = "(swank:arglist-for-echo-area (quote ((\"MAKE-INSTANCE\" \"'"
+			+ formatCode(className) + "\"))))";
 		
 		try {
 			synchronized (callBack) {
@@ -750,7 +761,7 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		//(swank:arglist-for-echo-area (quote ((:make-instance "some-class" "make-instance"))))
-		String msg = "(swank:arglist-for-echo-area (quote ((:" + formatCode(function) + " \""
+		String msg = "(swank:arglist-for-echo-area (quote ((\"" + formatCode(function) + "\" \""
 			+ formatCode(arg0) + "\" ))))";
 		
 		try {
