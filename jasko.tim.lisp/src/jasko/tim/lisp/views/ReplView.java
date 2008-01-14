@@ -653,15 +653,15 @@ public class ReplView extends ViewPart implements SelectionListener {
 	 * This is a real class rather than an anonymous one so that it can be cloned properly.
 	 *  If it weren't, you'd sometimes get results printed twice on the repl
 	 */
-	protected class DisplayRunnable extends SwankRunnable {
+	protected class DisplayRunnable extends SwankDisplayRunnable {
 		public ReplView rv;
 		
 		public void run() {
 			System.out.println("DisplayRunnable: "+result.toString());
-			if (result.params.size() <= 3) {
+			if (presentation == null) {
 				rv.appendText(result.get(1).value);
 			} else {
-				rv.appendInspectable(result.get(1).value, result.get(2).value);
+				rv.appendInspectable(result.get(1).value, presentation);
 			}
 			//history.appendText(result.get(1).value);
 			scrollDown();
@@ -669,6 +669,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		public SwankRunnable clone() {
 			DisplayRunnable re = new DisplayRunnable();
+			re.presentation = this.presentation;
 			re.result = this.result;
 			re.rv = this.rv;
 			
@@ -1198,7 +1199,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 							String file = res.getf(":file").value;
 							int pos = res.getf(":position").asInt();
 							String snippet = res.getf(":snippet").value;
-					swank.runAfterLispStart();
+					//swank.runAfterLispStart();
 							LispEditor.jumpToDefinition(file, pos, snippet);
 							setFocus();
 						}
