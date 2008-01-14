@@ -78,6 +78,11 @@ public class SwankInterface {
 	private Hashtable<String, SyncCallback> syncJobs = new Hashtable<String, SyncCallback>();
 	
 	/**
+	 * Listeners to be given debug info, usually right before a :debug-activate.
+	 */
+	private List<SwankRunnable> debugInfoListeners;
+	
+	/**
 	 * Listeners to be notified when the debugger is activated.
 	 */
 	private List<SwankRunnable> debugListeners;
@@ -106,6 +111,7 @@ public class SwankInterface {
 	
 	public SwankInterface() {
 		debugListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		debugInfoListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		displayListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		readListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		disconnectListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
@@ -205,7 +211,7 @@ public class SwankInterface {
 				+ "(swank:swank-require :swank-arglists)"
 				+ ")";
 			sendEval(contribs, null);
-			sendEval("(swank:fancy-inspector-init)", null);
+			//sendEval("(swank:fancy-inspector-init)", null);
 			
 			IPreferenceStore prefs = 
 				LispPlugin.getDefault().getPreferenceStore();
@@ -490,6 +496,10 @@ public class SwankInterface {
 	
 	public void addDebugListener(SwankRunnable callBack) {
 		debugListeners.add(callBack);
+	}
+	
+	public void addDebugInfoListener(SwankRunnable callBack) {
+		debugInfoListeners.add(callBack);
 	}
 	
 	public void addDisplayCallback(SwankDisplayRunnable callBack) {
@@ -1302,8 +1312,10 @@ public class SwankInterface {
 		
 		private void handle(LispNode node) {
 			try {
-				if (node.car().value.equalsIgnoreCase(":debug")) {
+				if (node.car().value.equalsIgnoreCase(":debug-activate")) {
 					signalListeners(debugListeners, node);
+				} else if (node.car().value.equalsIgnoreCase(":debug")) {
+					signalListeners(debugInfoListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":read-string")) {
 					signalListeners(readListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":presentation-start")) {

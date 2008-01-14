@@ -700,10 +700,17 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		});
 		
+		swank.addDebugInfoListener(new SwankRunnable() {
+			public void run() {
+				saveDebugInfo(result);
+			}
+		});
+		
 		swank.addDebugListener(new SwankRunnable() {
 			public void run() {
-				
-				pushDebugState(result);
+				String key = result.get(1).value + ":" + result.get(2).value;
+				System.out.println("*debug found: " + key + "->" + debugInfos.get(key));
+				pushDebugState(debugInfos.get(key));
 			} // run()
 		});
 		
@@ -937,6 +944,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	protected void pushDebugState(LispNode debugInfo) {
 		pushState(new DebugState(debugInfo));
+	}
+	
+	private Hashtable<String, LispNode> debugInfos = new Hashtable<String, LispNode>();
+	protected void saveDebugInfo(LispNode debugInfo) {
+		String key = debugInfo.get(1).value + ":" + debugInfo.get(2).value;
+		debugInfos.put(key, debugInfo);
 	}
 	
 	protected void pushReadState(String s1, String s2) {
