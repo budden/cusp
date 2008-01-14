@@ -492,7 +492,7 @@ public class SwankInterface {
 		debugListeners.add(callBack);
 	}
 	
-	public void addDisplayCallback(SwankRunnable callBack) {
+	public void addDisplayCallback(SwankDisplayRunnable callBack) {
 		displayListeners.add(callBack);
 	}
 	
@@ -897,7 +897,7 @@ public class SwankInterface {
 	public synchronized void sendInspectReplResult(String num, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:init-inspector \"(swank:get-repl-result #10r" + num 
-			+ ")\" :reset t :eval t :dwim-mode nil)";
+			+ ")\" )";
 		
 		emacsRex(msg);
 	}
@@ -1306,6 +1306,16 @@ public class SwankInterface {
 					signalListeners(debugListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":read-string")) {
 					signalListeners(readListeners, node);
+				} else if (node.car().value.equalsIgnoreCase(":presentation-start")) {
+					for (int i=0; i<displayListeners.size(); ++i) {
+						SwankDisplayRunnable runnable = (SwankDisplayRunnable) displayListeners.get(i);
+						runnable.startPresentation(node.get(1).value);
+					}
+				} else if (node.car().value.equalsIgnoreCase(":presentation-end")) {
+					for (int i=0; i<displayListeners.size(); ++i) {
+						SwankDisplayRunnable runnable = (SwankDisplayRunnable) displayListeners.get(i);
+						runnable.endPresentation();
+					}
 				} else if (node.car().value.equalsIgnoreCase(":write-string")) {
 					signalListeners(displayListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":indentation-update")) {
