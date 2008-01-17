@@ -53,7 +53,7 @@ public class SiteWideImplementation extends LispImplementation {
 			ProcessBuilder pb;
 			String[] commandLine = new String[] {
 				executable.getPath(),
-				"--load", loadPath
+				//"--load", loadPath
 			};
 			
 			pb = new ProcessBuilder(commandLine);
