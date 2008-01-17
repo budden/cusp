@@ -729,7 +729,7 @@ public class SwankInterface {
 	
 	public synchronized void sendGetArglist(String function, String currPackage, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:operator-arglist \"" + formatCode(function) + "\" + " + cleanPackage(currPackage) + ")";
+		String msg = "(swank:operator-arglist \"" + formatCode(function) + "\" " + cleanPackage(currPackage) + ")";
 		
 		emacsRex(msg, currPackage);
 	}
