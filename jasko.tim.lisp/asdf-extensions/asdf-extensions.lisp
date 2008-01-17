@@ -235,6 +235,7 @@ pathnames as well."
 (defun get-asd-descriptions (xx)
   "With xx = (system-name, path-to-asd-file),
 returns (:description :long-description) from defsystem"
+ (handler-case
   (with-open-file (stream (second xx))
                   (let ((docs 
                           (ignore-errors (loop for x = (read stream) then (read stream)
@@ -245,7 +246,9 @@ returns (:description :long-description) from defsystem"
                                                             (getf x :long-description))))))
                     (if docs 
                         docs 
-                        '(nil nil)))))
+                        '(nil nil))))
+   (t
+   '(nil nil))))
 
 (defun get-doc-links (xx)
   "With xx = (system-name, path-to-asd-file),
@@ -299,4 +302,4 @@ Returns hash table: system-name -> description-string"
                                           (list (list (pathname-name x) x)))) 
                                     (list-directory dir)))
                         *top-level-directories*)
-                #'string-lessp :key #'first)))      
+                #'string-lessp :key #'first)))
