@@ -13,12 +13,15 @@ package jasko.tim.lisp.wizards;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.builder.LispNature;
 import jasko.tim.lisp.swank.SwankInterface;
+import jasko.tim.lisp.swank.SwankRunnable;
+import jasko.tim.lisp.views.*;
 
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.operation.*;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.*;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
@@ -104,43 +107,43 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 	private void doFinish (String projectName, String customProjectPath, IProgressMonitor monitor) throws CoreException {
   		monitor.beginTask("Creating " + projectName, 10);
   		
-         IWorkspace workspace = ResourcesPlugin.getWorkspace();
+  		IWorkspace workspace = ResourcesPlugin.getWorkspace();
  		IWorkspaceRoot root = workspace.getRoot();
   		IProject newProject = root.getProject(projectName);
-  		
+
   		//creation of the project
   		if (newProject.exists()) {
   			throwCoreException("Project \"" + projectName + "\" already exists");
   		} else {
-             IProjectDescription pdesc = workspace.newProjectDescription(newProject.getName());
-             pdesc.setLocation(customProjectPath != null ? 
-                     new Path(new File(customProjectPath, projectName).getAbsolutePath()) : null);
-             
-             newProject.create(pdesc, monitor);
+  			IProjectDescription pdesc = workspace.newProjectDescription(newProject.getName());
+  			pdesc.setLocation(customProjectPath != null ? 
+  					new Path(new File(customProjectPath, projectName).getAbsolutePath()) : null);
+
+  			newProject.create(pdesc, monitor);
   			newProject.open(monitor);
-  			
+
   			try {
- 				String[] natures = pdesc.getNatureIds();
+  				String[] natures = pdesc.getNatureIds();
   				String[] newNatures = new String[natures.length + 1];
   				System.arraycopy(natures, 0, newNatures, 0, natures.length);
   				newNatures[natures.length] = LispNature.NATURE_ID;
-                 pdesc.setNatureIds(newNatures);
-  				
- 				newProject.setDescription(pdesc, IResource.FORCE, monitor);
+  				pdesc.setNatureIds(newNatures);
+
+  				newProject.setDescription(pdesc, IResource.FORCE, monitor);
   			} catch (CoreException e) {
   				e.printStackTrace();
   			} // catch
-			
-		} // else
+
+  		} // else
 		
 		monitor.worked(2);
 		
 		
 		// Create the contents of the project's root directory
-		String pkg = projectName.toLowerCase();
+		final String pkg = projectName.toLowerCase();
 		
 		InputStream contents = Templater.getTemplate("main.lisp", pkg);
-		IFile main = newProject.getFile("main.lisp");
+		final IFile main = newProject.getFile("main.lisp");
 		if (!main.exists()) {
 			main.create(contents ,true, monitor);
 		} // if
@@ -152,7 +155,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		// Make the asd file
 		contents = Templater.getTemplate("asd.asd", pkg);
-		IFile asd = newProject.getFile(projectName + ".asd");
+		final IFile asd = newProject.getFile(projectName + ".asd");
 		if (!asd.exists()) {
 			asd.create(contents, true, monitor);
 		}
@@ -164,7 +167,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		// Make the defpackage file
 		contents = Templater.getTemplate("defpackage.lisp", pkg);
-		IFile defpackage = newProject.getFile("defpackage.lisp");
+		final IFile defpackage = newProject.getFile("defpackage.lisp");
 		if (!defpackage.exists()) {
 			defpackage.create(contents, true, monitor);
 		}
@@ -179,8 +182,38 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		newProject.open(monitor);
 		
 
+		// Compile the defpackage file, then switch to that package once it's done
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
-		swank.sendCompileFile(defpackage.getLocation().toString(), null);
+		swank.sendCompileFile(defpackage.getLocation().toString(), 
+				new SwankRunnable() {
+					public void run() {
+						ReplView rv = ReplView.getInstance();
+						if (rv != null) {
+							rv.switchPackage(pkg);
+						}
+					}
+		});
+		
+		
+		
+		monitor.setTaskName("Opening files for editing...");
+		getShell().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				IWorkbenchPage page =
+					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+				try {
+					IDE.openEditor(page, asd, true);
+					IDE.openEditor(page, defpackage, true);
+					IDE.openEditor(page, main, true);
+					
+					
+				} catch (PartInitException e) {
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
 		
 		monitor.worked(2);
 		monitor.done();

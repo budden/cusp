@@ -26,6 +26,7 @@ import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.ui.IKeyBindingService;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -67,6 +68,18 @@ public class ReplView extends ViewPart implements SelectionListener {
 			page.showView(ReplView.ID);
 		} catch (PartInitException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	public static ReplView getInstance() {
+		IWorkbenchPage page = 
+			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		
+		IViewPart view = page.findView(ReplView.ID);
+		if (view instanceof ReplView) {
+			return (ReplView) view;
+		} else {
+			return null;
 		}
 	}
 	
@@ -560,7 +573,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 						swank.getAvailablePackages(1000), swank.getPackage());
 				if (pd.open() == Dialog.OK) {
 					switchPackage(pd.getPackage());
-					replPackage.setText("Current package: "+pd.getPackage());
 				}
 			}
 		};
@@ -755,7 +767,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 				ArrayList<String> packages = swank.getAvailablePackages(5000);
 				if (packages.contains(packageName.toUpperCase())){
 					switchPackage(packageName);
-					replPackage.setText("Current package: "+packageName);
 				}
 			}
 		}
@@ -766,10 +777,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 	 * prints an appropriate commented message, and forces the repl to scroll to the
 	 * bottom.
 	 */
-	private void switchPackage (String packageName) {
+	public void switchPackage (String packageName) {
 		swank.setPackage(packageName);
 		appendText(";Package changed to " + packageName + "\n");
 		scrollDown();
+		replPackage.setText("Current package: " + packageName);
 	}
 
 	protected void eval() {
