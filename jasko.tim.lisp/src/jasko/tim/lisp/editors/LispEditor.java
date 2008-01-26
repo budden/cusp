@@ -6,6 +6,7 @@ import java.net.URL;
 import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.ColorManager.ColorChangeEvent;
+import jasko.tim.lisp.editors.actions.FindCalleesAction;
 import jasko.tim.lisp.editors.actions.IndentAction;
 import jasko.tim.lisp.editors.assist.LispInformationControlManager;
 import jasko.tim.lisp.editors.outline.LispOutlinePage;
@@ -27,6 +28,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
@@ -126,6 +128,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		super();
 		setSourceViewerConfiguration(config);
 		setDocumentProvider(new LispDocumentProvider());
+		
 		colorPrefChangeListener = new ColorManager.ChangeEventListener() {
 
 			public void colorPreferenceChanged(ColorChangeEvent event) {
@@ -338,6 +341,13 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		licm.setLocation(p);
 		licm.setText(message);
 		licm.showInformation();
+	}
+	
+	protected void editorContextMenuAboutToShow(IMenuManager menu) {
+		super.editorContextMenuAboutToShow(menu);
+		/*FindCalleesAction action = new FindCalleesAction(this);
+		action.setText("Open Call Hierarchy");
+		menu.add(action);*/
 	}
 	
     protected void initializeKeyBindingScopes() {
