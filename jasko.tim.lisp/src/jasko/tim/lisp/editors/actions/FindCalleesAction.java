@@ -71,8 +71,29 @@ public class FindCalleesAction extends LispAction {
 				
 				LispNode location = chosen.getf(":location");
 				String path = location.getf(":file").value;
-				int position = location.getf(":position").asInt();
-				String snippet = location.getf(":snippet").value;
+				LispNode positionNode = location.getf(":position");
+				LispNode snippetNode = location.getf(":snippet");
+				
+				if( positionNode.value.equals("") ){
+					for( LispNode x : chosen.params ){
+						positionNode = x.getf(":position");
+						if( !positionNode.value.equals("") ){
+							break;
+						}
+					}
+				}
+				
+				if( snippetNode.value.equals("") ){
+					for( LispNode x : chosen.params ){
+						snippetNode = x.getf(":snippet");
+						if( !snippetNode.value.equals("") ){
+							break;
+						}
+					}
+				}
+				
+				int position = positionNode.asInt();
+				String snippet = snippetNode.value;
 				
 				LispEditor.jumpToDefinition(path, position, snippet);
 			}
