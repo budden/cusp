@@ -3,6 +3,7 @@ package jasko.tim.lisp.editors.actions;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.SwankRunnable;
+import jasko.tim.lisp.util.LispUtil;
 
 import java.util.ArrayList;
 
@@ -10,6 +11,7 @@ import org.eclipse.jface.dialogs.Dialog;
 
 
 public class FindCalleesAction extends LispAction {
+	private static final int TIMEOUT = 2000;
 	
 	public FindCalleesAction() {
 	}
@@ -20,7 +22,16 @@ public class FindCalleesAction extends LispAction {
 	
 	public void run() {
 		String symbol = getSymbol();
+
+		boolean haveDefinition = getSwank().haveDefinitions(symbol, 
+				getPackage(), TIMEOUT);
 		
+		if ( !haveDefinition )
+		{
+			editor.showPopupInfo("No calls from this function were found");
+			return;
+		}
+
 		getSwank().sendGetCallees(symbol, getPackage(), new SwankRunnable() {
 			public void run() {
 				LispNode guts = result.getf(":return").getf(":ok");
