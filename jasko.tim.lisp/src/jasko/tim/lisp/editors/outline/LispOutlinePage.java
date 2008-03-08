@@ -203,7 +203,8 @@ public class LispOutlinePage extends ContentOutlinePage
 				} else { //sexp
 					LispNode exp = LispParser.parse(LispUtil
 							.getTopLevelExpression(doc, offset + 1)).get(0);
-					itm = LispUtil.getTopLevelItem(exp, "", offset);
+					itm = LispUtil.getTopLevelItem(exp, 
+							LispUtil.getPackage(doc.get(), offset), offset);
 				}
 				newItems.add(itm);
 				Position pos = new Position(itm.offset+1);
@@ -264,7 +265,7 @@ public class LispOutlinePage extends ContentOutlinePage
 				itemTr.put(item, tmp);
 			}
 		} else if ( sort == Sort.Type ) {
-			// first move changed types
+			// first move changed types TODO:
 		}
 		//finally update items array
 		items.clear();
@@ -734,26 +735,25 @@ public class LispOutlinePage extends ContentOutlinePage
 			Point pt = new Point(e.x,e.y);
 			final Tree tree = getTreeViewer().getTree();
 			TreeItem item = tree.getItem(pt);
-			final Point ptHint = 
-				new Point(e.x,item.getBounds().y 
-						+ (int)Math.round(1.5*item.getBounds().height));
 			
 			if( item != null && item != tooltipItem && item.getData() != null ){
+				final Point ptHint = 
+					new Point(e.x,item.getBounds().y 
+							+ (int)Math.round(1.5*item.getBounds().height));
 				tooltipItem = item;
-				TopLevelItem tr = (TopLevelItem)(item.getData());
+				final TopLevelItem tr = (TopLevelItem)(item.getData());
 				if( !tr.type.equals("section") ){
 					Position pos = itemPos.get(tr);
 					if( pos != null ){
 						IDocument doc = editor.getDocument();
 						int offset = tr.nameOffset + 1;
-						final String pkg = LispUtil.getPackage(doc.get(), offset);
 						final String variable = LispUtil.getCurrentFullWord(doc, offset);
 						final SwankInterface swank = LispPlugin.getDefault().getSwank();
-						swank.sendGetArglist(variable, pkg, new SwankRunnable() {
+						swank.sendGetArglist(variable, tr.pkg, new SwankRunnable() {
 							public void run() {
 										
 								final String args = getReturn().value; //swank.getArglist(variable, 1000, pkg);
-								swank.sendGetDocumentation(variable, pkg, new SwankRunnable() {
+								swank.sendGetDocumentation(variable, tr.pkg, new SwankRunnable() {
 									public void run() {
 										
 										String docstr = getReturn().value; //swank.getDocumentation(variable, pkg, 1000);
