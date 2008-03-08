@@ -9,6 +9,7 @@ import org.eclipse.jface.dialogs.Dialog;
 
 
 public class FindCallersAction extends LispAction {
+	private static final int TIMEOUT = 2000;
 	
 	public FindCallersAction() {
 	}
@@ -19,6 +20,15 @@ public class FindCallersAction extends LispAction {
 	
 	public void run() {
 		String symbol = getSymbol();
+
+		boolean haveDefinition = getSwank().haveDefinitions(symbol, 
+				getPackage(), TIMEOUT);
+		
+		if ( !haveDefinition )
+		{
+			editor.showPopupInfo("No calls from this function were found");
+			return;
+		}
 		
 		getSwank().sendGetCallers(symbol, getPackage(), new SwankRunnable() {
 			public void run() {
