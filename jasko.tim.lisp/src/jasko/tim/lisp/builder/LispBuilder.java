@@ -594,10 +594,10 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							}
 						}
 						char c = line.charAt(i);
-						if (c == '(' && !inQuotes && !(i > 0 && line.charAt(i-1) == '\\')) {
+						if (c == '(' && !inQuotes && !(i > 1 && line.charAt(i-1) == '\\' && line.charAt(i-2) == '#')) {
 							++open;
 							parenData.add(new int[]{1,charOffset, lineNum});
-						} else if (c == ')' && !inQuotes && !(i > 0 && line.charAt(i-1) == '\\')) {
+						} else if (c == ')' && !inQuotes && !(i > 1 && line.charAt(i-1) == '\\' && line.charAt(i-2) == '#')) {
 							++close;
 							parenData.add(new int[]{-1,charOffset,lineNum});
 							if (close > open) {
@@ -606,13 +606,13 @@ public class LispBuilder extends IncrementalProjectBuilder {
 								res = false;
 								addParenMarker(file, charOffset, lineNum, false);
 							} // if
-						} else if (c == ';' && !inQuotes && !(i > 0 && line.charAt(i-1) == '\\')) {
+						} else if (c == ';' && !inQuotes && !(i > 1 && line.charAt(i-1) == '\\' && line.charAt(i-2) == '#')) {
 							charOffset += line.length() - i;
 							i = line.length();
 							break;
-						} else if (c == '"' && !(i > 0 && line.charAt(i-1) == '\\')) {
+						} else if (c == '"' && !(i > 1 && line.charAt(i-1) == '\\' && line.charAt(i-2) == '#')) {
 							inQuotes = !inQuotes;
-						} else if (c == '#' && !(i > 0 && line.charAt(i-1) == '\\')) {
+						} else if (c == '#' && !(i > 1 && line.charAt(i-1) == '\\' && line.charAt(i-2) == '#')) {
 							if (i+1 < line.length()) {
 								if (line.charAt(i+1) == '|') {
 									inComment = true;
