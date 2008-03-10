@@ -1,13 +1,8 @@
 package jasko.tim.lisp.editors;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.ColorManager.ColorChangeEvent;
-import jasko.tim.lisp.editors.actions.FindCalleesAction;
-import jasko.tim.lisp.editors.actions.IndentAction;
 import jasko.tim.lisp.editors.assist.LispInformationControlManager;
 import jasko.tim.lisp.editors.outline.LispOutlinePage;
 import jasko.tim.lisp.preferences.PreferenceConstants;
@@ -42,7 +37,6 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.*;
-import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
@@ -497,10 +491,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 				  .equals(PreferenceConstants.USE_SLIME_BUILD)) { 
 			LispBuilder.checkLisp(getIFile());
 		}
-		
-		LispNode contents = LispParser.parse(getDocument().get() + "\n)");
+
 		updateTasks();
-		processAutoBuild(contents);
+		processAutoBuild();
 	}
 
 	
@@ -509,7 +502,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		updateTasks();		
 	}
 	
-	private void processAutoBuild(LispNode contents) {
+	private void processAutoBuild() {
 		boolean oldAutoBuild = useAutoBuild;
 		useAutoBuild = LispPlugin.getDefault().getPreferenceStore()
 		  .getString(PreferenceConstants.BUILD_TYPE)
@@ -526,15 +519,17 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			}
 		}
 		if( useAutoBuild ){
-			compileOnSave(contents);
+			compileOnSave();
 		}
 	}
 
-	private void compileOnSave(LispNode contents) {
+	private void compileOnSave() {
+		IDocument doc = getDocument();
 		if( LispBuilder.checkLisp(getIFile()) ){
 			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
 			ArrayList<TopLevelItem> newForms = 
-				LispUtil.getTopLevelItems(contents,swank.getCurrPackage());
+				LispUtil.getTopLevelItems(LispParser.parse(doc.get() + "\n)"),
+						swank.getCurrPackage());
 			TopLevelItemSort sorter = new TopLevelItemSort();
 			sorter.sortItems(newForms, TopLevelItemSort.Sort.Position);
 			
@@ -542,7 +537,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			
 			Position[] pos = null;
 			try{
-				pos = getDocument().getPositions(CHANGED_POS_FOR_COMPILE);
+				pos = doc.getPositions(CHANGED_POS_FOR_COMPILE);
 			} catch ( BadPositionCategoryException e) {
 				e.printStackTrace();
 				pos = null;
@@ -554,7 +549,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			}
 		}
 		try {
-			IDocument doc = getDocument();
 			doc.removePositionCategory(CHANGED_POS_FOR_COMPILE);
 			doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
 		} catch ( BadPositionCategoryException e ){
@@ -564,13 +558,18 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
 	private void compileForms(int[][] sexps) {
 		// evaluate all modified sexps
+		IDocument doc = getDocument();
+		if( null == doc ){
+			return;
+		}
+		int n = doc.getLength();
 		for( int i = 0; i < sexps.length; ++i ){
 			int offset = sexps[i][0];
-			int endOffset = sexps[i][1];;
+			int endOffset = sexps[i][1];
 			if( offset >= 0 ){
 				String sexp = "";
 				try{
-					sexp = getDocument().get(offset,endOffset-offset+1);
+					sexp = doc.get(offset,Math.min(endOffset,n-1)-offset+1);
 				} catch ( BadLocationException e ){
 					e.printStackTrace();
 					sexp = "";
@@ -581,10 +580,10 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						|| sexp.toLowerCase().contains("defpackage")){
 					// should compile rest of the file
 					try{
-						sexp = getDocument().get(offset,getDocument().getLength()-offset+1);
+						sexp = doc.get(offset,n-offset);
 						LispBuilder.compileFilePart(getIFile(), sexp, offset);
-						getDocument().removePositionCategory(CHANGED_POS_FOR_COMPILE);
-						getDocument().addPositionCategory(CHANGED_POS_FOR_COMPILE);
+						doc.removePositionCategory(CHANGED_POS_FOR_COMPILE);
+						doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
 					} catch ( Exception e ){
 						e.printStackTrace();
 					}
@@ -705,18 +704,18 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		ArrayList<String> notToUndefine = new ArrayList<String>(topForms.size());
 		ArrayList<TopLevelItem> toDefine = new ArrayList<TopLevelItem>(topForms.size());
 		ArrayList<String> toDefineNoPos = new ArrayList<String>(topForms.size());
-		ArrayList<String> newTypeNamePack = new ArrayList<String>(newForms.size());
-		ArrayList<String> oldTypeNamePack = new ArrayList<String>(topForms.size());
+		ArrayList<String> newTypeNamePkg = new ArrayList<String>(newForms.size());
+		ArrayList<String> oldTypeNamePkg = new ArrayList<String>(topForms.size());
 
 		for( TopLevelItem item: newForms ){
-			newTypeNamePack.add(item.type+","+item.name+","+item.pkg);
+			newTypeNamePkg.add(item.type+","+item.name+","+item.pkg);
 		}
 		for( TopLevelItem item: topForms ){
-			oldTypeNamePack.add(item.type+","+item.name+","+item.pkg);
+			oldTypeNamePkg.add(item.type+","+item.name+","+item.pkg);
 		}
 		
 		// find removed forms
-		// All complexity is to be handle the following situation:
+		// All complexity is to handle the following situation:
 		// suppose have two function definition (defun f () 1) (defun f () 2)
 		// if second definition change to (defun ff () 2) need to recompile 
 		// also first definition
@@ -725,7 +724,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			String itemTmp = item.type+","+item.name+","+item.pkg;
 			if ( itemTmp.toLowerCase().startsWith("in-package")){
 				
-			} else if( !newTypeNamePack.contains(itemTmp) ){ //if not in new forms - set to undefine
+			} else if( !newTypeNamePkg.contains(itemTmp) ){ //if not in new forms - set to undefine
 				if (!toUndefine.contains(itemTmp)){//set to undefine only once
 					toUndefine.add(itemTmp);
 				}
@@ -735,15 +734,15 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					// it it is already in toDefine list - it was already processed
 					if ( !toDefineNoPos.contains(itemTmp) ){
 						// see if need to put form for evaluation
-						// first find number of times form is old and new lists
+						// first find number of times form is in old and new lists
 						int nnew = 0;
-						for( String itm: newTypeNamePack){
+						for( String itm: newTypeNamePkg){
 							if( itm.equalsIgnoreCase(item.type+","+item.name+","+item.pkg)){
 								++nnew;
 							}
 						}
 						int nold = 0;
-						for( String itm: oldTypeNamePack){
+						for( String itm: oldTypeNamePkg){
 							if( itm.equalsIgnoreCase(item.type+","+item.name+","+item.pkg)){
 								++nold;
 							}
@@ -752,7 +751,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 						// that has same type/name/package but is last in
 						// new forms
 						if( nnew != nold ){
-							int ind = newTypeNamePack.lastIndexOf(itemTmp);
+							int ind = newTypeNamePkg.lastIndexOf(itemTmp);
 							if( ind >= 0 ){
 								toDefine.add(newForms.get(ind));
 							}

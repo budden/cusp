@@ -130,6 +130,9 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 					usepkg = LispUtil.getPackage(viewer.getDocument().get(),offset);
 				}
 				String[][] results = swank.getCompletionsAndDocs(variable, usepkg, TIMEOUT, nn);
+				if (null == results){
+					return null;
+				}
 				if (results[0].length == 1) {
 					if (results[0][0].equals(variable)) {
 						return null;
