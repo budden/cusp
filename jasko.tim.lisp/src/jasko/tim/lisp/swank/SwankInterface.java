@@ -599,17 +599,18 @@ public class SwankInterface {
 			msg += "))) (if (listp (first (first x))) (first x) x)";
 		}
 		msg += "))))";
-		msg += "(list lst (mapcar #'(lambda (x) (swank:operator-arglist x " + cleanPackage(pkg) + ")) lst)" +
-				" (mapcar #'(lambda (x) (swank:documentation-symbol x)) lst)))";
+		msg += "(list lst (mapcar #'(lambda (y) (swank:operator-arglist y " + cleanPackage(pkg) + ")) lst)" +
+				" (mapcar #'(lambda (z) (swank:documentation-symbol z)) lst)))";
 		LispNode resNode = LispParser.parse(sendEvalAndGrab(msg, usepkg, timeout));
 		LispNode compl = resNode.car().get(0);
 		LispNode args = resNode.car().get(1);
 		LispNode docs = resNode.car().get(2);
 		int nn = compl.params.size();
-		String[][] res = new String[2][nn];
-		if (false ){
-			return res;			
+		if( 0 == nn ){
+			return null;
 		}
+		
+		String[][] res = new String[2][nn];
 
 		for( int i = 0; i < nn; ++i ){
 			String info = args.get(i).value;
