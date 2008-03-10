@@ -3,7 +3,6 @@ package jasko.tim.lisp.editors.actions;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.SwankRunnable;
-import jasko.tim.lisp.util.LispUtil;
 
 import java.util.ArrayList;
 
