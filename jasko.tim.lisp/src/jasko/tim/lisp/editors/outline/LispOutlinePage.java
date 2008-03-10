@@ -113,7 +113,7 @@ public class LispOutlinePage extends ContentOutlinePage
 				TopLevelItem itm = null; //"through away" item
 				try{
 					if( doc.getChar(item.offset) == ';'){ //section
-						String val = doc.get(item.offset, 
+						String val = doc.get(item.offset,
 								doc.getLineLength(doc
 										.getLineOfOffset(item.offset)));
 						itm = LispUtil.getSectionItem(
@@ -134,19 +134,24 @@ public class LispOutlinePage extends ContentOutlinePage
 					item.offset = itm.offset;
 					item.offsetEnd = itm.offsetEnd;
 					TreeItem tr = itemTr.get(item);
-					tr.setText(itm.name);
 					tr.setImage(LispImages.getImageForType(itm.type));
 
 					if( sort == Sort.Type && !item.type.equals(itm.type) ){
 						TreeItem[] typeNodes = 
 							getTreeViewer().getTree().getItems();
-						int i;
+						int i, j;
 						for( i = 0; i < typeNodes.length; ++i ){
 							if( typeNodes[i].getText().equals(itm.type) ){
 								break;
 							}
 						}
+						for( j = 0; j < typeNodes.length; ++j ){
+							if( typeNodes[j].getText().equals(item.type) ){
+								break;
+							}
+						}
 						TreeItem typeNode;
+						TreeItem oldtypeNode = typeNodes[j];
 						if( i >= typeNodes.length ){ //create new category
 							typeNode = 
 								new TreeItem(getTreeViewer().getTree(),SWT.NONE);
@@ -160,9 +165,13 @@ public class LispOutlinePage extends ContentOutlinePage
 							new TreeItem(typeNode,SWT.NONE,
 									getIndex(item.offset,
 											typeNode.getItems()));
+						tr.setText(itm.name);
 						copyItem(tr,tmp);
 						itemTr.put(item, tmp);
 						tr.dispose();
+						if( oldtypeNode.getItemCount() < 1 ){ //remove this category
+							oldtypeNode.dispose();
+						}
 					} else if( sort == Sort.Alpha 
 							&& !item.name.equals(itm.name)){
 						TreeItem[] nodes = 
@@ -176,9 +185,12 @@ public class LispOutlinePage extends ContentOutlinePage
 						}
 						TreeItem tmp = 
 							new TreeItem(getTreeViewer().getTree(),SWT.NONE,i);
+						tr.setText(itm.name);
 						copyItem(tr,tmp);
 						itemTr.put(item, tmp);
 						tr.dispose();
+					} else {
+						tr.setText(itm.name);
 					}
 					item.name = itm.name;
 					item.type = itm.type;						
@@ -265,14 +277,63 @@ public class LispOutlinePage extends ContentOutlinePage
 				itemTr.put(item, tmp);
 			}
 		} else if ( sort == Sort.Type ) {
-			// first move changed types TODO:
+			for( TopLevelItem item : newItems){
+				TreeItem[] typeNodes = getTreeViewer().getTree().getItems(); //types
+				//find type
+				int i;
+				for( i = 0; i < typeNodes.length; ++i ){
+					if( typeNodes[i].getText().equals(item.type) ){
+						break;
+					}
+				}
+				TreeItem typeNode;
+				if( i >= typeNodes.length ){ //create new category
+					typeNode = 
+						new TreeItem(getTreeViewer().getTree(),SWT.NONE);
+					typeNode.setText(item.type);
+					typeNode.setImage(LispImages
+							.getImageForType(item.type));
+				} else {
+					typeNode = typeNodes[i];
+				}
+				TreeItem tmp = 
+					new TreeItem(typeNode,SWT.NONE,
+							getIndex(item.offset,
+									typeNode.getItems()));
+				tmp.setImage(LispImages.getImageForType(item.type));
+				tmp.setText(item.name);
+				tmp.setData(item);
+				itemTr.put(item, tmp);
+			}
+			// remove top level items without kids
+			for( TreeItem node : getTreeViewer().getTree().getItems()){
+				if(0 == node.getItemCount()){
+					node.dispose();
+				}
+			}
+		} else { // sort is Alpha
+			for( TopLevelItem item : newItems){
+				TreeItem[] nodes = getTreeViewer().getTree().getItems(); //types
+				int i;
+				for( i = 0; i < nodes.length; ++i ){
+					if( nodes[i].getText().compareToIgnoreCase(item.name) >= 0 ){
+						break;
+					}
+				}
+				TreeItem tmp = 
+					new TreeItem(getTreeViewer().getTree(),SWT.NONE,i);
+				tmp.setImage(LispImages.getImageForType(item.type));
+				tmp.setText(item.name);
+				tmp.setData(item);
+				itemTr.put(item, tmp);
+			}
 		}
 		//finally update items array
 		items.clear();
 		items.addAll(itemPos.keySet());
 	}
 
-	// get index in items where offset is fit, when sorted by offsets
+	// get index in items where offset is located, when sorted by offsets
 	private int getIndex(int offset, TreeItem[] items){
 		if(items == null || items.length == 0 ){
 			return 0;
