@@ -430,11 +430,14 @@ compiler state."
 (sb-alien:define-alien-routine "tmpnam" sb-alien:c-string
   (dest (* sb-alien:c-string)))
 
+(defparameter *temp-folder* (sb-posix:getenv "TEMP"))
+
 (defun temp-file-name ()
   "Return a temporary file name to compile strings into."
-  (concatenate 'string (tmpnam nil) ".lisp"))
+  (concatenate 'string *temp-folder* (tmpnam nil) ".lisp"))
 
 (defimplementation swank-compile-string (string &key buffer position directory)
+  (declare (ignore directory))
   (let ((*buffer-name* buffer)
         (*buffer-offset* position)
         (*buffer-substring* string)
