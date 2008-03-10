@@ -593,8 +593,9 @@ public class SwankInterface {
 			usepkg = pkg;
 		}
 		if( usefuzzy  ){
+			msg += " :time-limit-in-msec " + timeout;
 			if( n > 0 ){
-				msg += ":limit " + n;
+				msg += " :limit " + n;
 			}
 			msg += "))) (if (listp (first (first x))) (first x) x)";
 		}
