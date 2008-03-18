@@ -140,7 +140,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		
 		// Create the contents of the project's root directory
-		final String pkg = projectName.toLowerCase();
+		final String pkg = makePackageName(projectName);
 		
 		InputStream contents = Templater.getTemplate("main.lisp", pkg);
 		final IFile main = newProject.getFile("main.lisp");
@@ -155,7 +155,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		// Make the asd file
 		contents = Templater.getTemplate("asd.asd", pkg);
-		final IFile asd = newProject.getFile(projectName + ".asd");
+		final IFile asd = newProject.getFile(pkg + ".asd");
 		if (!asd.exists()) {
 			asd.create(contents, true, monitor);
 		}
@@ -219,6 +219,11 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		monitor.done();
 		
 	} // void doFinish(...)
+	
+	private String makePackageName(String projectName) {
+		String ret = projectName.toLowerCase().replace(' ', '-');
+		return ret;
+	}
 	
 
 	private void throwCoreException(String message) throws CoreException {
