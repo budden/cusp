@@ -160,7 +160,8 @@ public class SwankInterface {
 		specialIndents.put("defvar",		"  ");
 		specialIndents.put("defparameter",	"  ");
 		specialIndents.put("eval-when",		"  ");
-		specialIndents.put("multiple-value-bind", "  ");
+		specialIndents.put("multiple-value-bind",	"  ");
+		specialIndents.put("destructuring-bind",	"  ");
 		specialIndents.put("unwind-protect","  ");
 		specialIndents.put("block",			"  ");
 		
