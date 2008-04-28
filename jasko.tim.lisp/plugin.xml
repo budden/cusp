@@ -104,7 +104,7 @@
 			nameFilter="*.asd">
 			<action
 				id="jasko.tim.lisp.navigator.LoadAsdAction"
-				label="Load asd"
+				label="Load Project"
 				icon="icons/load-asd.gif"
 				menubarPath="group.add"
 				class="jasko.tim.lisp.navigator.LoadAsdAction"
