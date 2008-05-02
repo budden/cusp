@@ -905,6 +905,15 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
+	// Stepping related
+	
+	public synchronized void sendStepDebug(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:sldb-step 0)";
+		
+		emacsRex(msg);
+	}
+	
 	// Inspection related
 	
 	public synchronized void sendInspectReplResult(String num, SwankRunnable callBack) {
@@ -1490,6 +1499,8 @@ public class SwankInterface {
 		}
 		
 	} // class
+
+	
 } // class
 	
 
