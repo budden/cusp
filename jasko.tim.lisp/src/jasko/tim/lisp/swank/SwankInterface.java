@@ -88,6 +88,11 @@ public class SwankInterface {
 	private List<SwankRunnable> debugListeners;
 	
 	/**
+	 * Listeners to be notified when the debugger should be dismissed
+	 */
+	private List<SwankRunnable> debugReturnListeners;
+	
+	/**
 	 * Listeners to be notified of anything to be output.
 	 */
 	private List<SwankRunnable> displayListeners;
@@ -112,6 +117,7 @@ public class SwankInterface {
 	public SwankInterface() {
 		debugListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		debugInfoListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		debugReturnListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		displayListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		readListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
 		disconnectListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
@@ -501,6 +507,10 @@ public class SwankInterface {
 	
 	public void addDebugInfoListener(SwankRunnable callBack) {
 		debugInfoListeners.add(callBack);
+	}
+	
+	public void addDebugReturnListener(SwankRunnable callBack) {
+		debugReturnListeners.add(callBack);
 	}
 	
 	public void addDisplayCallback(SwankDisplayRunnable callBack) {
@@ -1328,6 +1338,8 @@ public class SwankInterface {
 					signalListeners(debugListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":debug")) {
 					signalListeners(debugInfoListeners, node);
+				} else if (node.car().value.equalsIgnoreCase(":debug-return")) {
+					signalListeners(debugReturnListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":read-string")) {
 					signalListeners(readListeners, node);
 				} else if (node.car().value.equalsIgnoreCase(":presentation-start")) {
