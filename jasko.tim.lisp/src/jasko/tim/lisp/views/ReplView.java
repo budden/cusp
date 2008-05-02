@@ -733,6 +733,22 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		});
 		
+		swank.addDebugReturnListener(new SwankRunnable() {
+			public void run() {
+				String key = result.get(1).value + ":" + result.get(2).value;
+				LispNode info = debugInfos.get(key);
+				System.out.println("**1");
+				if (info != null) {
+					System.out.println("**2");
+					DebugState state = new DebugState(info);
+					if (currState().equals(state)) {
+						System.out.println("**3");
+						popState();
+					}
+				}
+			}
+		});
+		
 		swank.addDebugListener(new SwankRunnable() {
 			public void run() {
 				String key = result.get(1).value + ":" + result.get(2).value;
@@ -970,7 +986,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	protected void pushDebugState(LispNode debugInfo) {
-		pushState(new DebugState(debugInfo));
+		DebugState state = new DebugState(debugInfo);
+		System.out.println("currState:" + currState());
+		if (!currState().equals(state)) {
+			pushState(state);
+		}
 	}
 	
 	private Hashtable<String, LispNode> debugInfos = new Hashtable<String, LispNode>();
@@ -1063,6 +1083,14 @@ public class ReplView extends ViewPart implements SelectionListener {
 			desc = debugInfo.get(3);
 			options = debugInfo.get(4);
 			backtrace = debugInfo.get(5);
+		}
+		
+		public boolean equals(Object obj) {
+			if (obj instanceof DebugState) {
+				DebugState state = (DebugState)obj;
+				return (thread.equals(state.thread) && level.equals(state.level));
+			}
+			return false;
 		}
 
 		public Color getColor(Display display) {
