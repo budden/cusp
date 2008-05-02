@@ -471,13 +471,39 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	private Action connectButton;
 	private Action loadPackageButton;
-	
+	private Action packageButton;
+	private Action pauseButton;
+	private Action clearButton;
 	private Action stepButton;
 	
+	protected void fillNormalToolBar() {
+		if (clearButton != null) {
+			IToolBarManager tbm = this.getViewSite().getActionBars().getToolBarManager();
+			
+			tbm.removeAll();
+			tbm.add(clearButton);
+			tbm.add(pauseButton);
+			tbm.add(packageButton);
+			tbm.add(loadPackageButton);
+			tbm.add(connectButton);
+			tbm.update(true);
+		}
+	}
+	
+	protected void fillDebugToolBar() {
+		System.out.println("****1");
+		if (stepButton != null) {
+			System.out.println("****2");
+			IToolBarManager tbm = this.getViewSite().getActionBars().getToolBarManager();
+			
+			tbm.removeAll();
+			tbm.add(stepButton);
+			tbm.add(connectButton);
+			tbm.update(true);
+		}
+	}
+	
 	protected void fillToolBar(Composite parent) {
-		IToolBarManager tbm = 
-			this.getViewSite().getActionBars().getToolBarManager();
-		
 		loadPackageButton = new Action("Load Package") {
 			public void run() {
 				swank.sendGetInstalledPackages(new SwankRunnable() {
@@ -568,7 +594,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				LispImages.getImageDescriptor(LispImages.RECONNECT));
 		connectButton.setToolTipText("Reconnect");
 		
-		Action packageButton = new Action("Change Package") {
+		packageButton = new Action("Change Package") {
 			public void run() {
 				PackageDialog pd = 
 					new PackageDialog(ReplView.this.getSite().getShell(),
@@ -582,7 +608,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				LispImages.getImageDescriptor(LispImages.DEFPACKAGE));
 		packageButton.setToolTipText("Change Package");
 		
-		Action pauseButton = new Action("Interrupt execution") {
+		pauseButton = new Action("Interrupt execution") {
 			public void run() {
 				getSwank().sendInterrupt(null);
 			}
@@ -592,7 +618,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		pauseButton.setToolTipText("Interrupt execution");
 		
 		
-		Action clearButton = new Action("Clear Console") {
+		clearButton = new Action("Clear Console") {
 			public void run() {
 				history.clear();
 			}
@@ -610,15 +636,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 		stepButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.STEP));
 		stepButton.setToolTipText("Step");
-		stepButton.setEnabled(false);
 		
-		tbm.add(stepButton);
-		
-		tbm.add(clearButton);
-		tbm.add(pauseButton);
-		tbm.add(packageButton);
-		tbm.add(loadPackageButton);
-		tbm.add(connectButton);
+		this.fillNormalToolBar();
 	}
 	
 	public void widgetDefaultSelected(SelectionEvent e) {
@@ -737,12 +756,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 			public void run() {
 				String key = result.get(1).value + ":" + result.get(2).value;
 				LispNode info = debugInfos.get(key);
-				System.out.println("**1");
 				if (info != null) {
-					System.out.println("**2");
 					DebugState state = new DebugState(info);
 					if (currState().equals(state)) {
-						System.out.println("**3");
 						popState();
 					}
 				}
@@ -1030,9 +1046,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void activate() {
-			if (stepButton != null) {
-				stepButton.setEnabled(false);
-			}
+			fillNormalToolBar();
 		}
 	}
 	
@@ -1058,9 +1072,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void activate() {
-			if (stepButton != null) {
-				stepButton.setEnabled(false);
-			}
+			fillNormalToolBar();
 		}
 	
 	}
@@ -1102,9 +1114,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void activate() {
-			if (stepButton != null) {
-				stepButton.setEnabled(true);
-			}
+			fillDebugToolBar();
 			debugLabel.setText(desc.car().value + "\n" + desc.cadr().value);
 			debugLabel.setToolTipText(debugLabel.getText());
 			debugTree.removeAll();
