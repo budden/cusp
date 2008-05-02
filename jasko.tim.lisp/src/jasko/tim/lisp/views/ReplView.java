@@ -472,6 +472,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 	private Action connectButton;
 	private Action loadPackageButton;
 	
+	private Action stepButton;
+	
 	protected void fillToolBar(Composite parent) {
 		IToolBarManager tbm = 
 			this.getViewSite().getActionBars().getToolBarManager();
@@ -598,6 +600,19 @@ public class ReplView extends ViewPart implements SelectionListener {
 		clearButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.CLEAR));
 		clearButton.setToolTipText("Clear Console");
+		
+		
+		stepButton = new Action("Step") {
+			public void run() {
+				getSwank().sendStepDebug(null);
+			}
+		};
+		stepButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.STEP));
+		stepButton.setToolTipText("Step");
+		stepButton.setEnabled(false);
+		
+		tbm.add(stepButton);
 		
 		tbm.add(clearButton);
 		tbm.add(pauseButton);
@@ -995,6 +1010,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void activate() {
+			if (stepButton != null) {
+				stepButton.setEnabled(false);
+			}
 		}
 	}
 	
@@ -1020,6 +1038,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void activate() {
+			if (stepButton != null) {
+				stepButton.setEnabled(false);
+			}
 		}
 	
 	}
@@ -1053,6 +1074,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 
 		public void activate() {
+			if (stepButton != null) {
+				stepButton.setEnabled(true);
+			}
 			debugLabel.setText(desc.car().value + "\n" + desc.cadr().value);
 			debugLabel.setToolTipText(debugLabel.getText());
 			debugTree.removeAll();

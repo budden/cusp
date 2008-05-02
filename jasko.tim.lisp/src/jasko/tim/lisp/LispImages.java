@@ -44,6 +44,8 @@ public class LispImages {
 	public static final String REFRESH = "refresh";
 	public static final String FORWARD_NAV = "forward-nav";
 	public static final String BACKWARD_NAV = "backward-nav";
+	
+	public static final String STEP = "step";
 
 	static {
 		ImageRegistry imageReg = LispPlugin.getDefault().getImageRegistry();
@@ -89,6 +91,8 @@ public class LispImages {
 		imageReg.put(LispImages.REFRESH, loadImageDescriptor("refresh.gif"));
 		imageReg.put(LispImages.FORWARD_NAV, loadImageDescriptor("forward_nav.gif"));
 		imageReg.put(LispImages.BACKWARD_NAV, loadImageDescriptor("backward_nav.gif"));
+		
+		imageReg.put(LispImages.STEP, loadImageDescriptor("step.gif"));
 		
 	}
 	
