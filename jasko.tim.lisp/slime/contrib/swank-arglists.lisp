@@ -12,6 +12,40 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (swank-require :swank-c-p-c))
 
+(defun length= (seq n)
+  "Test for whether SEQ contains N number of elements. I.e. it's equivalent
+ to (= (LENGTH SEQ) N), but besides being more concise, it may also be more
+ efficiently implemented."
+  (etypecase seq 
+    (list (do ((i n (1- i))
+               (list seq (cdr list)))
+              ((or (<= i 0) (null list))
+               (and (zerop i) (null list)))))
+    (sequence (= (length seq) n))))
+
+(defun ensure-list (thing)
+  (if (listp thing) thing (list thing)))
+
+(defun recursively-empty-p (list)
+  "Returns whether LIST consists only of arbitrarily nested empty lists."
+  (cond ((not (listp list)) nil)
+	((null list) t)
+	(t (every #'recursively-empty-p list))))
+
+(defun maybecall (bool fn &rest args)
+  "Call FN with ARGS if BOOL is T. Otherwise return ARGS as multiple values."
+  (if bool (apply fn args) (values-list args)))
+
+(defun exactly-one-p (&rest values)
+  "If exactly one value in VALUES is non-NIL, this value is returned.
+Otherwise NIL is returned."
+  (let ((found nil))
+    (dolist (v values)
+      (when v (if found
+                  (return-from exactly-one-p nil)
+                  (setq found v))))
+    found))
+
 (defun valid-operator-symbol-p (symbol)
   "Is SYMBOL the name of a function, a macro, or a special-operator?"
   (or (fboundp symbol)
@@ -23,6 +57,14 @@
   "Is STRING the name of a function, macro, or special-operator?"
   (let ((symbol (parse-symbol string)))
     (valid-operator-symbol-p symbol)))
+
+(defun valid-function-name-p (form)
+  (or (symbolp form)
+      (and (consp form)
+           (second form)
+           (not (third form))
+           (eq (first form) 'setf)
+           (symbolp (second form)))))
 
 (defslimefun arglist-for-echo-area (raw-specs &key arg-indices
                                                    print-right-margin print-lines)
@@ -243,6 +285,29 @@ the flag if a symbol had to be interned."
     (assert (= pos (length string)))
     (values sexp interned?)))
 
+(defun read-softly-from-string (string)
+  "Returns three values:
+
+     1. the object resulting from READing STRING.
+
+     2. The index of the first character in STRING that was not read.
+
+     3. T if the object is a symbol that had to be newly interned
+        in some package. (This does not work for symbols in
+        compound forms like lists or vectors.)"
+  (multiple-value-bind (symbol found? symbol-name package) (parse-symbol string)
+    (if found?
+        (values symbol (length string) nil)
+        (multiple-value-bind (sexp pos) (read-from-string string)
+          (values sexp pos
+                  (when (symbolp sexp)
+                    (prog1 t
+                      ;; assert that PARSE-SYMBOL didn't parse incorrectly.
+                      (assert (and (equal symbol-name (symbol-name sexp))
+                                   (eq package (symbol-package sexp)))))))))))
+
+(defun unintern-in-home-package (symbol)
+  (unintern symbol (symbol-package symbol)))
 
 (defstruct (arglist (:conc-name arglist.) (:predicate arglist-p))
   provided-args         ; list of the provided actual arguments
@@ -520,65 +585,71 @@ Return an OPTIONAL-ARG structure."
 
 (defun decode-arglist (arglist)
   "Parse the list ARGLIST and return an ARGLIST structure."
-  (let ((mode nil)
-        (result (make-arglist)))
-    (dolist (arg arglist)
-      (cond
-        ((eql mode '&unknown-junk)      
-         ;; don't leave this mode -- we don't know how the arglist
-         ;; after unknown lambda-list keywords is interpreted
-         (push arg (arglist.unknown-junk result)))
-        ((eql arg '&allow-other-keys)
-         (setf (arglist.allow-other-keys-p result) t))
-        ((eql arg '&key)
-         (setf (arglist.key-p result) t
-               mode arg))
-        ((member arg '(&optional &rest &body &aux))
-         (setq mode arg))
-        ((member arg '(&whole &environment))
-         (setq mode arg)
-         (push arg (arglist.known-junk result)))
-        ((and (symbolp arg)
-              (string= (symbol-name arg) (string '#:&any))) ; may be interned
-         (setf (arglist.any-p result) t)                    ;  in any *package*.
-         (setq mode '&any))
-        ((member arg lambda-list-keywords)
-         (setq mode '&unknown-junk)
-         (push arg (arglist.unknown-junk result)))
-        (t
-         (ecase mode
-	   (&key
-	    (push (decode-keyword-arg arg) 
-                  (arglist.keyword-args result)))
-	   (&optional
-	    (push (decode-optional-arg arg) 
-                  (arglist.optional-args result)))
-	   (&body
-	    (setf (arglist.body-p result) t
-                  (arglist.rest result) arg))
-	   (&rest
-            (setf (arglist.rest result) arg))
-	   (&aux
-            (push (decode-optional-arg arg)
-                  (arglist.aux-args result)))
-	   ((nil)
-	    (push (decode-required-arg arg)
-                  (arglist.required-args result)))
-           ((&whole &environment)
-            (setf mode nil)
-            (push arg (arglist.known-junk result)))
-           (&any
-            (push arg (arglist.any-args result)))))))
-    (nreversef (arglist.required-args result))
-    (nreversef (arglist.optional-args result))
-    (nreversef (arglist.keyword-args result))
-    (nreversef (arglist.aux-args result))
-    (nreversef (arglist.any-args result))
-    (nreversef (arglist.known-junk result))
-    (nreversef (arglist.unknown-junk result))
-    (assert (or (and (not (arglist.key-p result)) (not (arglist.any-p result)))
-                (exactly-one-p (arglist.key-p result) (arglist.any-p result))))
-    result))
+  (loop
+    with mode = nil
+    with result = (make-arglist)
+    for arg = (if (consp arglist)
+                (pop arglist)
+                (progn
+                  (setf mode '&rest)
+                  arglist))
+    do (cond
+         ((eql mode '&unknown-junk)      
+          ;; don't leave this mode -- we don't know how the arglist
+          ;; after unknown lambda-list keywords is interpreted
+          (push arg (arglist.unknown-junk result)))
+         ((eql arg '&allow-other-keys)
+          (setf (arglist.allow-other-keys-p result) t))
+         ((eql arg '&key)
+          (setf (arglist.key-p result) t
+                mode arg))
+         ((member arg '(&optional &rest &body &aux))
+          (setq mode arg))
+         ((member arg '(&whole &environment))
+          (setq mode arg)
+          (push arg (arglist.known-junk result)))
+         ((and (symbolp arg)
+               (string= (symbol-name arg) (string '#:&any))) ; may be interned
+          (setf (arglist.any-p result) t)                    ;  in any *package*.
+          (setq mode '&any))
+         ((member arg lambda-list-keywords)
+          (setq mode '&unknown-junk)
+          (push arg (arglist.unknown-junk result)))
+         (t
+          (ecase mode
+            (&key
+               (push (decode-keyword-arg arg) 
+                     (arglist.keyword-args result)))
+            (&optional
+               (push (decode-optional-arg arg) 
+                     (arglist.optional-args result)))
+            (&body
+               (setf (arglist.body-p result) t
+                     (arglist.rest result) arg))
+            (&rest
+               (setf (arglist.rest result) arg))
+            (&aux
+               (push (decode-optional-arg arg)
+                     (arglist.aux-args result)))
+            ((nil)
+               (push (decode-required-arg arg)
+                     (arglist.required-args result)))
+            ((&whole &environment)
+               (setf mode nil)
+               (push arg (arglist.known-junk result)))
+            (&any
+               (push arg (arglist.any-args result))))))
+    until (atom arglist)
+    finally (nreversef (arglist.required-args result))
+    finally (nreversef (arglist.optional-args result))
+    finally (nreversef (arglist.keyword-args result))
+    finally (nreversef (arglist.aux-args result))
+    finally (nreversef (arglist.any-args result))
+    finally (nreversef (arglist.known-junk result))
+    finally (nreversef (arglist.unknown-junk result))
+    finally (assert (or (and (not (arglist.key-p result)) (not (arglist.any-p result)))
+                        (exactly-one-p (arglist.key-p result) (arglist.any-p result))))
+    finally (return result)))
 
 (defun encode-arglist (decoded-arglist)
   (append (mapcar #'encode-required-arg (arglist.required-args decoded-arglist))
@@ -1022,7 +1093,7 @@ Examples:
 
 (defgeneric arglist-dispatch (operator-type operator arguments &key remove-args))
   
-(defmethod arglist-dispatch (operator-type operator arguments &key (remove-args t))
+(defmethod arglist-dispatch ((operator-type t) operator arguments &key (remove-args t))
   (when (and (symbolp operator)
              (valid-operator-symbol-p operator))
     (multiple-value-bind (decoded-arglist determining-args any-enrichment)
@@ -1075,7 +1146,7 @@ Examples:
 (defmethod arglist-dispatch ((operator-type (eql :function)) (operator (eql 'declare))
                              arguments &key (remove-args t))
   ;; Catching 'DECLARE before SWANK-BACKEND:ARGLIST can barf.
-  (declare (ignore remove-args))
+  (declare (ignore remove-args arguments))
   (make-arglist :rest '#:decl-specifiers))
 
 (defmethod arglist-dispatch ((operator-type (eql :declaration))

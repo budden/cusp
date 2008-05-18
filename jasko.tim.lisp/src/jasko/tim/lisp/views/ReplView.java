@@ -61,6 +61,14 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected Button btn;
 	protected Label replPackage;
 	
+	protected void resetState() {
+		while (states.size() > 1) {
+			popState();
+		}
+
+		debugInfos.clear();
+	}
+	
 	public static void switchToRepl() {
 		IWorkbenchPage page = 
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
@@ -491,13 +499,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	protected void fillDebugToolBar() {
-		System.out.println("****1");
 		if (stepButton != null) {
-			System.out.println("****2");
 			IToolBarManager tbm = this.getViewSite().getActionBars().getToolBarManager();
 			
 			tbm.removeAll();
 			tbm.add(stepButton);
+			stepButton.setEnabled(true);
 			tbm.add(connectButton);
 			tbm.update(true);
 		}
@@ -581,6 +588,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 					scrollDown();
 					replPackage.setText("Current package: " + swank.getCurrPackage());
 					
+					resetState();
+					
 					this.setImageDescriptor(
 							LispImages.getImageDescriptor(
 									LispImages.RECONNECT));
@@ -630,7 +639,13 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		stepButton = new Action("Step") {
 			public void run() {
-				getSwank().sendStepDebug(null);
+				State currState = currState();
+				if (currState != null
+						&& currState.getClass().getName()
+								.contains("DebugState")) {
+					((DebugState) currState).startDebug();
+					this.setEnabled(false);
+				}
 			}
 		};
 		stepButton.setImageDescriptor(
@@ -963,6 +978,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 	//******************************
 	
 	protected void pushState(State s) {
+		if (states.size() > 1) {
+			// Assuming anything above one is a debug state?
+			if (currState() instanceof DebugState) {
+				((DebugState) currState()).deactivate();
+			}
+		}
 		states.push(s);
 		applyCurrentState();
 	}
@@ -1175,10 +1196,27 @@ public class ReplView extends ViewPart implements SelectionListener {
 			debugTree.setSelection(firstItem);
 			//select most often used (by me?) option
 			debugTree.setSelection(quickOption);
+			
+			LispNode condExtras = desc.caadr();
+
+			if (condExtras.getNumberOfSubSexps() > 0) {
+				for (int i = 0; i < condExtras.getNumberOfSubSexps(); i++) {
+					LispNode extra = condExtras.get(i);
+					if (extra.car().value.equals(":show-frame-source")) {
+						String frame = extra.cadr().value;
+						getSwank().sendGetFrameSourceLocation(frame, thread,
+								new SwankRunnable() {
+									public void run() {
+										processFrameSourceLocationResult(result);
+									}
+								});
+					}
+				}
+			}
 		}
 		
 		public void choose(Integer choice) {
-			swank.sendDebug(choice.toString(), null);
+			swank.sendDebug(choice.toString(), this.level, thread, null);
 			
 			appendInput("]> " + choice + "\n");
 			scrollDown();
@@ -1195,6 +1233,21 @@ public class ReplView extends ViewPart implements SelectionListener {
 			in.getControl().setFocus();
 		}
 		
+		public void deactivate() {
+			debugTree.removeSelectionListener(this);
+			debugTree.removeTreeListener(this);
+			debugTree.removeMouseListener(this);
+			debugTree.removeKeyListener(this);
+			debugView.removeKeyListener(this);
+
+			hideFrame(debugView);
+			showFrame(mainView);
+		}
+
+		public void startDebug() {
+			chooseRestart('s');
+		}
+		
 		public void chooseRestart(char c) {
 			switch (c) {
 			// a and c crash? sbcl under windows. I don't know about other distrs.
@@ -1206,8 +1259,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 				swank.sendContinueDebug(null);
 				appendText("]> Continue debug\n");
 				break; */
+			case 's':
+				swank.sendStepDebug(null, thread);
+				appendInput("]> Step\n");
+				break;
 			case 'q':
-				swank.sendQuitDebug(null);				
+				swank.sendQuitDebug(null, thread);				
 				appendInput("]> Quit debug\n");
 				break;
 			default :
@@ -1237,7 +1294,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				// all stupidity of this procedure, to make tree behave civilized on linux
 				// it would be much clearer and strightforward to just delete all old items and
 				// add create new ones, instead we need to reuse existing items
-				getSwank().sendGetFrameLocals(frame.toString(), new SwankRunnable() {
+				getSwank().sendGetFrameLocals(frame.toString(), thread, new SwankRunnable() {
 					public void run() {
 						int n0 = sel.getItemCount();
 						//sel.removeAll(); //this precludes displaying on Linux
@@ -1279,19 +1336,30 @@ public class ReplView extends ViewPart implements SelectionListener {
 			
 			if (sel.getData("frame") != null) {
 				Object frame = sel.getData("frame");
-				getSwank().sendGetFrameSourceLocation(frame.toString(), new SwankRunnable() {
+				getSwank().sendGetFrameSourceLocation(frame.toString(), thread, new SwankRunnable() {
 					public void run() {
-						LispNode res = result.getf(":return").getf(":ok");
-						if (!res.car().value.equalsIgnoreCase(":error")) {
-							String file = res.getf(":file").value;
-							int pos = res.getf(":position").asInt();
-							String snippet = res.getf(":snippet").value;
-					//swank.runAfterLispStart();
-							LispEditor.jumpToDefinition(file, pos, snippet);
-							setFocus();
-						}
+						processFrameSourceLocationResult(result);
+						
 					}
 				});
+			}
+		}
+		
+		public void processFrameSourceLocationResult(LispNode result) {
+			LispNode res = result.getf(":return").getf(":ok");
+			if (!res.car().value.equalsIgnoreCase(":error")) {
+				String file = res.getf(":file").value;
+				if (file == null || (file.length() == 0)) {
+					file = res.getf(":buffer").value;
+				}
+				if (file != null) {
+					file = getSwank().translateRemoteFilePath(file);
+				}
+				int pos = res.getf(":position").asInt();
+				String snippet = res.getf(":snippet").value;
+				// swank.runAfterLispStart();
+				LispEditor.jumpToDefinition(file, pos, snippet);
+				setFocus();
 			}
 		}
 		

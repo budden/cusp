@@ -128,11 +128,15 @@ public class InspectorView extends ViewPart {
 			return;
 		}
 		
-		for (LispNode item : content.params) {
-			if (item.isString) {
-				output.appendTextForInspector(item.value);
-			} else {
-				output.appendInspectable(item.getf(":value").value, item.get(2).value);
+		if ((content.params.size() > 0) &&
+			(content.params.get(0) != null) &&
+			(content.params.get(0).params != null)) {
+			for (LispNode item : content.params.get(0).params) {
+				if (item.isString) {
+					output.appendTextForInspector(item.value);
+				} else {
+					output.appendInspectable(item.getf(":value").value, item.get(2).value);
+				}
 			}
 		}
 	}

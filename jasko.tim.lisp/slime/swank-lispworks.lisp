@@ -408,7 +408,7 @@ Return NIL if the symbol is unbound."
   (loop for (filename . defs) in database do
 	(loop for (dspec . conditions) in defs do
 	      (dolist (c conditions) 
-		(funcall fn filename dspec c)))))
+		(funcall fn filename dspec (if (consp c) (car c) c))))))
 
 (defun lispworks-severity (condition)
   (cond ((not condition) :warning)
@@ -558,8 +558,9 @@ function names like \(SETF GET)."
 		nil)))
 	   htab))
 
-(defimplementation swank-compile-string (string &key buffer position directory)
-  (declare (ignore directory))
+(defimplementation swank-compile-string (string &key buffer position directory
+                                                debug)
+  (declare (ignore directory debug))
   (assert buffer)
   (assert position)
   (let* ((location (list :emacs-buffer buffer position string))
@@ -624,37 +625,27 @@ function names like \(SETF GET)."
           append (frob-locs dspec (dspec:dspec-definition-locations dspec)))))
 
 ;;; Inspector
-(defclass lispworks-inspector (backend-inspector) ())
 
-(defimplementation make-default-inspector ()
-  (make-instance 'lispworks-inspector))
-
-(defmethod inspect-for-emacs ((o t) (inspector backend-inspector))
-  (declare (ignore inspector))
+(defmethod emacs-inspect ((o t))
   (lispworks-inspect o))
 
-(defmethod inspect-for-emacs ((o function) 
-                              (inspector backend-inspector))
-  (declare (ignore inspector))
+(defmethod emacs-inspect ((o function))
   (lispworks-inspect o))
 
 ;; FIXME: slot-boundp-using-class in LW works with names so we can't
 ;; use our method in swank.lisp.
-(defmethod inspect-for-emacs ((o standard-object) 
-                              (inspector backend-inspector))
-  (declare (ignore inspector))
+(defmethod emacs-inspect ((o standard-object))
   (lispworks-inspect o))
 
 (defun lispworks-inspect (o)
   (multiple-value-bind (names values _getter _setter type)
       (lw:get-inspector-values o nil)
     (declare (ignore _getter _setter))
-    (values "A value."
             (append 
              (label-value-line "Type" type)
              (loop for name in names
                    for value in values
-                   append (label-value-line name value))))))
+                   append (label-value-line name value)))))
 
 ;;; Miscellaneous
 

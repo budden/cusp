@@ -170,6 +170,7 @@ public class SwankInterface {
 		specialIndents.put("destructuring-bind",	"  ");
 		specialIndents.put("unwind-protect","  ");
 		specialIndents.put("block",			"  ");
+		specialIndents.put("case",			"  ");
 		
 		// All additional custom indents will go here
 		indents = new Hashtable<String, Integer>();
@@ -429,7 +430,9 @@ public class SwankInterface {
 			if (slimeLoadCmd != null) {
 				commandInterface.writeBytes(slimeLoadCmd);
 			}
-			commandInterface.writeBytes("(swank:create-server :coding-system \"utf-8\" :port " + port + ")\n");
+			commandInterface.writeBytes("(swank-loader::init)");
+			commandInterface.flush();
+			commandInterface.writeBytes("(progn (swank:create-server :coding-system \"utf-8\" :port " + port + "))\n");
 			commandInterface.flush();
 			
 			// FIXME: at this point we should wait for "Swank started" message on standard output
@@ -886,19 +889,19 @@ public class SwankInterface {
 	}
 	
 		
-	public synchronized void sendDebug(String commandNum, SwankRunnable callBack) {
+	public synchronized void sendDebug(String commandNum, String sldbLevel, String threadId, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:invoke-nth-restart-for-emacs 1 "
+		String msg = "(swank:invoke-nth-restart-for-emacs " + sldbLevel + " "
 			+ commandNum + ")";
 		
-		emacsRex(msg);
+		emacsRexWithThread(msg, threadId);
 	}
 	
 	public synchronized void sendAbortDebug(SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:sdbl-abort)";
 		
-		emacsRex(msg);
+		emacsRex(msg, getPackage());
 	}
 	
 	public synchronized void sendContinueDebug(SwankRunnable callBack) {
@@ -908,20 +911,20 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
-	public synchronized void sendQuitDebug(SwankRunnable callBack) {
+	public synchronized void sendQuitDebug(SwankRunnable callBack, String threadId) {
 		registerCallback(callBack);
 		String msg = "(swank:throw-to-toplevel)";
 		
-		emacsRex(msg);
+		emacsRexWithThread(msg, threadId);
 	}
 	
 	// Stepping related
 	
-	public synchronized void sendStepDebug(SwankRunnable callBack) {
+	public synchronized void sendStepDebug(SwankRunnable callBack, String threadId) {
 		registerCallback(callBack);
 		String msg = "(swank:sldb-step 0)";
 		
-		emacsRex(msg);
+		emacsRexWithThread(msg, threadId);
 	}
 	
 	// Inspection related
@@ -955,26 +958,25 @@ public class SwankInterface {
 	
 	public synchronized void sendInspectFrameLocal(String threadNum, String frameNum, String varNum, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:init-inspector \"(swank:get-repl-result '(:frame-var " 
-			+ threadNum + " " + frameNum + " " + varNum + "))\" :reset t :eval t :dwim-mode nil)";
+		String msg = "(swank:inspect-frame-var " + frameNum + " " + varNum + ")";
 		
-		emacsRex(msg);
+		emacsRexWithThread(msg, threadNum);
 	}
 	
 	// Debug related
 	
-	public synchronized void sendGetFrameLocals(String frameNum, SwankRunnable callBack) {
+	public synchronized void sendGetFrameLocals(String frameNum, String threadId, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:frame-locals-for-emacs " + frameNum + ")";
 		
-		emacsRex(msg);
+		emacsRexWithThread(msg, threadId);
 	}
 	
-	public synchronized void sendGetFrameSourceLocation(String frameNum, SwankRunnable callBack) {
+	public synchronized void sendGetFrameSourceLocation(String frameNum, String threadId, SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(swank:frame-source-location-for-emacs " + frameNum + ")";
 		
-		emacsRex(msg);
+		emacsRexWithThread(msg, threadId);
 	}
 	
 	public synchronized void sendDisassemble(String symbol, String pkg, SwankRunnable callBack) {
@@ -1071,10 +1073,11 @@ public class SwankInterface {
 		registerCallback(new CompileRunnable(callBack));
 		System.out.println(file);
 		System.out.println(dir);
+		dir = implementation.translateLocalFilePath(dir);
 		String msg = "(swank:compile-string-for-emacs \""
 			+ formatCode(expr) + "\" \""
 			+ formatCode(dir + file) + "\" " + (offset+1) + " \"" + formatCode(dir)
-			+ "\")";
+			+ "\" nil)"; // FIXME: maximum debug setting for compilation
 		if (pckg.equalsIgnoreCase("nil")) {
 			emacsRex(msg);
 		} else {
@@ -1261,17 +1264,30 @@ public class SwankInterface {
 	}
 	
 	public synchronized boolean emacsRex(String message) {
-		String msg = "(:emacs-rex " + message + " nil :repl-thread " + messageNum + ")";
-		
-		return sendRaw(msg);
+		return emacsRexWithThread(message, ":repl-thread");
 	}
 	
 	
 	public synchronized boolean emacsRex(String message, String pkg) {
-		String msg = "(:emacs-rex " + message + " " + cleanPackage(pkg) + " :repl-thread " + messageNum + ")";
-		
+		return emacsRexWithThread(message, pkg, ":repl-thread");
+	}
+	
+	public synchronized boolean emacsRexWithThread(String message,
+			String threadId) {
+		String msg = "(:emacs-rex " + message + " nil " + threadId + " "
+				+ messageNum + ")";
+
 		return sendRaw(msg);
 	}
+
+	public synchronized boolean emacsRexWithThread(String message, String pkg,
+			String threadId) {
+		String msg = "(:emacs-rex " + message + " " + cleanPackage(pkg) + " "
+				+ threadId + " " + messageNum + ")";
+
+		return sendRaw(msg);
+	}
+	
 	
 	public synchronized boolean sendRaw(String message) {
 		//message = message + "\n";

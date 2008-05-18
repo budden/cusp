@@ -314,7 +314,9 @@
          (when binary-filename
            (delete-file binary-filename))))))
 
-(defimplementation swank-compile-string (string &key buffer position directory)
+(defimplementation swank-compile-string (string &key buffer position directory
+                                                debug)
+  (declare (ignore debug))
   ;; We store the source buffer in excl::*source-pathname* as a string
   ;; of the form <buffername>;<start-offset>.  Quite ugly encoding, but
   ;; the fasl file is corrupted if we use some other datatype.
@@ -564,33 +566,22 @@
 
 ;;;; Inspecting
 
-(defclass acl-inspector (backend-inspector) ())
-
-(defimplementation make-default-inspector ()
-  (make-instance 'acl-inspector))
-
-(defmethod inspect-for-emacs ((f function) inspector)
-  inspector
-  (values "A function."
+(defmethod emacs-inspect ((f function))
           (append
            (label-value-line "Name" (function-name f))
            `("Formals" ,(princ-to-string (arglist f)) (:newline))
            (let ((doc (documentation (excl::external-fn_symdef f) 'function)))
              (when doc
-               `("Documentation:" (:newline) ,doc))))))
+               `("Documentation:" (:newline) ,doc)))))
 
-(defmethod inspect-for-emacs ((o t) (inspector backend-inspector))
-  inspector
-  (values "A value." (allegro-inspect o)))
+(defmethod emacs-inspect ((o t))
+  (allegro-inspect o))
 
-(defmethod inspect-for-emacs ((o function) (inspector backend-inspector))
-  inspector
-  (values "A function." (allegro-inspect o)))
+(defmethod emacs-inspect ((o function))
+  (allegro-inspect o))
 
-(defmethod inspect-for-emacs ((o standard-object) 
-                              (inspector backend-inspector))
-  inspector
-  (values (format nil "~A is a standard-object." o) (allegro-inspect o)))
+(defmethod emacs-inspect ((o standard-object))
+  (allegro-inspect o))
 
 (defun allegro-inspect (o)
   (loop for (d dd) on (inspect::inspect-ctl o)

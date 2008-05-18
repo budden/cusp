@@ -180,6 +180,8 @@ public class RemoteImplementation extends LispImplementation {
 				// Unfortunately, SBCL shell character doesn't come up once --load
 				// processing finishes. As a (hopefuly portable!) hack:
 				// We wait for "swank-backend" string to appear.
+				// FIXME: looking for "This is SBCL" instead, to avoid modifying swank.
+				// FIXME: non-sbcl implementation will need to print this on load :)
 				// Then send a (format t "Swank ~A" "loaded") command
 				// And wait for the result to show up. Once it does, everything's ready
 				java.io.BufferedInputStream in1 = new BufferedInputStream(proccess.getInputStream());
@@ -199,7 +201,7 @@ public class RemoteImplementation extends LispImplementation {
 							allInput += result;
 						}
 						
-						if ((!sentControl) && allInput.indexOf("swank-backend") > -1) {
+						if ((!sentControl) && allInput.indexOf("This is SBCL") > -1) {
 							synchronized (sshProcess) {
 								sshProcess.getOutputStream().write("(format t \"Swank ~A\" \"loaded\")\n".getBytes());
 								sshProcess.getOutputStream().flush();
