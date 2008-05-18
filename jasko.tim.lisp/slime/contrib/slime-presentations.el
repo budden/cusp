@@ -374,6 +374,40 @@ Also return the start position, end position, and buffer of the presentation."
       (slime-presentation-around-or-before-point-or-error point)
     (slime-inspect-presentation presentation start end (current-buffer))))
 
+
+(defun slime-M-.-presentation (presentation start end buffer &optional where)
+  (let* ((id (slime-presentation-id presentation))
+	 (presentation-string (format "Presentation %s" id))
+	 (location (slime-eval `(swank:find-definition-for-thing
+				 (swank::lookup-presented-object
+				  ',(slime-presentation-id presentation))))))
+    (slime-edit-definition-cont
+     (and location (list (make-slime-xref :dspec `(,presentation-string)
+					  :location location)))
+     presentation-string
+     where)))
+
+(defun slime-M-.-presentation-at-mouse (event)
+  (interactive "e")
+  (multiple-value-bind (presentation start end buffer) 
+      (slime-presentation-around-click event)
+    (slime-M-.-presentation presentation start end buffer)))
+
+(defun slime-M-.-presentation-at-point (point)
+  (interactive "d")
+  (multiple-value-bind (presentation start end) 
+      (slime-presentation-around-or-before-point-or-error point)
+    (slime-M-.-presentation presentation start end (current-buffer))))
+
+(defun slime-edit-presentation (name &optional where)
+  (if (or current-prefix-arg (not (equal (slime-symbol-name-at-point) name)))
+      nil ; NAME came from user explicitly, so decline.
+      (multiple-value-bind (presentation start end whole-p)
+	  (slime-presentation-around-or-before-point (point))
+	(when presentation
+	  (slime-M-.-presentation presentation start end (current-buffer) where)))))
+
+
 (defun slime-copy-presentation-to-repl (presentation start end buffer)
   (let ((presentation-text 
 	 (with-current-buffer buffer
@@ -479,35 +513,47 @@ Also return the start position, end position, and buffer of the presentation."
     (goto-char start)
     (push-mark end nil t)))
 
-(defun slime-previous-presentation ()
-  "Move point to the beginning of the first presentation before point."
-  (interactive)
-  ;; First skip outside the current surrounding presentation (if any)
-  (multiple-value-bind (presentation start end) 
-      (slime-presentation-around-point (point))
-    (when presentation
-      (goto-char start)))
-  (let ((p (previous-single-property-change (point) 'slime-repl-presentation)))
-    (unless p 
-      (error "No previous presentation"))
-    (multiple-value-bind (presentation start end) 
-	(slime-presentation-around-or-before-point-or-error p)
-      (goto-char start))))
+(defun slime-previous-presentation (&optional arg)
+  "Move point to the beginning of the first presentation before point.
+With ARG, do this that many times.
+A negative argument means move forward instead."
+  (interactive "p")
+  (unless arg (setq arg 1))
+  (slime-next-presentation (- arg)))
 
-(defun slime-next-presentation ()
-  "Move point to the beginning of the next presentation after point."
-  (interactive)
-  ;; First skip outside the current surrounding presentation (if any)
-  (multiple-value-bind (presentation start end) 
-      (slime-presentation-around-point (point))
-    (when presentation
-      (goto-char end)))
-  (let ((p (next-single-property-change (point) 'slime-repl-presentation)))
-    (unless p 
-      (error "No next presentation"))
-    (multiple-value-bind (presentation start end) 
-	(slime-presentation-around-or-before-point-or-error p)
-      (goto-char start))))
+(defun slime-next-presentation (&optional arg)
+  "Move point to the beginning of the next presentation after point.
+With ARG, do this that many times.
+A negative argument means move backward instead."
+  (interactive "p")
+  (unless arg (setq arg 1))
+  (cond
+   ((plusp arg)
+    (dotimes (i arg)
+      ;; First skip outside the current surrounding presentation (if any)
+      (multiple-value-bind (presentation start end) 
+	  (slime-presentation-around-point (point))
+	(when presentation
+	  (goto-char end)))
+      (let ((p (next-single-property-change (point) 'slime-repl-presentation)))
+	(unless p 
+	  (error "No next presentation"))
+	(multiple-value-bind (presentation start end) 
+	    (slime-presentation-around-or-before-point-or-error p)
+	  (goto-char start)))))
+   ((minusp arg)
+    (dotimes (i (- arg))
+      ;; First skip outside the current surrounding presentation (if any)
+      (multiple-value-bind (presentation start end)
+	  (slime-presentation-around-point (point))
+	(when presentation
+	  (goto-char start)))
+      (let ((p (previous-single-property-change (point) 'slime-repl-presentation)))
+	(unless p 
+	  (error "No previous presentation"))
+	(multiple-value-bind (presentation start end) 
+	    (slime-presentation-around-or-before-point-or-error p)
+	  (goto-char start)))))))
 
 (defvar slime-presentation-map (make-sparse-keymap))
 
@@ -538,6 +584,7 @@ Also return the start position, end position, and buffer of the presentation."
       (list
        `(,(format "Presentation %s" what)
          ("" 
+	  ("Find Definition" . ,(savel 'slime-M-.-presentation-at-mouse))
           ("Inspect" . ,(savel 'slime-inspect-presentation-at-mouse))
           ("Describe" . ,(savel 'slime-describe-presentation-at-mouse))
           ("Pretty-print" . ,(savel 'slime-pretty-print-presentation-at-mouse))
@@ -668,6 +715,7 @@ output; otherwise the new input is appended."
 (defvar slime-presentation-easy-menu
   (let ((P '(slime-presentation-around-or-before-point-p)))
     `("Presentations"
+      [ "Find Definition" slime-M-.-presentation-at-point ,P ]
       [ "Inspect" slime-inspect-presentation-at-point ,P ]
       [ "Describe" slime-describe-presentation-at-point ,P ]
       [ "Pretty-print" slime-pretty-print-presentation-at-point ,P ]
@@ -684,9 +732,11 @@ output; otherwise the new input is appended."
   (easy-menu-define menubar-slime-presentation slime-mode-map "Presentations" slime-presentation-easy-menu)
   (easy-menu-define menubar-slime-presentation slime-repl-mode-map "Presentations" slime-presentation-easy-menu)
   (easy-menu-define menubar-slime-presentation sldb-mode-map "Presentations" slime-presentation-easy-menu)
+  (easy-menu-define menubar-slime-presentation slime-inspector-mode-map "Presentations" slime-presentation-easy-menu)
   (easy-menu-add slime-presentation-easy-menu 'slime-mode-map)
   (easy-menu-add slime-presentation-easy-menu 'slime-repl-mode-map)
-  (easy-menu-add slime-presentation-easy-menu 'sldb-mode-map))
+  (easy-menu-add slime-presentation-easy-menu 'sldb-mode-map)
+  (easy-menu-add slime-presentation-easy-menu 'slime-inspector-mode-map))
 
 ;;; hook functions (hard to isolate stuff)
 
@@ -780,6 +830,27 @@ even on Common Lisp implementations without weak hash tables."
 					   (slime-remove-presentation-properties from to 
 										 presentation))))
 
+(defun slime-presentation-inspector-insert-ispec (ispec)
+  (if (stringp ispec)
+      (insert ispec)
+    (destructure-case ispec
+      ((:value string id)
+       (slime-propertize-region 
+           (list 'slime-part-number id 
+                 'mouse-face 'highlight
+                 'face 'slime-inspector-value-face)
+         (slime-insert-presentation string `(:inspected-part ,id) t)))
+      ((:action string id)
+       (slime-insert-propertized (list 'slime-action-number id
+                                       'mouse-face 'highlight
+                                       'face 'slime-inspector-action-face)
+                                 string)))))
+
+(defun slime-presentation-sldb-insert-frame-variable-value (value frame index)
+  (slime-insert-presentation
+   (in-sldb-face local-value value)
+   `(:frame-var ,slime-current-thread ,(car frame) ,i) t))
+
 ;;; Initialization
 
 (defun slime-presentations-init ()
@@ -796,6 +867,10 @@ even on Common Lisp implementations without weak hash tables."
   (add-hook 'slime-open-stream-hooks 'slime-presentation-on-stream-open)
   (add-hook 'slime-repl-clear-buffer-hook 'slime-clear-presentations)
   (add-hook 'slime-connected-hook 'slime-install-presentations)
+  (add-hook 'slime-edit-definition-hooks 'slime-edit-presentation)
+  (setq slime-inspector-insert-ispec-function 'slime-presentation-inspector-insert-ispec)
+  (setq sldb-insert-frame-variable-value-function 
+	'slime-presentation-sldb-insert-frame-variable-value)
   (slime-presentation-init-keymaps)
   (slime-presentation-add-easy-menu))
 

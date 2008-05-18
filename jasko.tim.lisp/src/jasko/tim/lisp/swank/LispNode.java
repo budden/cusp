@@ -81,6 +81,14 @@ public class LispNode {
 		}
 	}
 	
+	public LispNode caadr() {
+		if (params.size() >= 3) {
+			return (LispNode) params.get(2);
+		} else {
+			return new LispNode();
+		}
+	}
+	
 	public LispNode get(int i) {
 		try {
 			if (params.size() >= i+1) {
@@ -93,6 +101,8 @@ public class LispNode {
 			return new LispNode();
 		}
 	}
+	
+
 	
 	public int getNumberOfSubSexps(){
 		return params.size();

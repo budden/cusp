@@ -391,8 +391,9 @@
           (when load-p (load output-file)))
         (values output-file warnings-p failure-p)))))
 
-(defimplementation swank-compile-string (string &key buffer position directory)
-  (declare (ignore directory))
+(defimplementation swank-compile-string (string &key buffer position directory
+                                                debug)
+  (declare (ignore directory debug))
   (with-compilation-hooks ()
     (let ((*buffer-name* buffer)
           (*buffer-start-position* position)
@@ -1693,11 +1694,6 @@ LRA  =  ~X~%" (mapcar #'fixnum
 
 ;;;; Inspecting
 
-(defclass scl-inspector (backend-inspector) ())
-
-(defimplementation make-default-inspector ()
-  (make-instance 'scl-inspector))
-
 (defconstant +lowtag-symbols+ 
   '(vm:even-fixnum-type
     vm:instance-pointer-type
@@ -1740,10 +1736,9 @@ The `symbol-value' of each element is a type tag.")
                                   :key #'symbol-value)))
           (format t ", type: ~A" type-symbol))))))
 
-(defmethod inspect-for-emacs ((o t) (inspector backend-inspector))
+(defmethod emacs-inspect ((o t))
   (cond ((di::indirect-value-cell-p o)
-         (values (format nil "~A is a value cell." o)
-                 `("Value: " (:value ,(c:value-cell-ref o)))))
+                 `("Value: " (:value ,(c:value-cell-ref o))))
         ((alien::alien-value-p o)
          (inspect-alien-value o))
 	(t
@@ -1752,18 +1747,17 @@ The `symbol-value' of each element is a type tag.")
 (defun scl-inspect (o)
   (destructuring-bind (text labeledp . parts)
       (inspect::describe-parts o)
-    (values (format nil "~A~%" text)
+    (list*  (format nil "~A~%" text)
             (if labeledp
                 (loop for (label . value) in parts
                       append (label-value-line label value))
                 (loop for value in parts  for i from 0 
                       append (label-value-line i value))))))
 
-(defmethod inspect-for-emacs ((o function) (inspector backend-inspector))
-  (declare (ignore inspector))
+(defmethod emacs-inspect ((o function))
   (let ((header (kernel:get-type o)))
     (cond ((= header vm:function-header-type)
-           (values (format nil "~A is a function." o)
+           (list*  (format nil "~A is a function.~%" o)
                    (append (label-value-line*
                             ("Self" (kernel:%function-self o))
                             ("Next" (kernel:%function-next o))
@@ -1775,7 +1769,7 @@ The `symbol-value' of each element is a type tag.")
                             (with-output-to-string (s)
                               (disassem:disassemble-function o :stream s))))))
           ((= header vm:closure-header-type)
-           (values (format nil "~A is a closure" o)
+           (list* (format nil "~A is a closure.~%" o)
                    (append 
                     (label-value-line "Function" (kernel:%closure-function o))
                     `("Environment:" (:newline))
@@ -1789,9 +1783,7 @@ The `symbol-value' of each element is a type tag.")
            (call-next-method)))))
 
 
-(defmethod inspect-for-emacs ((o kernel:code-component) (_ backend-inspector))
-  (declare (ignore _))
-  (values (format nil "~A is a code data-block." o)
+(defmethod emacs-inspect ((o kernel:code-component))
           (append 
            (label-value-line* 
             ("code-size" (kernel:%code-code-size o))
@@ -1815,22 +1807,19 @@ The `symbol-value' of each element is a type tag.")
                              (* vm:code-constants-offset vm:word-bytes))
                           (ash 1 vm:lowtag-bits))
                          (ash (kernel:%code-code-size o) vm:word-shift)
-                         :stream s))))))))
+                         :stream s)))))))
 
-(defmethod inspect-for-emacs ((o kernel:fdefn) (inspector backend-inspector))
-  (declare (ignore inspector))
-  (values (format nil "~A is a fdenf object." o)
-          (label-value-line*
+(defmethod emacs-inspect ((o kernel:fdefn))
+  (label-value-line*
            ("name" (kernel:fdefn-name o))
            ("function" (kernel:fdefn-function o))
            ("raw-addr" (sys:sap-ref-32
                         (sys:int-sap (kernel:get-lisp-obj-address o))
-                        (* vm:fdefn-raw-addr-slot vm:word-bytes))))))
+                        (* vm:fdefn-raw-addr-slot vm:word-bytes)))))
 
-(defmethod inspect-for-emacs ((o array) (inspector backend-inspector))
-  inspector
+(defmethod emacs-inspect ((o array))
   (cond ((kernel:array-header-p o)
-         (values (format nil "~A is an array." o)
+         (list*  (format nil "~A is an array.~%" o)
                  (label-value-line*
                   (:header (describe-primitive-type o))
                   (:rank (array-rank o))
@@ -1842,14 +1831,13 @@ The `symbol-value' of each element is a type tag.")
                   (:displaced-p (kernel:%array-displaced-p o))
                   (:dimensions (array-dimensions o)))))
         (t
-         (values (format nil "~A is an simple-array." o)
+         (list*  (format nil "~A is an simple-array.~%" o)
                  (label-value-line*
                   (:header (describe-primitive-type o))
                   (:length (length o)))))))
 
-(defmethod inspect-for-emacs ((o simple-vector) (inspector backend-inspector))
-  inspector
-  (values (format nil "~A is a vector." o)
+(defmethod emacs-inspect ((o simple-vector))
+  (list*  (format nil "~A is a vector.~%" o)
           (append 
            (label-value-line*
             (:header (describe-primitive-type o))
@@ -1859,8 +1847,6 @@ The `symbol-value' of each element is a type tag.")
                    append (label-value-line i (aref o i)))))))
 
 (defun inspect-alien-record (alien)
-  (values
-   (format nil "~A is an alien value." alien)
    (with-struct (alien::alien-value- sap type) alien
      (with-struct (alien::alien-record-type- kind name fields) type
        (append
@@ -1870,16 +1856,14 @@ The `symbol-value' of each element is a type tag.")
          (:name name))
         (loop for field in fields 
               append (let ((slot (alien::alien-record-field-name field)))
-                       (label-value-line slot (alien:slot alien slot)))))))))
+                       (label-value-line slot (alien:slot alien slot))))))))
 
 (defun inspect-alien-pointer (alien)
-  (values
-   (format nil "~A is an alien value." alien)
-   (with-struct (alien::alien-value- sap type) alien
+  (with-struct (alien::alien-value- sap type) alien
      (label-value-line* 
       (:sap sap)
       (:type type)
-      (:to (alien::deref alien))))))
+      (:to (alien::deref alien)))))
   
 (defun inspect-alien-value (alien)
   (typecase (alien::alien-value-type alien)
