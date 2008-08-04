@@ -528,7 +528,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	
 	private static boolean checkCommas(LispNode code, IFile file){
 		boolean res = true;
-		if( code.value.equals(",")){
+		if( code.value.equals(",") && !code.isString){
 			addCommaMarker(file,code.offset,code.line);
 			res = false;
 		}
