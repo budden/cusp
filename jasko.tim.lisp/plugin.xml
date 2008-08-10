@@ -260,7 +260,7 @@
 	<extension point="org.eclipse.ui.editors">
 		<editor
 			name="Lisp Editor"
-			extensions="lisp,cl,el"
+			extensions="lisp,cl,el,asd"
 			icon="icons/lispFile.gif"
 			contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
 			class="jasko.tim.lisp.editors.LispEditor"
@@ -268,6 +268,7 @@
 			</editor>
 	</extension>
 	
+	<!---
 	<extension point="org.eclipse.ui.editors">
 		<editor
 			name="Lisp Editor"
@@ -275,10 +276,10 @@
 			icon="icons/asd.gif"
 			contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
 			class="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.editors.AsdEditor">
+			id="jasko.tim.lisp.editors.LispEditor">
 			</editor>
 	</extension>
-
+	-->
 	<!-- Editor Menu -->
 	<extension point="org.eclipse.ui.editorActions">
 		<editorContribution

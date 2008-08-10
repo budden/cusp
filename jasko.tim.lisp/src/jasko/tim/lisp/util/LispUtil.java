@@ -130,7 +130,8 @@ public class LispUtil {
 			} else {
 				for (int i = offset - 1; i >= 0; --i) {
 					char c = source.charAt(i);
-					if (Character.isWhitespace(c) || c == '(' || c ==')') {
+					if (Character.isWhitespace(c) || c == '(' || c ==')'
+						|| ( c == '\'') ) {
 						break;
 					} else {
 		                start = i;
@@ -139,7 +140,8 @@ public class LispUtil {
 		        
 				for (int i = offset; i < source.length(); ++i) {
 					char c = source.charAt(i);
-					if (Character.isWhitespace(c) || c == '(' || c ==')') {
+					if (Character.isWhitespace(c) || c == '(' || c ==')'
+						|| ( c == '\'') ) {
 		                break;
 					} else {
 		                end = i + 1;

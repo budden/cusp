@@ -22,18 +22,18 @@ public class ColorManager {
 		COMMENT, DEFAULT, GLOBAL, CONSTANT, SENT_MESSAGE, UCW_TAG,
         REPL_INSP_BG, REPL_INSP_FG, REPL_INP_BG, REPL_INP_FG }
 
-	public static RGB DEFAULT_STRING = new RGB(200, 128, 0);
-	public static RGB DEFAULT_NUMBER = new RGB(0, 128, 128);
-	public static RGB DEFAULT_PAREN = new RGB(128, 0, 0);
-	public static RGB DEFAULT_KEYWORD = new RGB(0, 0, 128);
-	public static RGB DEFAULT_SYMBOL = new RGB(0, 0, 255);
-	public static RGB DEFAULT_PARAMS = new RGB(128, 128, 0);
-	public static RGB DEFAULT_COMMENT = new RGB(0, 128, 0);
-	public static RGB DEFAULT_DEFAULT = new RGB(0, 0, 128);
-	public static RGB DEFAULT_GLOBAL = new RGB(128, 0, 255);
-	public static RGB DEFAULT_CONSTANT = new RGB(128, 0, 128);
+	public static RGB DEFAULT_STRING = new RGB(200, 128, 0); //
+	public static RGB DEFAULT_NUMBER = new RGB(0, 128, 128); //
+	public static RGB DEFAULT_PAREN = new RGB(128, 0, 0); //
+	public static RGB DEFAULT_KEYWORD = new RGB(0, 0, 128); //
+	public static RGB DEFAULT_SYMBOL = new RGB(0, 0, 255); //
+	public static RGB DEFAULT_PARAMS = new RGB(128, 128, 0); //
+	public static RGB DEFAULT_COMMENT = new RGB(0, 128, 0); //
+	public static RGB DEFAULT_DEFAULT = new RGB(0, 0, 128); //
+	public static RGB DEFAULT_GLOBAL = new RGB(128, 0, 255); //
+	public static RGB DEFAULT_CONSTANT = new RGB(128, 0, 128); //
 	public static RGB DEFAULT_SENT_MESSAGE = new RGB(220,220,220);
-	public static RGB DEFAULT_UCW = new RGB(200, 50, 0);
+	public static RGB DEFAULT_UCW = new RGB(200, 50, 0); //
     
     public static final RGB DEFAULT_REPL_INSPECTABLE_BG_COLOR = new RGB(230, 230, 255);
     public static final RGB DEFAULT_REPL_INSPECTABLE_FG_COLOR = new RGB(0, 0, 128);
