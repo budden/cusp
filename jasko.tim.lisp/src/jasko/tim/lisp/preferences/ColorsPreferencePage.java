@@ -35,6 +35,11 @@ public class ColorsPreferencePage extends FieldEditorPreferencePage implements I
 	 */
 	public void createFieldEditors() {
 		addField(new org.eclipse.jface.preference.ColorFieldEditor(
+				PreferenceConstants.COLOR_DEFAULT,
+				"Default: ",
+				getFieldEditorParent()));
+
+		addField(new org.eclipse.jface.preference.ColorFieldEditor(
 				PreferenceConstants.COLOR_STRINGS,
 				"Strings: ",
 				getFieldEditorParent()));

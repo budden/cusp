@@ -40,7 +40,7 @@ public class LispScanner extends RuleBasedScanner {
 		
 		IToken number = new Token(
 				new TextAttribute(manager.getColor(ColorManager.TokenType.NUMBER), background, SWT.NORMAL));
-			rules[7] = new LispNumberRule(number);
+		rules[7] = new LispNumberRule(number);
 		
 		IToken ucwToken = new Token(
 				new TextAttribute(manager.getColor(ColorManager.TokenType.UCW_TAG), background, SWT.BOLD));
@@ -51,7 +51,6 @@ public class LispScanner extends RuleBasedScanner {
 				new TextAttribute(manager.getColor(ColorManager.TokenType.KEYWORD), background, SWT.NORMAL));
 		IToken keyword = new Token(
 			new TextAttribute(manager.getColor(ColorManager.TokenType.KEYWORD), background, SWT.BOLD));
-		//WordRule keywordRule = new WordRule(new LispSpecialWordDetector(), defaultToken);
 		WordRule keywordRule = new WordRule(new LispIdentifierDetector(), defaultToken);
 		for(int i = 0; i < LispSpecialWordDetector.RESERVED_WORDS.length; i++) {
 			keywordRule.addWord(LispSpecialWordDetector.RESERVED_WORDS[i], keyword);

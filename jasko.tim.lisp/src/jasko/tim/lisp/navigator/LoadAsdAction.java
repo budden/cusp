@@ -1,8 +1,9 @@
 package jasko.tim.lisp.navigator;
 
 
+import java.util.*;
+
 import jasko.tim.lisp.*;
-import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.builder.LispBuilder;
 
 import org.eclipse.core.resources.*;
@@ -29,8 +30,12 @@ public class LoadAsdAction implements IActionDelegate {
 			Object obj = ssel.getFirstElement();
 			if (obj instanceof IFile) {
 				IFile file = (IFile) obj;
-				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				swank.sendLoadASDF(file.getLocation().toString(), 
+				List<IFile> files = 
+					new ArrayList<IFile>(LispPlugin.getDefault().getSwank().filesWithCompileProblems);
+				for( IFile f: files){
+					LispBuilder.deleteMarkers(f);
+				}
+				LispPlugin.getDefault().getSwank().sendLoadASDF(file.getLocation().toString(), 
 						new LispBuilder.CompileListener(null));
 			}
 		}

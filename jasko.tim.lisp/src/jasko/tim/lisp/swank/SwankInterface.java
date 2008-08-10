@@ -1,13 +1,13 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.inspector.InspectorView;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
 
@@ -132,6 +132,9 @@ public class SwankInterface {
 	public Hashtable<String, Integer> indents;
 	public Hashtable<String, String> handlerCaseIndents;
 
+	// stores all compile problems, I am not sure this is the best place
+	public List<IFile> filesWithCompileProblems = new ArrayList<IFile>();
+	
 	private void initIndents() {
 		// for forms that get indented like flet
 		fletIndents = new Hashtable<String, String>();

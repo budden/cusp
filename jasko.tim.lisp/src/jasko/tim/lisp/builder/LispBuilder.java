@@ -12,6 +12,7 @@ import jasko.tim.lisp.util.TopLevelItem;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
@@ -109,7 +110,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					}
 					break;
 				case IResourceDelta.REMOVED:
-					// handle removed resource - TODO: undefine all functions from file before remove?
+					// handle removed resource - TODO: undefine all functions in file before file is removed?
 					break;
 				case IResourceDelta.CHANGED:
 					// handle changed resource
@@ -317,6 +318,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		try {
 			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
 			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
+			List<IFile> files = 
+				LispPlugin.getDefault().getSwank().filesWithCompileProblems;
+			if (files != null && files.contains(file)){
+				files.remove(file);
+			}			
 		} catch (CoreException ce) {
 		}
 	}
@@ -326,12 +332,20 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			return;
 		}
 		try{
-			IMarker[] markers = file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
+			IMarker[] markers = 
+				file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
 			for( IMarker m: markers ){
 				int moffset = (Integer)m.getAttribute(IMarker.CHAR_START); 
 				if( moffset >= offset && moffset <= offset + length ){
 					m.delete();
 				}
+			}
+			markers = file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
+			List<IFile> files = 
+				LispPlugin.getDefault().getSwank().filesWithCompileProblems;
+			if ( markers.length == 0 
+					&& files != null && files.contains(file)){
+				files.remove(file);
 			}
 		} catch (CoreException e1) {
 			e1.printStackTrace();
@@ -351,7 +365,12 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		attr.put(IMarker.MESSAGE, msg);
 		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
 		try {
-			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
+			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);
+			List<IFile> files = 
+				LispPlugin.getDefault().getSwank().filesWithCompileProblems;
+			if( files != null && !files.contains(file) ){
+				files.add(file);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -360,6 +379,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd,
 			int lineNum, String pkg){
 		addMarker(file,"Package "+ pkg + " is not loaded",offsetStart,offsetEnd+1,lineNum);
+		List<IFile> files = 
+			LispPlugin.getDefault().getSwank().filesWithCompileProblems;
 	}
 
 	private static boolean checkPackageDependence(LispNode code, IFile file){
