@@ -17,7 +17,7 @@
    </license>
 
    <url>
-      <update label="Cusp Update" url="http://www.paragent.com/lisp/cusp/update/"/>
+      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
    </url>
 
    <plugin
