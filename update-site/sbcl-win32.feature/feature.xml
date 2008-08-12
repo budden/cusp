@@ -2,7 +2,7 @@
 <feature
       id="sbcl_win32"
       label="SBCL-Win32"
-      version="1.0.6">
+      version="1.0.13">
    <install-handler library="sbcl.installer.jar" handler="sbcl.installer.sbclInstallHandler"/>
 
    <description>
@@ -31,7 +31,7 @@ Xerox and Gerd Moellmann are retained.
    </license>
 
    <url>
-      <update label="Cusp Update" url="http://www.paragent.com/lisp/cusp/update/"/>
+      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
    </url>
 
    <plugin
