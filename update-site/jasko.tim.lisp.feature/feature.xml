@@ -2,7 +2,7 @@
 <feature
       id="jasko.tim.lisp"
       label="Cusp Plug-in"
-      version="0.9.189">
+      version="0.9.218">
 
    <description>
       Cusp is a development environment for Lisp.
@@ -46,27 +46,8 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
    </license>
 
    <url>
-      <update label="Cusp Update" url="http://www.paragent.com/lisp/cusp/update/"/>
+      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
    </url>
-
-   <includes
-         id="sbcl_linux"
-         version="0.0.0"
-         optional="true"
-         os="linux"/>
-
-   <includes
-         id="sbcl_osx"
-         version="0.0.0"
-         optional="true"
-         os="macosx"
-         arch="x86"/>
-
-   <includes
-         id="sbcl_win32"
-         version="0.0.0"
-         optional="true"
-         os="win32"/>
 
    <includes
          id="jasko.tim.lisp.libs"
