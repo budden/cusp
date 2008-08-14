@@ -359,47 +359,31 @@ public class SwankInterface {
 				}
 			}
 			
-			connectStreams(slimePath);
-			
-			
-			int tries = 7;
+			int retries = 1;
 			do {
-				try {
-					echoSocket = new Socket("localhost", port);
-					out = new DataOutputStream(echoSocket.getOutputStream());
-					listener = new ListenerThread(echoSocket.getInputStream());
-					listener.start();
-					tries = 0;
-					
-				} catch (UnknownHostException e) {
-					return false;
-				} catch (IOException e) {
-					
+				if (connectStreams(slimePath)) {
 					try {
-						int val = lispEngine.exitValue();
-						System.out.println("exit: " + val);
-						
-						lispEngine = implementation.startHarder(slimePath, port);
-						connectStreams(slimePath);
-					} catch (IllegalThreadStateException e2) {
-						System.out.println("lisp instance still loading...");
-					} catch (IOException e2) {
-						e.printStackTrace();
-					}
-					
-					System.err.println("Couldn't connect to swank (" + tries + " more tries).");
-					if (tries > 0) {
-						try {
-							Thread.sleep(7000);
-							--tries;
-						} catch (InterruptedException e1) {
-							e1.printStackTrace();
-						}
-					} else {
+						echoSocket = new Socket("localhost", port);
+						out = new DataOutputStream(echoSocket.getOutputStream());
+						listener = new ListenerThread(echoSocket.getInputStream());
+						listener.start();
+						break;
+					} catch (UnknownHostException e) {
 						return false;
+					} catch (IOException e) {
+						try {
+							int val = lispEngine.exitValue();
+							System.out.println("exit: " + val);
+
+							lispEngine = implementation.startHarder(slimePath, port);
+							--retries; // try to connect again
+						} catch (IOException e2) {
+							e.printStackTrace();
+							return false;
+						}
 					}
 				}
-			} while (tries > 0);
+			} while (retries >= 0);
 		} // synchronized
 		
 		//sendRaw("(:emacs-rex (swank:connection-info) nil t 1)");
@@ -411,20 +395,27 @@ public class SwankInterface {
 		return connected;
 	}
 	
-	private void connectStreams(String slimePath) {
+	private boolean connectStreams(String slimePath) {
 		if (stdOut != null) { // never cross the streams
 			stdOut.running = false;
 		}
 		if (stdErr != null) {
 			stdErr.running = false;
 		}
+
 		// it's not happy unless we hook up to clear out the output
+		SwankStartFilter ssfilter = new SwankStartFilter();
+		int retries = 7;
+		
 		stdOut = new DisplayListenerThread(lispEngine.getInputStream(), true);
 		stdErr = new DisplayListenerThread(lispEngine.getErrorStream(), true);
+
+		stdOut.addFilter(ssfilter);
+		stdErr.addFilter(ssfilter);
 		
 		stdOut.start();
 		stdErr.start();
-		
+
 		try {
 			commandInterface = new DataOutputStream(lispEngine.getOutputStream());
 			//commandInterface.writeBytes("(progn (swank:create-swank-server " + port + " nil) (quit))\n");
@@ -433,24 +424,35 @@ public class SwankInterface {
 			if (slimeLoadCmd != null) {
 				commandInterface.writeBytes(slimeLoadCmd);
 			}
-			commandInterface.writeBytes("(swank-loader::init)");
+			commandInterface.writeBytes("(swank-loader::init :load-contribs t :setup t)");
 			commandInterface.flush();
 			commandInterface.writeBytes("(progn (swank:create-server :coding-system \"utf-8\" :port " + port + "))\n");
 			commandInterface.flush();
 			
-			// FIXME: at this point we should wait for "Swank started" message on standard output
-			// for now, simply sleep a bit. This is only necessary with RemoteLispImplementation
-			// because SSH tunnel will allow a successful connection for echoSocket, but will
-			// send a reset later.
-			try {
-				Thread.sleep(1000);
-			} catch(Exception e) {
-				// ignore
+			while (!ssfilter.getStartStringFlag() && retries > 0) {
+				synchronized (ssfilter) {
+					try {
+						// Wait until we detect the "Swank started" message in the display stream
+						ssfilter.wait(10000);
+					} catch(Exception e) {
+						// ignore all exceptions (this might be dangerous)
+					} finally {
+						if (!ssfilter.getStartStringFlag()) {
+							System.err.println("still waiting for 'Swank started' string... retries = " + retries);
+							--retries;
+						}
+					}
+				}
 			}
-			
 		} catch (IOException e2) {
 			e2.printStackTrace();
+			return false;
+		} finally {
+			stdOut.removeFilter(ssfilter);
+			stdErr.removeFilter(ssfilter);
 		}
+		
+		return (retries > 0);
 	}
 	
 	public void reconnect() {
@@ -507,31 +509,87 @@ public class SwankInterface {
 	}
 	
 	public void addReadListener(SwankRunnable callBack) {
-		readListeners.add(callBack);
+		synchronized (readListeners) {
+			readListeners.add(callBack);
+		}
 	}
 	
 	public void addDebugListener(SwankRunnable callBack) {
-		debugListeners.add(callBack);
+		synchronized (debugListeners) {
+			debugListeners.add(callBack);
+		}
 	}
 	
 	public void addDebugInfoListener(SwankRunnable callBack) {
-		debugInfoListeners.add(callBack);
+		synchronized (debugInfoListeners) {
+			debugInfoListeners.add(callBack);
+		}
 	}
 	
 	public void addDebugReturnListener(SwankRunnable callBack) {
-		debugReturnListeners.add(callBack);
+		synchronized (debugReturnListeners) {
+			debugReturnListeners.add(callBack);
+		}
 	}
 	
-	public void addDisplayCallback(SwankDisplayRunnable callBack) {
-		displayListeners.add(callBack);
+	public void addDisplayCallback(SwankRunnable callBack) {
+		synchronized (displayListeners) {
+			displayListeners.add(callBack);
+		}
 	}
 	
 	public void addDisconnectCallback(SwankRunnable callBack) {
-		disconnectListeners.add(callBack);
+		synchronized (disconnectListeners) {
+			disconnectListeners.add(callBack);
+		}
 	}
 	
 	public void addIndentationListener(SwankRunnable callBack) {
-		indentationListeners.add(callBack);
+		synchronized (indentationListeners) {
+			indentationListeners.add(callBack);
+		}
+	}
+	
+	public void removeReadListener(SwankRunnable callBack) {
+		synchronized (readListeners) {
+			readListeners.remove(callBack);
+		}
+	}
+	
+	public void removeDebugListener(SwankRunnable callBack) {
+		synchronized (debugListeners) {
+			debugListeners.remove(callBack);
+		}
+	}
+	
+	public void removeDebugInfoListener(SwankRunnable callBack) {
+		synchronized (debugInfoListeners) {
+			debugInfoListeners.remove(callBack);
+		}
+	}
+	
+	public void removeDebugReturnListener(SwankRunnable callBack) {
+		synchronized (debugReturnListeners) {
+			debugReturnListeners.remove(callBack);
+		}
+	}
+	
+	public void removeDisplayCallback(SwankRunnable callBack) {
+		synchronized (displayListeners) {
+			displayListeners.remove(callBack);
+		}
+	}
+	
+	public void removeDisconnectCallback(SwankRunnable callBack) {
+		synchronized (disconnectListeners) {
+			disconnectListeners.remove(callBack);
+		}
+	}
+	
+	public void removeIndentationListener(SwankRunnable callBack) {
+		synchronized (indentationListeners) {
+			indentationListeners.remove(callBack);
+		}
 	}
 	
 	private void registerCallback(SwankRunnable callBack) {
@@ -1328,8 +1386,8 @@ public class SwankInterface {
 	
 	private void signalListeners(List<SwankRunnable> listeners, LispNode result) {
 		synchronized (listeners) {
-			for (int i=0; i<listeners.size(); ++i) {
-				SwankRunnable runnable = listeners.get(i).clone();
+			for (SwankRunnable l : listeners) {
+				SwankRunnable runnable = l.clone();
 				runnable.result = result;
 				//runnable.resultString = result.value;
 				Display.getDefault().asyncExec(runnable);
@@ -1466,14 +1524,45 @@ public class SwankInterface {
 	private class DisplayListenerThread extends Thread {
 		private BufferedReader in;
 		public boolean running = true;
-		//private String curr = "";
-		private StringBuffer acc = new StringBuffer();
+		private StringBuffer acc;
 		private boolean echo;
+		// Display listener filters: these are run immediately and separately from Eclipse
+		private List<DisplayFilter> filters; 
+		// Number of accumulated results before syncing with listeners:
+		private final int ACCUM_RESULTS = 4;
+		// Max size of characters to read from input stream, if available
+		// N.B. need to keep this small enough so that stdOut/stdErr interleave in an
+		// intelligible manner (i.e. errors are correlated to the previous output.)
+		private final int MAX_READ = 8;
 		
-		public DisplayListenerThread(InputStream stream, boolean echo) {
+		public DisplayListenerThread(InputStream stream, boolean echo_flag) {
 			super ("Secondary Swank Listener");
-			this.echo = echo;
-			this.in = new BufferedReader(new InputStreamReader(stream));
+			in = new BufferedReader(new InputStreamReader(stream));
+			running = true;
+			acc = new StringBuffer();
+			echo = echo_flag;
+			filters = Collections.synchronizedList(new ArrayList<DisplayFilter>(1));
+		}
+		
+		
+		public void addFilter(DisplayFilter filter) {
+			synchronized(filters) {
+				filters.add(filter);
+			}
+		}
+		
+		public void removeFilter(DisplayFilter filter) {
+			synchronized(filters) {
+				filters.remove(filter);
+			}
+		}
+		
+		private void runFilters(String str) {
+			synchronized(filters) {
+				for (DisplayFilter f : filters) {
+					f.filter(str);
+				}
+			}
 		}
 		
 		public String fetchText() {
@@ -1486,46 +1575,46 @@ public class SwankInterface {
 		
 		
 		public void run() {
-			int lines = 0;
+			char [] cbuf = new char[MAX_READ];
+
 			while (running) {
 				try {
-					int cint = in.read();
-					char c = (char)cint;
-					if (cint < 0) {
+					LispNode result = new LispNode();
+					int lines = 0;
+					int nread = in.read(cbuf, 0, 1);
+					if (nread < 0) {
 						System.out.println("Display input pipe closed.");
 						return;
-					} else if (c == '\n') {
-						acc.append(c);
-						// Things are much faster display-wise if we grab several lines at a time
-						if (lines > 5 || !in.ready()) {
-							synchronized(acc) {
-								String curr = acc.toString();
-								if (echo) {
-									for (int i=0; i<displayListeners.size(); ++i) {
-										SwankRunnable runnable = displayListeners.get(i).clone();
-										LispNode result = new LispNode();
-										result.params.add(new LispNode(":write-string"));
-										result.params.add(new LispNode(curr));
-										runnable.result = result;
-										Display.getDefault().asyncExec(runnable);
-									}
-								}
-								System.out.print("]");
-								System.out.println(curr);
-						
-								acc = new StringBuffer();
-							}
-							lines = 0;
-						} else {
-							lines += 1;
+					}
+					// If we can read one character, we can potentially read more...
+					if (in.ready()) {
+						int naddl = in.read(cbuf, 1, MAX_READ - 1);
+						if (naddl > 0) {
+							nread += naddl;
 						}
-						
-					} else {
-						synchronized(acc) {
-							acc.append(c);
-						}
+						// N.B., if naddl < 0, we'll catch that next iteration
 					}
 					
+					synchronized(acc) {
+						acc.append(cbuf, 0, nread);
+						for (int nl = acc.indexOf("\n"); nl >= 0 && acc.length() > 0; nl = acc.indexOf("\n")) {
+							String curr = acc.substring(0, nl);
+							acc = acc.delete(0, nl+1);
+							if (echo) {
+								result.params.add(new LispNode(":write-string"));
+								result.params.add(new LispNode(curr));
+								if (lines >= ACCUM_RESULTS) {
+									signalListeners(displayListeners, result);
+									lines = 0;
+									result = new LispNode();
+								} else
+									lines += 1;
+							}
+							System.out.print("]");
+							System.out.println(curr);
+							runFilters(curr);
+						}
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -1534,8 +1623,36 @@ public class SwankInterface {
 		
 	} // class
 
+	// Internal abstract class for filtering strings collected by DisplayListenerThread.
+	// The primary difference between this and a SwankRunnable is that there is a
+	// deterministic guarantee that the filter will be run when the next display line
+	// is collected.
+	private abstract class DisplayFilter {
+		public abstract void filter(String str);
+	} // class
 	
+	private class SwankStartFilter extends DisplayFilter {
+		private boolean got_start_string;
+		
+		public SwankStartFilter() {
+			got_start_string = false;
+		}
+		
+		public synchronized boolean getStartStringFlag() {
+			return got_start_string;
+		}
+		
+		public void filter(String str) {
+			if (str.indexOf("Swank started") >= 0) {
+				synchronized (this) {
+					got_start_string = true;
+					notifyAll();
+				}
+			}
+		}
+	} // class
 } // class
 	
+
 
 
