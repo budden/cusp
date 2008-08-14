@@ -4,6 +4,50 @@
 
 (in-package :com.gigamonkeys.asdf-extensions)
 
+;;; Methods that need to be in the namespace before they are used:
+
+
+(defun directory-pathname-p (p)
+  "Is the given pathname the name of a directory? This function can
+usefully be used to test whether a name returned by LIST-DIRECTORIES
+or passed to the function in WALK-DIRECTORY is the name of a directory
+in the file system since they always return names in `directory normal
+form'."
+  (flet ((component-present-p (value)
+           (and value (not (eql value :unspecific)))))
+    (and 
+     (not (component-present-p (pathname-name p)))
+     (not (component-present-p (pathname-type p)))
+     p)))
+
+
+(defun pathname-as-directory (name)
+  "Return a pathname reperesenting the given pathname in
+`directory normal form', i.e. with all the name elements in the
+directory component and NIL in the name and type components. Can
+not be used on wild pathnames because there's not portable way to
+convert wildcards in the name and type into a single directory
+component. Returns its argument if name and type are both nil or
+:unspecific."
+  (let ((pathname (pathname name)))
+    (when (wild-pathname-p pathname)
+      (error "Can't reliably convert wild pathnames."))
+    (if (not (directory-pathname-p name))
+      (make-pathname 
+       :directory (append (or (pathname-directory pathname) (list :relative))
+                          (list (file-namestring pathname)))
+       :name      nil
+       :type      nil
+       :defaults pathname)
+      pathname)))
+
+
+(defun directory-wildcard (dirname)
+  (make-pathname 
+   :name :wild
+   :type #-clisp :wild #+clisp nil
+   :defaults (pathname-as-directory dirname)))
+
 ;;; Method for finding ASD files that doesn't depend on symlinks.
 
 (defvar *top-level-directories* ())
@@ -132,12 +176,6 @@ in `directory normal form'. Returns truename which will be in
     #-(or sbcl cmu lispworks openmcl allegro clisp)
     (error "list-directory not implemented"))
 
-(defun directory-wildcard (dirname)
-  (make-pathname 
-   :name :wild
-   :type #-clisp :wild #+clisp nil
-   :defaults (pathname-as-directory dirname)))
-
 #+clisp
 (defun clisp-subdirectories-wildcard (wildcard)
   (make-pathname
@@ -147,45 +185,11 @@ in `directory normal form'. Returns truename which will be in
    :defaults wildcard))
 
 
-(defun directory-pathname-p (p)
-  "Is the given pathname the name of a directory? This function can
-usefully be used to test whether a name returned by LIST-DIRECTORIES
-or passed to the function in WALK-DIRECTORY is the name of a directory
-in the file system since they always return names in `directory normal
-form'."
-  (flet ((component-present-p (value)
-           (and value (not (eql value :unspecific)))))
-    (and 
-     (not (component-present-p (pathname-name p)))
-     (not (component-present-p (pathname-type p)))
-     p)))
-
-
 (defun file-pathname-p (p)
   (unless (directory-pathname-p p) p))
 
-(defun pathname-as-directory (name)
-  "Return a pathname reperesenting the given pathname in
-`directory normal form', i.e. with all the name elements in the
-directory component and NIL in the name and type components. Can
-not be used on wild pathnames because there's not portable way to
-convert wildcards in the name and type into a single directory
-component. Returns its argument if name and type are both nil or
-:unspecific."
-  (let ((pathname (pathname name)))
-    (when (wild-pathname-p pathname)
-      (error "Can't reliably convert wild pathnames."))
-    (if (not (directory-pathname-p name))
-      (make-pathname 
-       :directory (append (or (pathname-directory pathname) (list :relative))
-                          (list (file-namestring pathname)))
-       :name      nil
-       :type      nil
-       :defaults pathname)
-      pathname)))
-
 (defun pathname-as-file (name)
-  "Return a pathname reperesenting the given pathname in `file form',
+  "Return a pathname representing the given pathname in `file form',
 i.e. with the name elements in the name and type component. Can't
 convert wild pathnames because of problems mapping wild directory
 component into name and type components. Returns its argument if
@@ -247,8 +251,12 @@ returns (:description :long-description) from defsystem"
                     (if docs 
                         docs 
                         '(nil nil))))
-   (t
-   '(nil nil))))
+   ;; catch file-error conditions
+   (file-error () '(nil nil))
+   ;; catch any condition
+   (condition () '(nil nil))
+   ;; default/base condition type
+   (t () '(nil nil))))
 
 (defun get-doc-links (xx)
   "With xx = (system-name, path-to-asd-file),
