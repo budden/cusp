@@ -15,7 +15,7 @@ public class sbclInstallHandler extends BaseInstallHandler {
 		}
 		path += "plugins/";
 		path += feature.getVersionedIdentifier().getIdentifier();
-		path += "_"+feature.getVersionedIdentifier().getVersion().toString();
+		path += "_"+feature.getVersionedIdentifier().getIdentifier();
 		
 		return path;
 	}
