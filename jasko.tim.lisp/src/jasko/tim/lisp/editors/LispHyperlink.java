@@ -1,6 +1,5 @@
 package jasko.tim.lisp.editors;
 
-import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.hyperlink.IHyperlink;
 import jasko.tim.lisp.editors.actions.EditDefinitionAction;
@@ -12,8 +11,8 @@ public class LispHyperlink implements IHyperlink {
 	private LispEditor editor;
 
 	public LispHyperlink(LispEditor edt, IRegion region, String urlString) {
-		Assert.isNotNull(urlString);
-		Assert.isNotNull(region);
+		assert urlString != null;
+		assert region != null;
 
 		fRegion= region;
 		fURLString= urlString;

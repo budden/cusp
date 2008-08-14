@@ -4,7 +4,6 @@ import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.io.BufferedInputStream;
 
 import org.eclipse.jface.dialogs.IDialogConstants;

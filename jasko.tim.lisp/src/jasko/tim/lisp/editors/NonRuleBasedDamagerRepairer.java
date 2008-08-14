@@ -10,7 +10,6 @@ import org.eclipse.jface.text.TextAttribute;
 import org.eclipse.jface.text.TextPresentation;
 import org.eclipse.jface.text.presentation.IPresentationDamager;
 import org.eclipse.jface.text.presentation.IPresentationRepairer;
-import org.eclipse.jface.util.Assert;
 import org.eclipse.swt.custom.StyleRange;
 
 /**
@@ -28,7 +27,7 @@ public class NonRuleBasedDamagerRepairer
 	 * Constructor for NonRuleBasedDamagerRepairer.
 	 */
 	public NonRuleBasedDamagerRepairer(TextAttribute defaultTextAttribute) {
-		Assert.isNotNull(defaultTextAttribute);
+		assert defaultTextAttribute != null;
 
 		fDefaultTextAttribute = defaultTextAttribute;
 	}

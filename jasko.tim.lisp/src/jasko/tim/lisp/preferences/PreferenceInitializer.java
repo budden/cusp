@@ -43,7 +43,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 	 */
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = LispPlugin.getDefault().getPreferenceStore();
-		for (Map.Entry e: DEFAULT_COLOR_MAP.entrySet()) {
+		for (Map.Entry<String, String> e: DEFAULT_COLOR_MAP.entrySet()) {
 			store.setDefault((String)e.getKey(), (String)e.getValue());
 		}
         

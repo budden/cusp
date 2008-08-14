@@ -484,8 +484,11 @@ public class SwankInterface {
 				stdErr.running = false;
 			}
 			
-			
-			listener.running = false;
+			if (listener != null) {
+				listener.running = false;
+			} else {
+				System.err.println("lisp instance wasn't running.");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1534,4 +1537,5 @@ public class SwankInterface {
 	
 } // class
 	
+
 

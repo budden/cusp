@@ -131,19 +131,22 @@ public class ColorManager {
 		for (String pref : prefMap.keySet())
 		{
 			TokenType toktype = preferenceStringToTokenType(pref);
-			RGB prefVal = null;
+			RGB prefVal = DEFAULT_DEFAULT;
 			try {
-				prefVal = StringConverter.asRGB(getPlugin().getPreferenceStore().getString(pref));
+				String prefString = getPlugin().getPreferenceStore().getString(pref);
+				if (prefString != null && prefString.length() > 0)
+					prefVal = StringConverter.asRGB(prefString);
 			} catch (Exception e) {
                 e.printStackTrace();
                 try {
                     prefVal = StringConverter.asRGB(PreferenceInitializer.getDefaultColorFor(pref));
                 } catch (Exception ex) {
+                	prefVal = DEFAULT_DEFAULT;
                     //ex.printStackTrace();
                 }
 			}
 
-			setRGBForTokenType(toktype, prefVal == null ? DEFAULT_DEFAULT : prefVal);
+			setRGBForTokenType(toktype, prefVal);
 		}
 	}
 	

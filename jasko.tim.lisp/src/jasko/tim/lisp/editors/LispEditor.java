@@ -1,12 +1,11 @@
 package jasko.tim.lisp.editors;
 
-import jasko.tim.lisp.ColorManager;
+// import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.ColorManager.ColorChangeEvent;
+// import jasko.tim.lisp.ColorManager.ColorChangeEvent;
 import jasko.tim.lisp.editors.assist.LispInformationControlManager;
 import jasko.tim.lisp.editors.outline.LispOutlinePage;
 import jasko.tim.lisp.preferences.PreferenceConstants;
-import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.util.*;
@@ -44,7 +43,7 @@ import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 public class LispEditor extends TextEditor implements ILispEditor {
 	private LispOutlinePage outline;
 	private ArrayList<TopLevelItem> topForms;
-	private ColorManager.ChangeEventListener colorPrefChangeListener;
+	// private ColorManager.ChangeEventListener colorPrefChangeListener;
     private final LispConfiguration config = 
     	new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
     
@@ -123,13 +122,13 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		setSourceViewerConfiguration(config);
 		setDocumentProvider(new LispDocumentProvider());
 		
-		colorPrefChangeListener = new ColorManager.ChangeEventListener() {
+		/* colorPrefChangeListener = new ColorManager.ChangeEventListener() {
 
 			public void colorPreferenceChanged(ColorChangeEvent event) {
 				
 			}
 			
-		};
+		}; */
         
 		//setRangeIndicator(new DefaultRangeIndicator());
 	}
@@ -785,9 +784,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
 		// prepare data structures
 		{
-			Iterator it = projectionAnnotationModel.getAnnotationIterator();
+			Iterator<?> it = projectionAnnotationModel.getAnnotationIterator();
 			while(it.hasNext()){
-				ProjectionAnnotation a = (ProjectionAnnotation)it.next();
+				ProjectionAnnotation a = (ProjectionAnnotation) it.next();
 				Position p = projectionAnnotationModel.getPosition(a);
 				oldPositions.add(p);
 				hashAnnotations.put(p, a);
@@ -800,7 +799,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		remPositions.removeAll(positions);
 		Annotation[] remAnnotations = new Annotation[remPositions.size()];
 		{
-			Iterator it = remPositions.iterator();
+			Iterator<Position> it = remPositions.iterator();
 			int i = 0;
 			while(it.hasNext()){
 				remAnnotations[i] = hashAnnotations.get(it.next());
@@ -814,7 +813,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
 		positions.removeAll(oldPositions);
 		{
-			Iterator it = positions.iterator();
+			Iterator<Position> it = positions.iterator();
 			while(it.hasNext()){
 				newAnnotations.put(new ProjectionAnnotation(), (Position)it.next());
 			}
