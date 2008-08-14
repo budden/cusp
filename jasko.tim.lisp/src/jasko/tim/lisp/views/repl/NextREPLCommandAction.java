@@ -1,14 +1,14 @@
 package jasko.tim.lisp.views.repl;
 
 import jasko.tim.lisp.views.ReplView;
+import jasko.tim.lisp.editors.actions.LispAction;
 
-import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorActionDelegate;
 import org.eclipse.ui.IEditorPart;
 
-public class NextREPLCommandAction extends Action implements IEditorActionDelegate {
+public class NextREPLCommandAction extends LispAction implements IEditorActionDelegate {
     private final ReplView repl;
     
     public NextREPLCommandAction (ReplView repl) {

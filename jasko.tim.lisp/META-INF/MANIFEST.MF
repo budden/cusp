@@ -16,7 +16,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.console,
  org.eclipse.debug.core,
  org.eclipse.core.resources
-Eclipse-LazyStart: true
+Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Export-Package: jasko.tim.lisp;
   uses:="org.eclipse.core.runtime,
@@ -122,3 +122,4 @@ Export-Package: jasko.tim.lisp;
    org.eclipse.jface.viewers,
    org.eclipse.swt.widgets",
  jasko.tim.lisp.wizards.actions;uses:="org.eclipse.jface.action,org.eclipse.ui,org.eclipse.jface.viewers"
+Import-Package: org.eclipse.core.expressions

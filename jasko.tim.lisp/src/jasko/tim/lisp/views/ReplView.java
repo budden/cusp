@@ -10,6 +10,8 @@ import jasko.tim.lisp.inspector.InspectorRunnable;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.util.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.layout.*;
@@ -25,7 +27,10 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
-import org.eclipse.ui.IKeyBindingService;
+
+import org.eclipse.ui.contexts.IContextService;
+import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.jface.commands.ActionHandler;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -110,8 +115,8 @@ public class ReplView extends ViewPart implements SelectionListener {
     private class ReplEditor extends SourceViewer implements ILispEditor {
         private final LispConfiguration config = 
         	new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
-        private final CurrentExpressionHighlightingListener highlighter = 
-        	new CurrentExpressionHighlightingListener();
+        /* private final CurrentExpressionHighlightingListener highlighter = 
+        	new CurrentExpressionHighlightingListener(); */
         
         public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
             super(comp2, ruler, i);
@@ -124,7 +129,7 @@ public class ReplView extends ViewPart implements SelectionListener {
             showAnnotations(false);
             showAnnotationsOverview(false);
             
-            //highlighter.install(this);
+            // highlighter.install(this);
         }
         
         public String showParameterHints () {
@@ -141,6 +146,69 @@ public class ReplView extends ViewPart implements SelectionListener {
         }
     
     }
+
+    private class HandlerDef {
+    	private final Class<?> the_class;
+    	private final String id;
+    	private final boolean edit_or_view;
+    	
+    	public HandlerDef(Class<?> hclass, String hid, boolean hedit_or_view) {
+    		the_class = hclass;
+    		id = hid;
+    		edit_or_view = hedit_or_view;
+    	}
+    	
+    	public LispAction newClassInstance(ILispEditor editor, ReplView view) {
+    		Object [] args = { null };
+    		Class<?> [] ctor_args = { null }; 
+
+    		if (edit_or_view) {
+    			ctor_args[0] = ILispEditor.class;
+    			args[0] = editor;
+    		} else {
+    			ctor_args[0] = ReplView.class;
+    			args[0] = view;
+    		}
+    		
+    		try {
+    			Constructor<?> ctor = the_class.getConstructor(ctor_args);
+    			return (LispAction) ctor.newInstance(args);
+    		}
+    		catch (NoSuchMethodException e) {
+    			System.err.println("HandlerDef throws NoSuchMethodException");
+    			e.printStackTrace();
+    			return null;
+    		} catch (SecurityException e) {
+    			System.err.println("HandlerDef throws SecurityException");
+    			e.printStackTrace();
+    			return null;
+    		} catch (InstantiationException e) {
+    			System.err.println("HandlerDef throws InstatiationException");
+    			e.printStackTrace();
+    			return null;
+    		} catch (IllegalAccessException e) {
+    			System.err.println("HandlerDef throws IllegalAccessException");
+    			e.printStackTrace();
+    			return null;
+    		} catch (IllegalArgumentException e) {
+    			System.err.println("HandlerDef throws IllegalArgumentException");
+    			e.printStackTrace();
+    			return null;
+    		} catch (InvocationTargetException e) {
+    			System.err.println("HandlerDef throws InvocationTargetException");
+    			e.printStackTrace();
+    			return null;
+    		}
+    	}
+
+		public Class<?> getThe_class() {
+			return the_class;
+		}
+
+		public String getId() {
+			return id;
+		}
+    };
 	
 	public void createPartControl(Composite parent) {
 		parentControl = parent;
@@ -234,48 +302,33 @@ public class ReplView extends ViewPart implements SelectionListener {
  		in.appendVerifyKeyListener(new CheckEvalListener());
         in.appendVerifyKeyListener(new SelectAllListener());
         
- 		IKeyBindingService keys = this.getSite().getKeyBindingService();
- 		keys.setScopes(new String[] { "jasko.tim.lisp.context1" });
- 		HyperSpecAction hsAction = new HyperSpecAction(in);
- 		hsAction.setActionDefinitionId("jasko.tim.lisp.actions.HyperSpecAction");
- 		keys.registerAction(hsAction); 		
- 		LispDocAction ldAction = new LispDocAction(in);
- 		ldAction.setActionDefinitionId("jasko.tim.lisp.actions.LispDocAction");
- 		keys.registerAction(ldAction); 
- 		OpenHistoryAction openHistAction = new OpenHistoryAction(this);
- 		openHistAction.setActionDefinitionId("jasko.tim.lisp.actions.OpenHistoryDialogAction");
- 		keys.registerAction(openHistAction);
- 		PreviousREPLCommandAction prevCmdAction = new PreviousREPLCommandAction(this);
- 		prevCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.PreviousREPLCommandAction");
- 		keys.registerAction(prevCmdAction);
- 		NextREPLCommandAction nextCmdAction = new NextREPLCommandAction(this);
- 		nextCmdAction.setActionDefinitionId("jasko.tim.lisp.actions.NextREPLCommandAction");
- 		keys.registerAction(nextCmdAction);
-        ContentAssistAction assistAction = new ContentAssistAction(in);
-        assistAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ContentAssistAction");
-        keys.registerAction(assistAction);
-        ParameterHintsAction hintsAction = new ParameterHintsAction(in);
-        hintsAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ParameterHintsAction");
-        keys.registerAction(hintsAction);
-        IndentAction indentAction = new IndentAction(in);
-        indentAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.Indent");
-        keys.registerAction(indentAction);
-        ExpandSelectionAction expSelAction = new ExpandSelectionAction(in);
-        expSelAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.ExpandSelectionAction");
-        keys.registerAction(expSelAction);
-        SelectCurrentExpressionAction selCurrentAction = new SelectCurrentExpressionAction(in);
-        selCurrentAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction");
-        keys.registerAction(selCurrentAction);
-        JumpForwardAction jumpForeAction = new JumpForwardAction(in);
-        jumpForeAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.JumpForwardAction");
-        keys.registerAction(jumpForeAction);
-        JumpBackAction jumpBackAction = new JumpBackAction(in);
-        jumpBackAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.JumpBackAction");
-        keys.registerAction(jumpBackAction);
-        CommentingAction commentingAction = new CommentingAction(in);
-        commentingAction.setActionDefinitionId("jasko.tim.lisp.editors.actions.CommentingAction");
-        keys.registerAction(commentingAction);
+ 		IHandlerService keys = (IHandlerService) this.getSite().getService(IHandlerService.class);
+ 		IContextService keyctx = (IContextService) this.getSite().getService(IContextService.class);
+ 		
+ 		keyctx.activateContext("jasko.tim.lisp.context1");
 
+ 		HandlerDef [] handler_defs = {
+ 			new HandlerDef(HyperSpecAction.class, "jasko.tim.lisp.actions.HyperSpecAction", true),
+ 			new HandlerDef(LispDocAction.class, "jasko.tim.lisp.actions.LispDocAction", true),
+ 			new HandlerDef(OpenHistoryAction.class, "jasko.tim.lisp.actions.OpenHistoryDialogAction", false),
+ 			new HandlerDef(PreviousREPLCommandAction.class, "jasko.tim.lisp.actions.PreviousREPLCommandAction", false),
+ 			new HandlerDef(NextREPLCommandAction.class, "jasko.tim.lisp.actions.NextREPLCommandAction", false),
+ 			new HandlerDef(ContentAssistAction.class, "jasko.tim.lisp.editors.actions.ContentAssistAction", true),
+ 			new HandlerDef(ParameterHintsAction.class, "jasko.tim.lisp.editors.actions.ParameterHintsAction", true),
+ 			new HandlerDef(IndentAction.class, "jasko.tim.lisp.editors.actions.Indent", true),
+ 			new HandlerDef(ExpandSelectionAction.class, "jasko.tim.lisp.editors.actions.ExpandSelectionAction", true),
+ 			new HandlerDef(SelectCurrentExpressionAction.class, "jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction", true),
+ 			new HandlerDef(JumpForwardAction.class, "jasko.tim.lisp.editors.actions.JumpForwardAction", true),
+ 			new HandlerDef(JumpBackAction.class, "jasko.tim.lisp.editors.actions.JumpBackAction", true),
+ 			new HandlerDef(CommentingAction.class, "jasko.tim.lisp.editors.actions.CommentingAction", true)
+ 		};
+ 		
+ 		for (int i = 0; i < handler_defs.length; ++i) {
+ 			LispAction hdef = handler_defs[i].newClassInstance(in, this);
+ 			hdef.setActionDefinitionId(handler_defs[i].getId());
+ 			keys.activateHandler(handler_defs[i].getId(), new ActionHandler(hdef));
+ 		}
+ 		
  		/*in.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
 				try {

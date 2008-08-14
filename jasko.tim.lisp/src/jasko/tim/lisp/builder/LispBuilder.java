@@ -31,7 +31,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	
 
 /*	// We ended up not using asd files for incremental build. However these couple of functions
-    // might be usefull for future code handling project management with asd files. So I leave them commented out.
+    // might be useful for future code handling project management with asd files. So I leave them commented out.
 	private ArrayList<IFile> asdFiles = null;
 	private ArrayList<ArrayList<String>> filesInAsd = null;
 	
@@ -379,8 +379,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd,
 			int lineNum, String pkg){
 		addMarker(file,"Package "+ pkg + " is not loaded",offsetStart,offsetEnd+1,lineNum);
-		List<IFile> files = 
-			LispPlugin.getDefault().getSwank().filesWithCompileProblems;
+		/*( List<IFile> files = 
+			LispPlugin.getDefault().getSwank().filesWithCompileProblems; */
 	}
 
 	private static boolean checkPackageDependence(LispNode code, IFile file){
