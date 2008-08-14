@@ -384,6 +384,10 @@
 			description="Shortcuts related to programming Lisp"
 			id="jasko.tim.lisp.category1"
 			name="Lisp"/>
+        <category
+            description="Shortcuts related to profiling Lisp"
+            id="jasko.tim.lisp.category2"
+            name="Profile"/>
 		<command
 			categoryId="jasko.tim.lisp.category1"
 			description="Compiles the file and changes focus to the REPL."
