@@ -18,7 +18,7 @@ public class MarkerAnnotationHover implements IAnnotationHover {
 
 	public String getHoverInfo(ISourceViewer viewer, int line) {
 		String info = null;
-		List markers = getMarkersForLine(viewer, line);
+		List<IMarker> markers = getMarkersForLine(viewer, line);
 		if (markers != null) {
 			info = "";
 			for (int i =  0; i < markers.size(); i++) {
@@ -43,7 +43,7 @@ public class MarkerAnnotationHover implements IAnnotationHover {
 		List<IMarker> markers = new ArrayList<IMarker>();
 		IAnnotationModel model = aViewer.getAnnotationModel();
 		if (model != null) {
-			Iterator e = model.getAnnotationIterator();
+			Iterator<?> e = model.getAnnotationIterator();
 			while (e.hasNext()) {
 				Object o = e.next();
 				if (o instanceof MarkerAnnotation) {

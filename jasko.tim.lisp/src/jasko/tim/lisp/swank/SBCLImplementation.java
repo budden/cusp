@@ -1,7 +1,6 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.File;
 import java.io.FileFilter;

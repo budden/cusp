@@ -1,6 +1,5 @@
 package jasko.tim.lisp.editors;
 
-import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.rules.*;
 
 public class LispNumberRule implements IRule {
@@ -15,7 +14,7 @@ public class LispNumberRule implements IRule {
 	static private String hex = "(#[xX][-\\+]?[a-fA-F0-9]+(/[a-fA-F0-9]+)?)";
 
 	public LispNumberRule(IToken token) {
-		Assert.isNotNull(token);
+		assert token != null;
 		fToken= token;
 	}
 

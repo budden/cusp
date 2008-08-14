@@ -1,7 +1,6 @@
 package jasko.tim.lisp.editors.actions;
 
 import jasko.tim.lisp.editors.ILispEditor;
-import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.editors.LispPartitionScanner;
 import jasko.tim.lisp.editors.assist.*;
 
