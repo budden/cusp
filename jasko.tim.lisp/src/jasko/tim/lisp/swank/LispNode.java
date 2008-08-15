@@ -192,4 +192,8 @@ public class LispNode {
 		}
 		return ret;
 	}
+	
+	public boolean isCarEqual(String value) {
+		return car().value.equalsIgnoreCase(value);
+	}
 }
