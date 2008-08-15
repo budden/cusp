@@ -14,13 +14,15 @@
 (in-package :swank-backend)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (require 'asdf)
   (require 'sb-bsd-sockets)
   (require 'sb-introspect)
   (require 'sb-posix)
   (require 'sb-cltl2))
 
-(declaim (optimize (debug 2) (sb-c:insert-step-conditions 0)))
+(declaim (optimize (debug 2) 
+                   (sb-c::insert-step-conditions 0)
+                   (sb-c::insert-debug-catch 0)
+                   (sb-c::merge-tail-calls 2)))
 
 (import-from :sb-gray *gray-stream-symbols* :swank-backend)
 
@@ -47,7 +49,12 @@
   (defun sbcl-with-restart-frame ()
     (if (find-symbol "FRAME-HAS-DEBUG-TAG-P" "SB-DEBUG")
         '(:and)
-        '(:or))))
+        '(:or)))
+  (defun sbcl-with-symbol (name package)
+    (if (find-symbol (string name) (string package))
+        '(:and)
+        '(:or)))
+  )
 
 ;;; swank-mop
 
@@ -105,6 +112,13 @@
                          (or external-format :iso-latin-1-unix)
                          (or buffering :full)))
 
+#-win32
+(defimplementation install-sigint-handler (function)
+  (sb-sys:enable-interrupt sb-unix:sigint 
+                           (lambda (&rest args)
+                             (declare (ignore args))
+                             (funcall function))))
+
 (defvar *sigio-handlers* '()
   "List of (key . fn) pairs to be called on SIGIO.")
 
@@ -126,7 +140,6 @@
 (defimplementation add-sigio-handler (socket fn)
   (set-sigio-handler)
   (let ((fd (socket-fd socket)))
-    (format *debug-io* "Adding sigio handler: ~S ~%" fd)
     (enable-sigio-on-fd fd)
     (push (cons fd fn) *sigio-handlers*)))
 
@@ -139,7 +152,6 @@
 (defimplementation add-fd-handler (socket fn)
   (declare (type function fn))
   (let ((fd (socket-fd socket)))
-    (format *debug-io* "; Adding fd handler: ~S ~%" fd)
     (sb-sys:add-fd-handler fd :input (lambda (_)
                                        _
                                        (funcall fn)))))
@@ -308,10 +320,13 @@ This traps all compiler conditions at a lower-level than using
 C:*COMPILER-NOTIFICATION-FUNCTION*. The advantage is that we get to
 craft our own error messages, which can omit a lot of redundant
 information."
-  (let ((context (sb-c::find-error-context nil)))
-    (unless (eq condition *previous-compiler-condition*)
-      (setq *previous-compiler-condition* condition)
-      (signal-compiler-condition condition context))))
+  (unless (or (eq condition *previous-compiler-condition*))
+    ;; First resignal warnings, so that outer handlers -- which may choose to
+    ;; muffle this -- get a chance to run.
+    (when (typep condition 'warning)
+      (signal condition))
+    (setq *previous-compiler-condition* condition)
+    (signal-compiler-condition condition (sb-c::find-error-context nil))))
 
 (defun signal-compiler-condition (condition context)
   (signal (make-condition
@@ -404,7 +419,6 @@ compiler state."
   (handler-bind ((sb-c:fatal-compiler-error #'handle-file-compiler-termination)
                  (sb-c:compiler-error  #'handle-notification-condition)
                  (sb-ext:compiler-note #'handle-notification-condition)
-                 (style-warning        #'handle-notification-condition)
                  (warning              #'handle-notification-condition))
     (funcall function)))
 
@@ -444,28 +458,36 @@ compiler state."
 
 (defimplementation swank-compile-string (string &key buffer position directory
                                                 debug)
+  (declare (ignorable debug))
   (let ((*buffer-name* buffer)
         (*buffer-offset* position)
         (*buffer-substring* string)
         (filename (temp-file-name))
-        (old-min-debug (assoc 'debug (sb-ext:restrict-compiler-policy))))
+        #+#.(swank-backend::sbcl-with-symbol 'restrict-compiler-policy 'sb-ext)
+        (old-min-debug (assoc 'debug (sb-ext:restrict-compiler-policy)))
+        )
+    #+#.(swank-backend::sbcl-with-symbol 'restrict-compiler-policy 'sb-ext)
     (when debug
-      (sb-ext:restrict-compiler-policy 'debug 3))
-    (flet ((compile-it (fn)
+      (sb-ext:restrict-compiler-policy 'debug debug))
+    (flet ((load-it (filename)
+             (when filename (load filename)))
+           (compile-it (cont)
              (with-compilation-hooks ()
                (with-compilation-unit
                    (:source-plist (list :emacs-buffer buffer
                                         :emacs-directory directory
                                         :emacs-string string
                                         :emacs-position position))
-                 (funcall fn (compile-file filename))))))
+                 (funcall cont (compile-file filename))))))
       (with-open-file (s filename :direction :output :if-exists :error)
         (write-string string s))
       (unwind-protect
            (if *trap-load-time-warnings*
-               (compile-it #'load)
-               (load (compile-it #'identity)))
+               (compile-it #'load-it)
+               (load-it (compile-it #'identity)))
         (ignore-errors
+          #+#.(swank-backend::sbcl-with-symbol
+               'restrict-compiler-policy 'sb-ext)
           (sb-ext:restrict-compiler-policy 'debug (or old-min-debug 0))
           (delete-file filename)
           (delete-file (compile-file-pathname filename)))))))
@@ -515,16 +537,18 @@ This is useful when debugging the definition-finding code.")
              (structure-class    :structure-class)
              (class              :class)
              (method-combination :method-combination)
+             (package            :package)
+             (condition          :condition)             
              (structure-object   :structure-object)
              (standard-object    :standard-object)
-             (condition          :condition)
              (t                  :thing)))
          (to-string (obj)
            (typecase obj
+             (package (princ-to-string obj)) ; Packages are possibly named entities.
              ((or structure-object standard-object condition)
               (with-output-to-string (s)
                 (print-unreadable-object (obj s :type t :identity t))))
-             (t (format nil "~A" obj)))))
+             (t (princ-to-string obj)))))
     (handler-case
         (make-definition-source-location
          (sb-introspect:find-definition-source obj) (general-type-of obj) (to-string obj))
@@ -739,7 +763,7 @@ Return a list of the form (NAME LOCATION)."
   #'(lambda (condition old-hook)
       ;; Notice that *INVOKE-DEBUGGER-HOOK* is tried before
       ;; *DEBUGGER-HOOK*, so we have to make sure that the latter gets
-      ;; run when it was established locally by a user.
+      ;; run when it was established locally by a user (i.e. changed meanwhile.)
       (if *debugger-hook*
           (funcall *debugger-hook* condition old-hook)
           (funcall hook condition old-hook))))
@@ -771,7 +795,7 @@ Return a list of the form (NAME LOCATION)."
 (defimplementation call-with-debugging-environment (debugger-loop-fn)
   (declare (type function debugger-loop-fn))
   (let* ((*sldb-stack-top* (or sb-debug:*stack-top-hint* (sb-di:top-frame)))
-	 (sb-debug:*stack-top-hint* nil))
+         (sb-debug:*stack-top-hint* nil))
     (handler-bind ((sb-di:debug-condition
 		    (lambda (condition)
                       (signal (make-condition
@@ -838,9 +862,14 @@ stack."
          (plist (sb-c::debug-source-plist dsource)))
     (if (getf plist :emacs-buffer)
         (emacs-buffer-source-location code-location plist)
+        #+#.(swank-backend::sbcl-with-symbol 'debug-source-from 'sb-di)
         (ecase (sb-di:debug-source-from dsource)
           (:file (file-source-location code-location))
-          (:lisp (lisp-source-location code-location))))))
+          (:lisp (lisp-source-location code-location)))
+        #-#.(swank-backend::sbcl-with-symbol 'debug-source-from 'sb-di)
+        (if (sb-di:debug-source-namestring dsource)
+            (file-source-location code-location)
+            (lisp-source-location code-location)))))
 
 ;;; FIXME: The naming policy of source-location functions is a bit
 ;;; fuzzy: we have FUNCTION-SOURCE-LOCATION which returns the
@@ -894,7 +923,12 @@ stack."
                          `(:snippet ,snippet)))))))
 
 (defun code-location-debug-source-name (code-location)
-  (namestring (truename (sb-c::debug-source-name
+  (namestring (truename (#+#.(swank-backend::sbcl-with-symbol
+                              'debug-source-name 'sb-di)
+                             sb-c::debug-source-name
+                             #-#.(swank-backend::sbcl-with-symbol
+                                  'debug-source-name 'sb-di)
+                             sb-c::debug-source-namestring
                          (sb-di::code-location-debug-source code-location)))))
 
 (defun code-location-debug-source-created (code-location)
@@ -1190,18 +1224,45 @@ stack."
     (if (sb-thread:thread-alive-p thread)
         "RUNNING"
         "STOPPED"))
+  #+#.(swank-backend::sbcl-with-weak-hash-tables)
+  (progn
+    (defparameter *thread-description-map*
+      (make-weak-key-hash-table))
+
+    (defvar *thread-descr-map-lock*
+      (sb-thread:make-mutex :name "thread description map lock"))
+    
+    (defimplementation thread-description (thread)
+      (sb-thread:with-mutex (*thread-descr-map-lock*)
+        (or (gethash thread *thread-description-map*)
+            (short-backtrace thread 6 10))))
+
+    (defimplementation set-thread-description (thread description)
+      (sb-thread:with-mutex (*thread-descr-map-lock*)
+        (setf (gethash thread *thread-description-map*) description)))
+
+    (defun short-backtrace (thread start count)
+      (let ((self (current-thread))
+            (tag (get-internal-real-time)))
+        (sb-thread:interrupt-thread
+         thread
+         (lambda ()
+           (let* ((frames (nthcdr start (sb-debug:backtrace-as-list count))))
+             (send self (cons tag frames)))))
+        (handler-case
+            (sb-ext:with-timeout 0.1
+              (let ((frames (cdr (receive-if (lambda (msg) 
+                                               (eq (car msg) tag)))))
+                    (*print-pretty* nil))
+                (format nil "~{~a~^ <- ~}" (mapcar #'car frames))))
+          (sb-ext:timeout () ""))))
+
+    )
 
   (defimplementation make-lock (&key name)
     (sb-thread:make-mutex :name name))
 
   (defimplementation call-with-lock-held (lock function)
-    (declare (type function function))
-    (sb-thread:with-mutex (lock) (funcall function)))
-
-  (defimplementation make-recursive-lock (&key name)
-    (sb-thread:make-mutex :name name))
-
-  (defimplementation call-with-recursive-lock-held (lock function)
     (declare (type function function))
     (sb-thread:with-recursive-lock (lock) (funcall function)))
 
@@ -1246,51 +1307,36 @@ stack."
               (nconc (mailbox.queue mbox) (list message)))
         (sb-thread:condition-broadcast (mailbox.waitqueue mbox)))))
 
-  (defimplementation receive ()
+  (defimplementation receive-if (test &optional timeout)
     (let* ((mbox (mailbox (current-thread)))
            (mutex (mailbox.mutex mbox)))
-      (sb-thread:with-mutex (mutex)
-        (loop
-         (let ((q (mailbox.queue mbox)))
-           (cond (q (return (pop (mailbox.queue mbox))))
-                 (t (sb-thread:condition-wait (mailbox.waitqueue mbox)
-                                              mutex))))))))
+      (assert (or (not timeout) (eq timeout t)))
+      (loop
+       (check-slime-interrupts)
+       (sb-thread:with-mutex (mutex)
+         (let* ((q (mailbox.queue mbox))
+                (tail (member-if test q)))
+           (when tail 
+             (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
+             (return (car tail))))
+         (when (eq timeout t) (return (values nil t)))
+         (handler-case (sb-ext:with-timeout 0.2
+                         (sb-thread:condition-wait (mailbox.waitqueue mbox)
+                                                   mutex))
+           (sb-ext:timeout ()))))))
 
-
-  ;; Auto-flush streams
-
-  (defvar *auto-flush-interval* 0.15
-    "How often to flush interactive streams. This valu is passed
-    directly to cl:sleep.")
-
-  (defvar *auto-flush-lock* (make-recursive-lock :name "auto flush"))
-
-  (defvar *auto-flush-thread* nil)
-
-  (defvar *auto-flush-streams* '())
-  
-  (defimplementation make-stream-interactive (stream)
-    (call-with-recursive-lock-held
-     *auto-flush-lock*
-     (lambda ()
-       (pushnew stream *auto-flush-streams*)
-       (unless *auto-flush-thread*
-         (setq *auto-flush-thread*
-               (sb-thread:make-thread #'flush-streams
-                                      :name "auto-flush-thread"))))))
-
-  (defun flush-streams ()
-    (loop
-     (call-with-recursive-lock-held
-      *auto-flush-lock*
-      (lambda ()
-        (setq *auto-flush-streams*
-              (remove-if (lambda (x)
-                           (not (and (open-stream-p x)
-                                     (output-stream-p x))))
-                         *auto-flush-streams*))
-        (mapc #'finish-output *auto-flush-streams*)))
-     (sleep *auto-flush-interval*)))
+  #-non-broken-terminal-sessions
+  (progn
+    (defvar *native-wait-for-terminal* #'sb-thread::get-foreground)
+    (sb-ext:with-unlocked-packages (sb-thread) 
+      (defun sb-thread::get-foreground ()
+        (ignore-errors
+          (format *debug-io* ";; SWANK: sb-thread::get-foreground ...~%")
+          (finish-output *debug-io*))
+        (or (and (typep *debug-io* 'two-way-stream)
+                 (typep (two-way-stream-input-stream *debug-io*)
+                        'slime-input-stream))
+            (funcall *native-wait-for-terminal*)))))
 
   )
 
@@ -1357,3 +1403,17 @@ stack."
 (defimplementation hash-table-weakness (hashtable)
   #+#.(swank-backend::sbcl-with-weak-hash-tables)
   (sb-ext:hash-table-weakness hashtable))
+
+#-win32
+(defimplementation save-image (filename &optional restart-function)
+  (let ((pid (sb-posix:fork)))
+    (cond ((= pid 0) 
+           (let ((args `(,filename 
+                         ,@(if restart-function
+                               `((:toplevel ,restart-function))))))
+             (apply #'sb-ext:save-lisp-and-die args)))
+          (t
+           (multiple-value-bind (rpid status) (sb-posix:waitpid pid 0)
+             (assert (= pid rpid))
+             (assert (and (sb-posix:wifexited status)
+                          (zerop (sb-posix:wexitstatus status)))))))))

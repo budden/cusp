@@ -55,6 +55,14 @@ public class LispNode {
 		this.endLine = endLine;
 	}
 	
+	/**
+	 * Test if this is an empty LispNode.
+	 * @return true if value equals the empty string
+	 */
+	public boolean isEmpty() {
+		return (params.size() == 0 && value.length() == 0);
+	}
+	
 	public int asInt() {
 		int ret = 0;
 		try {
@@ -67,7 +75,7 @@ public class LispNode {
 	
 	public LispNode car() {
 		if (params.size() >= 1) {
-			return (LispNode)params.get(0);
+			return params.get(0);
 		} else {
 			return new LispNode();
 		}
@@ -75,7 +83,7 @@ public class LispNode {
 	
 	public LispNode cadr() {
 		if (params.size() >= 2) {
-			return (LispNode)params.get(1);
+			return params.get(1);
 		} else {
 			return new LispNode();
 		}
@@ -83,7 +91,7 @@ public class LispNode {
 	
 	public LispNode caadr() {
 		if (params.size() >= 3) {
-			return (LispNode) params.get(2);
+			return params.get(2);
 		} else {
 			return new LispNode();
 		}
@@ -92,7 +100,7 @@ public class LispNode {
 	public LispNode get(int i) {
 		try {
 			if (params.size() >= i+1) {
-				return (LispNode)params.get(i);
+				return params.get(i);
 			} else {
 				return new LispNode();
 			}
@@ -137,12 +145,12 @@ public class LispNode {
 		if (!value.equals("")) {
 			return "`" + value + "`";
 		} else {
-			String ret = "(";
-			for (int i=0; i<params.size(); ++i) {
-				ret += params.get(i).toString() + " ";
+			StringBuffer ret = new StringBuffer("(");
+			for (LispNode p : params) {
+				ret.append(p.toString()).append(" ");
 			}
-			ret += ")";
-			return ret;
+			ret.append(")");
+			return ret.toString();
 		}
 	}
 	
@@ -193,7 +201,7 @@ public class LispNode {
 		return ret;
 	}
 	
-	public boolean isCarEqual(String value) {
-		return car().value.equalsIgnoreCase(value);
+	public boolean isCarEqual(String val) {
+		return car().value.equalsIgnoreCase(val);
 	}
 }

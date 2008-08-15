@@ -32,10 +32,14 @@
            #:unbound-slot-filler
            #:declaration-arglist
            #:type-specifier-arglist
+           ;; interrupt macro for the backend
+           #:*pending-slime-interrupts*
+           #:check-slime-interrupts
            ;; inspector related symbols
            #:emacs-inspect
            #:label-value-line
            #:label-value-line*
+           
            #:with-struct
            ))
 
@@ -193,6 +197,7 @@ EXCEPT is a list of symbol names which should be ignored."
 (defvar *gray-stream-symbols*
   '(:fundamental-character-output-stream
     :stream-write-char
+    :stream-write-string
     :stream-fresh-line
     :stream-force-output
     :stream-finish-output
@@ -297,6 +302,17 @@ that the calling thread is the one that interacts with Emacs."
 (definterface getpid ()
   "Return the (Unix) process ID of this superior Lisp.")
 
+(definterface install-sigint-handler (function)
+  "Call FUNCTION on SIGINT (instead of invoking the debugger).
+Return old signal handler."
+  nil)
+
+(definterface call-with-user-break-handler (handler function)
+  "Install the break handler HANDLER while executing FUNCTION."
+  (let ((old-handler (install-sigint-handler handler)))
+    (unwind-protect (funcall function)
+      (install-sigint-handler old-handler))))
+
 (definterface lisp-implementation-type-name ()
   "Return a short name for the Lisp implementation."
   (lisp-implementation-type))
@@ -346,15 +362,20 @@ If DIRECTORY is specified it may be used by certain implementations to
 rebind *DEFAULT-PATHNAME-DEFAULTS* which may improve the recording of
 source information.
 
-If DEBUG is supplied, it may be used by certain implementations to
-compile with maximum debugging information.
+If DEBUG is supplied, and non-NIL, it may be used by certain
+implementations to compile with a debug optimization quality of its
+value.
+
+Should return T on successfull compilation, NIL otherwise.
 ")
 
 (definterface swank-compile-file (filename load-p external-format)
    "Compile FILENAME signalling COMPILE-CONDITIONs.
 If LOAD-P is true, load the file after compilation.
 EXTERNAL-FORMAT is a value returned by find-external-format or
-:default.")
+:default.
+
+Should return T on successfull compilation, NIL otherwise.")
 
 (deftype severity () 
   '(member :error :read-error :warning :style-warning :note))
@@ -442,15 +463,6 @@ argument.
 Output should be forced to OUTPUT-FN before calling INPUT-FN.
 
 The streams are returned as two values.")
-
-(definterface make-stream-interactive (stream)
-  "Do any necessary setup to make STREAM work interactively.
-This is called for each stream used for interaction with the user
-\(e.g. *standard-output*). An implementation could setup some
-implementation-specific functions to control output flushing at the
-like."
-  (declare (ignore stream))
-  nil)
 
 
 ;;;; Documentation
@@ -765,7 +777,7 @@ That is the source location of the underlying datastructure of
 OBJECT. E.g. on a STANDARD-OBJECT, the source location of the
 respective DEFCLASS definition is returned, on a STRUCTURE-CLASS the
 respective DEFSTRUCT definition, and so on."
-  ;; This returns _ source location and not a list of locations. It's
+  ;; This returns one source location and not a list of locations. It's
   ;; supposed to return the location of the DEFGENERIC definition on
   ;; #'SOME-GENERIC-FUNCTION.
   )
@@ -930,12 +942,14 @@ Depending on the impleimentaion, this function may never return."
   "Return an Emacs-parsable object to identify THREAD.
 
 Ids should be comparable with equal, i.e.:
- (equal (thread-id <t1>) (thread-id <t2>)) <==> (eq <t1> <t2>)")
+ (equal (thread-id <t1>) (thread-id <t2>)) <==> (eq <t1> <t2>)"
+  thread)
 
 (definterface find-thread (id)
   "Return the thread for ID.
 ID should be an id previously obtained with THREAD-ID.
-Can return nil if the thread no longer exists.")
+Can return nil if the thread no longer exists."
+  (current-thread))
 
 (definterface thread-name (thread)
    "Return the name of THREAD.
@@ -950,9 +964,20 @@ user. They do not have to be unique."
    (declare (ignore thread))
    "")
 
+(definterface thread-description (thread)
+  "Return a string describing THREAD."
+  (declare (ignore thread))
+  "")
+
+(definterface set-thread-description (thread description)
+  "Set THREAD's description to DESCRIPTION."
+  (declare (ignore thread description))
+  "")
+
 (definterface make-lock (&key name)
    "Make a lock for thread synchronization.
-Only one thread may hold the lock (via CALL-WITH-LOCK-HELD) at a time."
+Only one thread may hold the lock (via CALL-WITH-LOCK-HELD) at a time
+but that thread may hold it more than once."
    (declare (ignore name))
    :null-lock)
 
@@ -961,24 +986,6 @@ Only one thread may hold the lock (via CALL-WITH-LOCK-HELD) at a time."
    (declare (ignore lock)
             (type function function))
    (funcall function))
-
-(definterface make-recursive-lock (&key name)
-  "Make a lock for thread synchronization.
-Only one thread may hold the lock (via CALL-WITH-RECURSIVE-LOCK-HELD)
-at a time, but that thread may hold it more than once."
-  (cons nil (make-lock :name name)))
-
-(definterface call-with-recursive-lock-held (lock function)
-  "Call FUNCTION with LOCK held, queueing if necessary."
-  (if (eql (car lock) (current-thread))
-      (funcall function)
-      (call-with-lock-held (cdr lock)
-                           (lambda ()
-                             (unwind-protect
-                                  (progn
-                                    (setf (car lock) (current-thread))
-                                    (funcall function))
-                               (setf (car lock) nil))))))
 
 (definterface current-thread ()
   "Return the currently executing thread."
@@ -1002,8 +1009,22 @@ at a time, but that thread may hold it more than once."
 (definterface send (thread object)
   "Send OBJECT to thread THREAD.")
 
-(definterface receive ()
-  "Return the next message from current thread's mailbox.")
+(definterface receive (&optional timeout)
+  "Return the next message from current thread's mailbox."
+  (receive-if (constantly t) timeout))
+
+(definterface receive-if (predicate &optional timeout)
+  "Return the first message satisfiying PREDICATE.")
+
+(defvar *pending-slime-interrupts*)
+
+(defun check-slime-interrupts ()
+  "Execute pending interrupts if any.
+This should be called periodically in operations which
+can take a long time to complete."
+  (when (and (boundp '*pending-slime-interrupts*)
+             *pending-slime-interrupts*)
+    (funcall (pop *pending-slime-interrupts*))))
 
 (definterface toggle-trace (spec)
   "Toggle tracing of the function(s) given with SPEC.
@@ -1076,3 +1097,12 @@ SPEC can be:
     (values             . (&rest typespecs))
     (vector             . (&optional element-type size))
     ))
+
+;;; Heap dumps
+
+(definterface save-image (filename &optional restart-function)
+  "Save a heap image to the file FILENAME.
+RESTART-FUNCTION, if non-nil, should be called when the image is loaded.")
+
+
+  

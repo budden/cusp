@@ -32,9 +32,15 @@
 (defun swank-mop:eql-specializer-object (eql-spec)
   (second eql-spec))
 
-(when (fboundp 'dspec::define-dspec-alias)
-  (dspec::define-dspec-alias defimplementation (name args &rest body)
-    `(defmethod ,name ,args ,@body)))
+(eval-when (:compile-toplevel :execute :load-toplevel)
+  (defvar *original-defimplementation* (macro-function 'defimplementation))
+  (defmacro defimplementation (&whole whole name args &body body 
+                               &environment env)
+    (declare (ignore args body))
+    `(progn
+       (dspec:record-definition '(defun ,name) (dspec:location)
+                                :check-redefinition-p nil)
+       ,(funcall *original-defimplementation* whole env))))
 
 ;;; TCP server
 
@@ -212,18 +218,27 @@ Return NIL if the symbol is unbound."
                  :io-bindings io-bindings
                  :debugger-hoook hook))
 
-(defmethod env-internals:environment-display-notifier
+(defmethod env-internals:environment-display-notifier 
     ((env slime-env) &key restarts condition)
-  (declare (ignore restarts))
-  (funcall (slot-value env 'debugger-hook) condition *debugger-hook*))
+  (declare (ignore restarts condition))
+  (funcall (swank-sym :swank-debugger-hook) condition *debugger-hook*)
+  ;;  nil
+  )
 
 (defmethod env-internals:environment-display-debugger ((env slime-env))
   *debug-io*)
+
+(defmethod env-internals:confirm-p ((e slime-env) &optional msg &rest args)
+  (apply (swank-sym :y-or-n-p-in-emacs) msg args))
 
 (defimplementation call-with-debugger-hook (hook fun)
   (let ((*debugger-hook* hook))
     (env:with-environment ((slime-env hook '()))
       (funcall fun))))
+
+(defimplementation install-debugger-globally (function)
+  (setq *debugger-hook* function)
+  (setf (env:environment) (slime-env function '())))
 
 (defvar *sldb-top-frame*)
 
@@ -341,6 +356,12 @@ Return NIL if the symbol is unbound."
 (defimplementation restart-frame (frame-number)
   (let ((frame (nth-frame frame-number)))
     (dbg::restart-frame frame :same-args t)))
+
+(defimplementation disassemble-frame (frame-number)
+  (let* ((frame (nth-frame frame-number)))
+    (when (dbg::call-frame-p frame)
+      (let ((function (dbg::get-call-frame-function frame)))
+        (disassemble function)))))
 
 ;;; Definition finding
 
@@ -731,19 +752,39 @@ function names like \(SETF GET)."
 (defimplementation thread-alive-p (thread)
   (mp:process-alive-p thread))
 
+(defstruct (mailbox (:conc-name mailbox.)) 
+  (mutex (mp:make-lock :name "thread mailbox"))
+  (queue '() :type list))
+
 (defvar *mailbox-lock* (mp:make-lock))
 
 (defun mailbox (thread)
   (mp:with-lock (*mailbox-lock*)
     (or (getf (mp:process-plist thread) 'mailbox)
         (setf (getf (mp:process-plist thread) 'mailbox)
-              (mp:make-mailbox)))))
+              (make-mailbox)))))
 
-(defimplementation receive ()
-  (mp:mailbox-read (mailbox mp:*current-process*)))
+(defimplementation receive-if (test &optional timeout)
+  (let* ((mbox (mailbox mp:*current-process*))
+         (lock (mailbox.mutex mbox)))
+    (assert (or (not timeout) (eq timeout t)))
+    (loop
+     (check-slime-interrupts)
+     (mp:with-lock (lock "receive-if/try")
+       (let* ((q (mailbox.queue mbox))
+              (tail (member-if test q)))
+         (when tail
+           (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
+           (return (car tail)))))
+     (when (eq timeout t) (return (values nil t)))
+     (mp:process-wait-with-timeout 
+      "receive-if" 0.2 (lambda () (some test (mailbox.queue mbox)))))))
 
-(defimplementation send (thread object)
-  (mp:mailbox-send (mailbox thread) object))
+(defimplementation send (thread message)
+  (let ((mbox (mailbox thread)))
+    (mp:with-lock ((mailbox.mutex mbox))
+      (setf (mailbox.queue mbox)
+            (nconc (mailbox.queue mbox) (list message))))))
 
 ;;; Some intergration with the lispworks environment
 
@@ -752,25 +793,7 @@ function names like \(SETF GET)."
 (defimplementation emacs-connected ()
   (when (eq (eval (swank-sym :*communication-style*))
             nil)
-    (set-sigint-handler))
-  ;; pop up the slime debugger by default
-  (let ((lw:*handle-warn-on-redefinition* :warn))
-    (defmethod env-internals:environment-display-notifier 
-        (env &key restarts condition)
-      (declare (ignore restarts))
-      (funcall (swank-sym :swank-debugger-hook) condition *debugger-hook*))
-    (defmethod env-internals:environment-display-debugger (env)
-      *debug-io*)))
-
-(defimplementation make-stream-interactive (stream)
-  (unless (find-method #'stream:stream-soft-force-output nil `((eql ,stream))
-                       nil)
-    (let ((lw:*handle-warn-on-redefinition* :warn))
-      (defmethod stream:stream-soft-force-output  ((o (eql stream)))
-        (force-output o)))))
-
-(defmethod env-internals:confirm-p ((e slime-env) &optional msg &rest args)
-  (apply (swank-sym :y-or-n-p-in-emacs) msg args))
+    (set-sigint-handler)))
       
 
 ;;;; Weak hashtables

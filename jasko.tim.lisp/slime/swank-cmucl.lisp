@@ -100,9 +100,10 @@
 
 (defimplementation accept-connection (socket &key
                                       external-format buffering timeout)
-  (declare (ignore timeout external-format))
-  (let ((buffering (or buffering :full)))
-    (make-socket-io-stream (ext:accept-tcp-connection socket) buffering)))
+  (declare (ignore timeout))
+  (make-socket-io-stream (ext:accept-tcp-connection socket) 
+                         (or buffering :full)
+                         (or external-format :iso-8859-1)))
 
 ;;;;; Sockets
 
@@ -117,12 +118,31 @@
   (let ((hostent (ext:lookup-host-entry hostname)))
     (car (ext:host-entry-addr-list hostent))))
 
-(defun make-socket-io-stream (fd buffering)
+(defvar *external-format-to-coding-system*
+  '((:iso-8859-1
+     "latin-1" "latin-1-unix" "iso-latin-1-unix"
+     "iso-8859-1" "iso-8859-1-unix")
+    #+unicode
+    (:utf-8 "utf-8" "utf-8-unix")))
+
+(defimplementation find-external-format (coding-system)
+  (car (rassoc-if (lambda (x) (member coding-system x :test #'equal))
+                  *external-format-to-coding-system*)))
+
+(defun make-socket-io-stream (fd buffering external-format)
   "Create a new input/output fd-stream for FD."
+  #-unicode(declare (ignore external-format))
   (sys:make-fd-stream fd :input t :output t :element-type 'base-char
-                      :buffering buffering))
+                      :buffering buffering
+                      #+unicode :external-format 
+                      #+unicode external-format))
 
 ;;;;; Signal-driven I/O
+
+(defimplementation install-sigint-handler (function)
+  (sys:enable-interrupt :sigint (lambda (signal code scp)
+                                  (declare (ignore signal code scp))
+                                  (funcall function))))
 
 (defvar *sigio-handlers* '()
   "List of (key . function) pairs.
@@ -140,19 +160,28 @@ specific functions.")
 (defun fcntl (fd command arg)
   "fcntl(2) - manipulate a file descriptor."
   (multiple-value-bind (ok error) (unix:unix-fcntl fd command arg)
-    (unless ok (error "fcntl: ~A" (unix:get-unix-error-msg error)))))
+    (cond (ok)
+          (t (error "fcntl: ~A" (unix:get-unix-error-msg error))))))
 
 (defimplementation add-sigio-handler (socket fn)
   (set-sigio-handler)
   (let ((fd (socket-fd socket)))
     (fcntl fd unix:f-setown (unix:unix-getpid))
-    (fcntl fd unix:f-setfl unix:fasync)
+    (let ((old-flags (fcntl fd unix:f-getfl 0)))
+      (fcntl fd unix:f-setfl (logior old-flags unix:fasync)))
     (push (cons fd fn) *sigio-handlers*)))
 
 (defimplementation remove-sigio-handlers (socket)
   (let ((fd (socket-fd socket)))
-    (setf *sigio-handlers* (remove fd *sigio-handlers* :key #'car))
-    (sys:invalidate-descriptor fd)))
+    (unless (assoc fd *sigio-handlers*)
+      (setf *sigio-handlers* (remove fd *sigio-handlers* :key #'car))
+      (let ((old-flags (fcntl fd unix:f-getfl 0)))
+        (fcntl fd unix:f-setfl (logandc2 old-flags unix:fasync)))
+      (sys:invalidate-descriptor fd))
+    #+(or)
+    (when (null *sigio-handlers*)
+      (sys:default-interrupt :sigio))
+    ))
 
 ;;;;; SERVE-EVENT
 
@@ -2082,18 +2111,28 @@ The `symbol-value' of each element is a type tag.")
                 (make-mailbox)))))
   
   (defimplementation send (thread message)
-    (let* ((mbox (mailbox thread))
-           (mutex (mailbox.mutex mbox)))
-      (mp:with-lock-held (mutex)
+    (check-slime-interrupts)
+    (let* ((mbox (mailbox thread)))
+      (mp:with-lock-held ((mailbox.mutex mbox))
         (setf (mailbox.queue mbox)
               (nconc (mailbox.queue mbox) (list message))))))
-  
-  (defimplementation receive ()
-    (let* ((mbox (mailbox mp:*current-process*))
-           (mutex (mailbox.mutex mbox)))
-      (mp:process-wait "receive" #'mailbox.queue mbox)
-      (mp:with-lock-held (mutex)
-        (pop (mailbox.queue mbox)))))
+
+  (defimplementation receive-if (test &optional timeout)
+    (let ((mbox (mailbox mp:*current-process*)))
+      (assert (or (not timeout) (eq timeout t)))
+      (loop
+       (check-slime-interrupts)
+       (mp:with-lock-held ((mailbox.mutex mbox))
+         (let* ((q (mailbox.queue mbox))
+                (tail (member-if test q)))
+           (when tail
+             (setf (mailbox.queue mbox) 
+                   (nconc (ldiff q tail) (cdr tail)))
+             (return (car tail)))))
+       (when (eq timeout t) (return (values nil t)))
+       (mp:process-wait-with-timeout 
+        "receive-if" 0.5 (lambda () (some test (mailbox.queue mbox)))))))
+                   
 
   ) ;; #+mp
 
@@ -2227,6 +2266,98 @@ The `symbol-value' of each element is a type tag.")
 
 (defimplementation make-weak-key-hash-table (&rest args)
   (apply #'make-hash-table :weak-p t args))
+
+
+;;; Save image
+
+(defimplementation save-image (filename &optional restart-function)
+  (multiple-value-bind (pid error) (unix:unix-fork)
+    (when (not pid) (error "fork: ~A" (unix:get-unix-error-msg error)))
+    (cond ((= pid 0)
+           (let ((args `(,filename 
+                         ,@(if restart-function
+                               `((:init-function ,restart-function))))))
+             (apply #'ext:save-lisp args)))
+          (t 
+           (let ((status (waitpid pid)))
+             (destructuring-bind (&key exited? status &allow-other-keys) status
+               (assert (and exited? (equal status 0)) ()
+                       "Invalid exit status: ~a" status)))))))
+
+(defun waitpid (pid)
+  (alien:with-alien ((status c-call:int))
+    (let ((code (alien:alien-funcall 
+                 (alien:extern-alien 
+                  waitpid (alien:function unix::pid-t 
+                                          unix::pid-t
+                                          (* c-call:int) c-call:int))
+                 pid (alien:addr status) 0)))
+      (cond ((= code -1) (error "waitpid: ~A" (unix:get-unix-error-msg)))
+            (t (assert (= code pid))
+               (decode-wait-status status))))))
+
+(defun decode-wait-status (status)
+  (let ((output (with-output-to-string (s)
+                  (call-program (list (process-status-program)
+                                      (format nil "~d" status))
+                                :output s))))
+    (read-from-string output)))
+
+(defun call-program (args &key output)
+  (destructuring-bind (program &rest args) args
+    (let ((process (ext:run-program program args :output output)))
+      (when (not program) (error "fork failed"))
+      (unless (and (eq (ext:process-status process) :exited)
+                   (= (ext:process-exit-code process) 0))
+        (error "Non-zero exit status")))))
+
+(defvar *process-status-program* nil)
+    
+(defun process-status-program ()
+  (or *process-status-program*
+      (setq *process-status-program*
+            (compile-process-status-program))))
+
+(defun compile-process-status-program ()
+  (let ((infile (system::pick-temporary-file-name
+                 "/tmp/process-status~d~c.c")))
+    (with-open-file (stream infile :direction :output :if-exists :supersede)
+      (format stream "
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <assert.h>
+
+#define FLAG(value) (value ? \"t\" : \"nil\")
+
+int main (int argc, char** argv) {
+  assert (argc == 2);
+  { 
+    char* endptr = NULL;
+    char* arg = argv[1];
+    long int status = strtol (arg, &endptr, 10);
+    assert (endptr != arg && *endptr == '\\0');
+    printf (\"(:exited? %s :status %d :signal? %s :signal %d :coredump? %s\"
+	    \" :stopped? %s :stopsig %d)\\n\",
+	    FLAG(WIFEXITED(status)), WEXITSTATUS(status),
+	    FLAG(WIFSIGNALED(status)), WTERMSIG(status),
+	    FLAG(WCOREDUMP(status)),
+	    FLAG(WIFSTOPPED(status)), WSTOPSIG(status));
+    fflush (NULL);
+    return 0;
+  }
+}
+")
+      (finish-output stream))
+    (let* ((outfile (system::pick-temporary-file-name))
+           (args (list "cc" "-o" outfile infile)))
+      (warn "Running cc: ~{~a ~}~%" args)
+      (call-program args :output t)
+      (delete-file infile)
+      outfile)))
+
+;; (save-image "/tmp/x.core")
 
 ;; Local Variables:
 ;; pbook-heading-regexp:    "^;;;\\(;+\\)"

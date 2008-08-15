@@ -193,11 +193,6 @@
 (defimplementation emacs-connected ()
   (setq ccl::*interactive-abort-process* ccl::*current-process*))
 
-(defimplementation make-stream-interactive (stream)
-  (typecase stream
-    (ccl:fundamental-output-stream 
-     (push stream ccl::*auto-flush-streams*))))
-
 ;;; Unix signals
 
 (defimplementation call-without-interrupts (fn)
@@ -958,13 +953,21 @@ out IDs for.")
             (nconc (mailbox.queue mbox) (list message)))
       (ccl:signal-semaphore (mailbox.semaphore mbox)))))
 
-(defimplementation receive ()
+(defimplementation receive-if (test &optional timeout)
   (let* ((mbox (mailbox ccl:*current-process*))
          (mutex (mailbox.mutex mbox)))
-    (ccl:wait-on-semaphore (mailbox.semaphore mbox))
-    (ccl:with-lock-grabbed (mutex)
-      (assert (mailbox.queue mbox))
-      (pop (mailbox.queue mbox)))))
+    (assert (or (not timeout) (eq timeout t)))
+    (loop
+     (check-slime-interrupts)
+     (ccl:with-lock-grabbed (mutex)
+       (let* ((q (mailbox.queue mbox))
+              (tail (member-if test q)))
+         (when tail 
+           (setf (mailbox.queue mbox) 
+                 (nconc (ldiff q tail) (cdr tail)))
+           (return (car tail)))))
+     (when (eq timeout t) (return (values nil t)))
+     (ccl:timed-wait-on-semaphore (mailbox.semaphore mbox) 0.2))))
 
 (defimplementation quit-lisp ()
   (ccl::quit))

@@ -99,6 +99,14 @@
       #+win32 ((ext:getenv "PID")) ; where does that come from?
       (t -1))))
 
+(defimplementation call-with-user-break-handler (handler function)
+  (handler-bind ((system::simple-interrupt-condition
+                  (lambda (c)
+                    (declare (ignore c))
+                    (funcall handler)
+                    (continue))))
+    (funcall function)))
+
 (defimplementation lisp-implementation-type-name ()
   "clisp")
 
@@ -212,12 +220,14 @@ Return NIL if the symbol is unbound."
     (:function (describe (symbol-function symbol)))
     (:class (describe (find-class symbol)))))
 
-(defun fspec-pathname (symbol)
-  (let ((path (documentation symbol 'sys::file))
+(defun fspec-pathname (spec)
+  (let ((path spec)
+	type
         lines)
     (when (consp path)
-      (psetq path (car path)
-             lines (cdr path)))
+      (psetq type (car path)
+	     path (cadr path)
+             lines (cddr path)))
     (when (and path
                (member (pathname-type path)
                        custom:*compiled-file-types* :test #'equal))
@@ -225,24 +235,26 @@ Return NIL if the symbol is unbound."
             (loop for suffix in custom:*source-file-types*
                thereis (probe-file (make-pathname :defaults path
                                                   :type suffix)))))
-    (values path lines)))
+    (values path type lines)))
 
-(defun fspec-location (fspec)
-  (multiple-value-bind (file lines)
+(defun fspec-location (name fspec)
+  (multiple-value-bind (file type lines)
       (fspec-pathname fspec)
-    (cond (file
-           (multiple-value-bind (truename c) (ignore-errors (truename file))
-             (cond (truename
-                    (make-location (list :file (namestring truename))
-                                   (if (consp lines)
-                                       (list* :line lines)
-                                       (list :function-name (string fspec)))))
-                   (t (list :error (princ-to-string c))))))
-          (t (list :error (format nil "No source information available for: ~S"
-                                  fspec))))))
+    (list (if type (list name type) name)
+	  (cond (file
+		 (multiple-value-bind (truename c) (ignore-errors (truename file))
+		   (cond (truename
+			  (make-location (list :file (namestring truename))
+					 (if (consp lines)
+					     (list* :line lines)
+					     (list :function-name (string fspec)))
+					 (list :snippet (format nil "~A" type))))
+			 (t (list :error (princ-to-string c))))))
+		(t (list :error (format nil "No source information available for: ~S"
+					fspec)))))))
 
 (defimplementation find-definitions (name)
-  (list (list name (fspec-location name))))
+  (mapcar #'(lambda (e) (fspec-location name e)) (documentation name 'sys::file)))
 
 (defun trim-whitespace (string)
   (string-trim #(#\newline #\space #\tab) string))
@@ -574,7 +586,7 @@ Execute BODY with NAME's function slot set to FUNCTION."
         nil))))
 
 (defimplementation swank-compile-string (string &key buffer position directory
-                                                debug)
+                                         debug)
   (declare (ignore directory debug))
   (with-compilation-hooks ()
     (let ((*buffer-name* buffer)
@@ -600,7 +612,7 @@ Execute BODY with NAME's function slot set to FUNCTION."
 (defun xref-results (symbols)
   (let ((xrefs '()))
     (dolist (symbol symbols)
-      (push (list symbol (fspec-location symbol)) xrefs))
+      (push (fspec-location symbol symbol) xrefs))
     xrefs))
 
 (when (find-package :swank-loader)
@@ -667,6 +679,10 @@ Execute BODY with NAME's function slot set to FUNCTION."
   #+lisp=cl (ext:quit)
   #-lisp=cl (lisp:quit))
 
+(defimplementation thread-id (thread)
+  (declare (ignore thread))
+  0)
+
 ;;;; Weak hashtables
 
 (defimplementation make-weak-key-hash-table (&rest args)
@@ -674,6 +690,12 @@ Execute BODY with NAME's function slot set to FUNCTION."
 
 (defimplementation make-weak-value-hash-table (&rest args)
   (apply #'make-hash-table :weak :value args))
+
+(defimplementation save-image (filename &optional restart-function)
+  (let ((args `(,filename 
+                ,@(if restart-function 
+                      `((:init-function ,restart-function))))))
+    (apply #'ext:saveinitmem args)))
 
 ;;; Local Variables:
 ;;; eval: (put 'compile-file-frobbing-notes 'lisp-indent-function 1)

@@ -1134,7 +1134,7 @@ public class SwankInterface {
 	// Compiling
 	
 	public synchronized void sendCompileString(String expr, String file, String dir, int offset, String pckg, SwankRunnable callBack) {
-		registerCallback(new CompileRunnable(callBack));
+		registerCallback(callBack);
 		System.out.println(file);
 		System.out.println(dir);
 		dir = implementation.translateLocalFilePath(dir);
@@ -1150,7 +1150,7 @@ public class SwankInterface {
 	}
 	
 	public synchronized void sendCompileFile(String filePath, SwankRunnable callBack) {
-		registerCallback(new CompileRunnable(callBack));
+		registerCallback(callBack);
 		filePath = filePath.replace('\\', '/');
 		filePath = implementation.translateLocalFilePath(filePath);
 		String msg = "(swank:compile-file-for-emacs \""
@@ -1183,25 +1183,6 @@ public class SwankInterface {
 		sendEvalAndGrab("(asdf:operate 'asdf:load-op :"+pkg+")",3000);
 	}		
 	
-	
-	private class CompileRunnable extends SwankRunnable {
-		private SwankRunnable callBack;
-		
-		public CompileRunnable(SwankRunnable callBack) {
-			this.callBack = callBack;
-		}
-		
-		public void run() {
-			sendCompileCheck(callBack);
-		}
-	}
-	
-	protected synchronized void sendCompileCheck(SwankRunnable callBack) {
-		registerCallback(callBack);
-		String msg = "(swank:compiler-notes-for-emacs)";
-		
-		emacsRex(msg);
-	}
 	
 	public synchronized void sendGetAvailablePackages(SwankRunnable callBack) {
 		registerCallback(callBack);
@@ -1267,13 +1248,11 @@ public class SwankInterface {
 	
 	public synchronized void sendGetCallers(String functionName, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		
 		emacsRex("(swank:xref (quote :callers) (quote \"" + formatCode(functionName) + "\"))", pkg);
 	}
 	
 	public synchronized void sendGetCallees(String functionName, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		
 		emacsRex("(swank:xref (quote :callees) (quote \"" + formatCode(functionName) + "\"))", pkg);
 	}
 	
@@ -1296,26 +1275,7 @@ public class SwankInterface {
 	}
 	
 	
-	
-	private void signalResponse(LispNode reply) {
-		String jobNum = reply.get(reply.params.size() - 1).value;
-		Object r = jobs.get(jobNum);
-		if (r != null) {
-			SwankRunnable runnable = (SwankRunnable) r;
-			runnable.result = reply;
-			Display.getDefault().asyncExec(runnable);
-			jobs.remove(jobNum);
-		} else {
-			SyncCallback sync = syncJobs.get(jobNum);
-			if (sync != null) {
-				sync.result = reply;
-				syncJobs.remove(jobNum);
-				synchronized (sync) {
-					sync.notifyAll();
-				}
-			} // if
-		} // else
-	}
+	// Message and response/reply management:
 	
 	private String formatCode(String code) {
 		return code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "");
@@ -1393,6 +1353,26 @@ public class SwankInterface {
 		return true;
 	}
 	
+	private void signalResponse(LispNode reply) {
+		String jobNum = reply.get(reply.params.size() - 1).value;
+		Object r = jobs.get(jobNum);
+		if (r != null) {
+			SwankRunnable runnable = (SwankRunnable) r;
+			runnable.result = reply;
+			Display.getDefault().asyncExec(runnable);
+			jobs.remove(jobNum);
+		} else {
+			SyncCallback sync = syncJobs.get(jobNum);
+			if (sync != null) {
+				sync.result = reply;
+				syncJobs.remove(jobNum);
+				synchronized (sync) {
+					sync.notifyAll();
+				}
+			} // if
+		} // else
+	}
+	
 	private void signalListeners(List<SwankRunnable> listeners, LispNode result) {
 		synchronized (listeners) {
 			for (SwankRunnable l : listeners) {
@@ -1427,6 +1407,12 @@ public class SwankInterface {
             // You would think that there's an easier way to fill the Hashtable,
             // but... put the special case handler actions in the dispatch hash
             // table:
+            ListenerDispatch default_dispatch = new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		signalResponse(node);
+            	}
+            };
+            
             dispatch.put(":debug-activate", new ListenerDispatch() {
             	public void func(LispNode node) {
             		signalListeners(debugListeners, node);
@@ -1472,11 +1458,9 @@ public class SwankInterface {
 					signalListeners(indentationListeners, node);
             	}
             });
-            dispatch.put(":return", new ListenerDispatch() {
-            	public void func(LispNode node) {
-            		signalResponse(node);
-            	}
-            });
+            dispatch.put(":return", default_dispatch);
+            dispatch.put(":reader-error", default_dispatch);
+            dispatch.put(":new-features", default_dispatch);
 		}
 		
 		
@@ -1486,7 +1470,7 @@ public class SwankInterface {
 				if (l != null)
 					l.func(node);
 				else
-					System.out.println("** unhandled node type: " + node.toString());
+					System.err.println("** unhandled node type: " + node.toString());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -1535,7 +1519,7 @@ public class SwankInterface {
 							nread += n;
 						} while (nread < length);
 						
-						// Materialize the string...
+						// Reify the string...
 						reply = String.copyValueOf(rbuf, 0, nread);
 						System.out.println("<--" + reply);
 						System.out.flush();
