@@ -1164,7 +1164,7 @@ public class SwankInterface {
  		fileFullPath = implementation.translateLocalFilePath(fileFullPath);
  		String[] fpathparts = fileFullPath.split("/");
  		if( fpathparts.length > 0 && fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
- 			registerCallback(new CompileRunnable(callBack));
+ 			registerCallback(callBack);
  			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
  			// Note from Tim:
  			// I changed this back, because the newer implementation assumed
