@@ -58,10 +58,10 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		ArrayList<String> res = new ArrayList<String>();
 		LispNode code = LispParser.parse(asdFile);
 		for( LispNode node: code.params ){
-			if( node.car().value.equalsIgnoreCase("defsystem") ){
+			if( node.isCarEqual("defsystem") ){
 				for( LispNode subnode : node.getf(":components").params )
 				{
-					if( subnode.car().value.equalsIgnoreCase(":file")){
+					if( subnode.isCarEqual(":file")){
 						res.add(subnode.cadr().value); //TODO: cannot handle files in subfolders
 					}
 				}
@@ -244,8 +244,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
   			} else if ( file != null && length > 0) {
   				deleteMarkers(file,offset,length);
   			}
-  			LispNode guts = result.getf(":return").getf(":ok");
- 			if (! guts.value.equalsIgnoreCase("nil")) {
+  			LispNode guts = result.getf(":return").getf(":ok").getf(":swank-compilation-unit");
+ 			if (! guts.isEmpty()) {
  				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
 				for (LispNode error: guts.params) {
 					String msg = error.getf(":message").value;

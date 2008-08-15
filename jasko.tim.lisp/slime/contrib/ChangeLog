@@ -1,3 +1,81 @@
+2008-08-12  Helmut Eller  <heller@common-lisp.net>
+
+	* slime-clipboard.el (slime-clipboard-insert-ref): Set
+	read-nonsticky to t to work better with kill/yank.
+	* swank-clipboard.lisp (:swank-clipboard): List exports to avoid
+	compiler warnings.
+
+2008-08-12  Helmut Eller  <heller@common-lisp.net>
+
+	Add a simple object clipboard.
+
+	* swank-clipboard.lisp: New file.
+	* slime-clipboard.el: New file.
+
+2008-08-07  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-fancy.el: Add slime-mdot-fu and slime-package-fu.
+
+2008-08-07  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-mdot-fu.el: Works for LET bindings now also.
+	(def-slime-test find-local-definitions.1): New test case.
+
+2008-08-05  Michael Weber  <michaelw+slime@foldr.org>
+
+	* slime-typeout-frame.el (slime-typeout-message-aux): prevent
+	typeout messages from scribbling into any buffer which happens to
+	be in the typeout window
+	(slime-typeout-buffer): new function; changed buffer name to
+	"*SLIME Typeout*"
+	(slime-make-typeout-frame): use it
+	(slime-ensure-typeout-frame): ensure typeout buffer is visible
+
+2008-08-04  Adam Bozanich <adam.boz@gmail.com>
+
+	* slime-asdf.el: Load swank-asdf.
+	This should avoid the rude disconnect if asdf wasn't loaded.
+
+2008-08-03  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-presentations.el (slime-presentation-around-or-before-point):
+	Guard against the case being used at the start of a buffer.
+
+2008-07-31  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-mdot-fu.el: New contrib. Makes M-. work on local definitions.
+
+2008-07-31  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-package-fu.el (slime-find-package-definition-regexp): Use
+	new constructor `make-slime-file-location'.
+	(slime-frob-defpackage-form, slime-export-symbol-at-point): Now
+	always display a message regarding success of the operation.
+	(slime-package-fu-init-undo-stack, slime-package-fu-unload): New.
+
+2008-07-19  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-package-fu.el, swank-package-fu.lisp: New contrib to
+	automatically add symbols to the relevant DEFPACKAGE forms.  You
+	can use `C-c x' to export the symbol at point, and `C-u C-c x' to
+	unexport it.
+
+2008-07-19  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-asdf.el (slime-oos): Use `slime-repl-shortcut-async'.
+
+2008-07-16  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* swank-asdf.lisp (operate-on-system-for-emacs): Wrapped in
+	WITH-SWANK-COMPILATION-UNIT.
+
+2008-06-07  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-parse.el (slime-cl-symbol-name),
+	(slime-cl-symbol-package),
+	(slime-qualify-cl-symbol-name): Moved back to `slime.el' as
+	they're still used there.
+
 2008-04-17  Gábor Melis <mega@retes.hu>
 
 	* swank-fancy-inspector.lisp (inspect-slot-for-emacs):

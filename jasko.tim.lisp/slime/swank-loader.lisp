@@ -21,6 +21,7 @@
 (cl:defpackage :swank-loader
   (:use :cl)
   (:export :init
+           :dump-image
            :*source-directory*
            :*fasl-directory*))
 
@@ -185,6 +186,7 @@ If LOAD is true, load the fasl file."
                      swank-fancy-inspector
                      swank-presentations swank-presentation-streams
                      #+(or asdf sbcl) swank-asdf
+                     swank-package-fu
                      )
   "List of names for contrib modules.")
 
@@ -235,3 +237,7 @@ If LOAD is true, load the fasl file."
     (compile-contribs :load t))
   (when setup
     (setup)))
+
+(defun dump-image (filename)
+  (init :setup nil)
+  (funcall (q "swank-backend:save-image") filename))

@@ -15,64 +15,66 @@
    (buffer :initform (make-string 8000))
    (fill-pointer :initform 0)
    (column :initform 0)
-   (last-flush-time :initform (get-internal-real-time))
-   (lock :initform (make-recursive-lock :name "buffer write lock"))))
+   (lock :initform (make-lock :name "buffer write lock"))))
+
+(defmacro with-slime-output-stream (stream &body body)
+  `(with-slots (lock output-fn buffer fill-pointer column) ,stream
+     (call-with-lock-held lock (lambda () ,@body))))
 
 (defmethod stream-write-char ((stream slime-output-stream) char)
-  (call-with-recursive-lock-held
-   (slot-value stream 'lock)
-   (lambda ()
-     (with-slots (buffer fill-pointer column) stream
-       (setf (schar buffer fill-pointer) char)
-       (incf fill-pointer)
-       (incf column)
-       (when (char= #\newline char)
-         (setf column 0)
-         (force-output stream))
-       (when (= fill-pointer (length buffer))
-         (finish-output stream)))))
+  (with-slime-output-stream stream
+    (setf (schar buffer fill-pointer) char)
+    (incf fill-pointer)
+    (incf column)
+    (when (char= #\newline char)
+      (setf column 0))
+    (when (= fill-pointer (length buffer))
+      (finish-output stream)))
   char)
 
+(defmethod stream-write-string ((stream slime-output-stream) string
+                                &optional start end)
+  (with-slime-output-stream stream
+    (let* ((start (or start 0))
+           (end (or end (length string)))
+           (len (length buffer))
+           (count (- end start))
+           (free (- len fill-pointer)))
+      (when (>= count free)
+        (stream-finish-output stream))
+      (cond ((< count len)
+             (replace buffer string :start1 fill-pointer
+                      :start2 start :end2 end)
+             (incf fill-pointer count))
+            (t
+             (funcall output-fn (subseq string start end))))
+      (let ((last-newline (position #\newline string :from-end t
+                                    :start start :end end)))
+        (setf column (if last-newline 
+                         (- end last-newline 1)
+                         (+ column count))))))
+  string)
+              
 (defmethod stream-line-column ((stream slime-output-stream))
-  (call-with-recursive-lock-held
-   (slot-value stream 'lock)
-   (lambda ()
-     (slot-value stream 'column))))
+  (with-slime-output-stream stream column))
 
 (defmethod stream-line-length ((stream slime-output-stream))
   75)
 
 (defmethod stream-finish-output ((stream slime-output-stream))
-  (call-with-recursive-lock-held
-   (slot-value stream 'lock)
-   (lambda ()
-     (with-slots (buffer fill-pointer output-fn last-flush-time) stream
-       (let ((end fill-pointer))
-         (unless (zerop end)
-           (funcall output-fn (subseq buffer 0 end))
-           (setf fill-pointer 0)))
-       (setf last-flush-time (get-internal-real-time)))))
+  (with-slime-output-stream stream 
+    (unless (zerop fill-pointer)
+      (funcall output-fn (subseq buffer 0 fill-pointer))
+      (setf fill-pointer 0)))
   nil)
 
 (defmethod stream-force-output ((stream slime-output-stream))
-  (call-with-recursive-lock-held
-   (slot-value stream 'lock)
-   (lambda ()
-     (with-slots (last-flush-time fill-pointer) stream
-       (let ((now (get-internal-real-time)))
-         (when (> (/ (- now last-flush-time)
-                     (coerce internal-time-units-per-second 'double-float))
-                  0.2)
-           (finish-output stream))))))
-  nil)
+  (stream-finish-output stream))
 
 (defmethod stream-fresh-line ((stream slime-output-stream))
-  (call-with-recursive-lock-held
-   (slot-value stream 'lock)
-   (lambda ()
-     (with-slots (column) stream
-       (cond ((zerop column) nil)
-             (t (terpri stream) t))))))
+  (with-slime-output-stream stream
+    (cond ((zerop column) nil)
+          (t (terpri stream) t))))
 
 (defclass slime-input-stream (fundamental-character-input-stream)
   ((output-stream :initarg :output-stream)

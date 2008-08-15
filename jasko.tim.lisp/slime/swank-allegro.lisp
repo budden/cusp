@@ -124,9 +124,6 @@
     (:class
      (describe (find-class symbol)))))
 
-(defimplementation make-stream-interactive (stream)
-  (setf (interactive-stream-p stream) t))
-
 ;;;; Debugger
 
 (defvar *sldb-topframe*)
@@ -414,6 +411,13 @@
       (fspec-definition-locations next)))
    (t
     (let ((defs (excl::find-source-file fspec)))
+      (when (and (null defs)
+                 (listp fspec)
+                 (string= (car fspec) '#:method))
+        ;; If methods are defined in a defgeneric form, the source location is
+        ;; recorded for the gf but not for the methods. Therefore fall back to
+        ;; the gf as the likely place of definition.
+        (setq defs (excl::find-source-file (second fspec))))
       (if (null defs)
           (list
            (list (list nil fspec)
@@ -654,8 +658,9 @@
 (defvar *mailbox-lock* (mp:make-process-lock :name "mailbox lock"))
 
 (defstruct (mailbox (:conc-name mailbox.)) 
-  (mutex (mp:make-process-lock :name "process mailbox"))
-  (queue '() :type list))
+  (lock (mp:make-process-lock :name "process mailbox"))
+  (queue '() :type list)
+  (gate (mp:make-gate nil)))
 
 (defun mailbox (thread)
   "Return THREAD's mailbox."
@@ -665,23 +670,27 @@
               (make-mailbox)))))
 
 (defimplementation send (thread message)
-  (let* ((mbox (mailbox thread))
-         (mutex (mailbox.mutex mbox)))
-    (mp:process-wait-with-timeout 
-     "yielding before sending" 0.1
-     (lambda ()
-       (mp:with-process-lock (mutex)
-         (< (length (mailbox.queue mbox)) 10))))
-    (mp:with-process-lock (mutex)
-      (setf (mailbox.queue mbox)
-            (nconc (mailbox.queue mbox) (list message))))))
+  (let* ((mbox (mailbox thread)))
+    (mp:with-process-lock ((mailbox.lock mbox))
+      (setf (mailbox.queue mbox) 
+            (nconc (mailbox.queue mbox) (list message)))
+      (mp:open-gate (mailbox.gate mbox)))))
 
-(defimplementation receive ()
-  (let* ((mbox (mailbox mp:*current-process*))
-         (mutex (mailbox.mutex mbox)))
-    (mp:process-wait "receive" #'mailbox.queue mbox)
-    (mp:with-process-lock (mutex)
-      (pop (mailbox.queue mbox)))))
+(defimplementation receive-if (test &optional timeout)
+  (let ((mbox (mailbox mp:*current-process*)))
+    (assert (or (not timeout) (eq timeout t)))
+    (loop
+     (check-slime-interrupts)
+     (mp:with-process-lock ((mailbox.lock mbox))
+       (let* ((q (mailbox.queue mbox))
+              (tail (member-if test q)))
+         (when tail
+           (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
+           (return (car tail)))
+         (mp:close-gate (mailbox.gate mbox))))
+     (when (eq timeout t) (return (values nil t)))
+     (mp:process-wait-with-timeout "receive-if" 0.5
+                                   #'mp:gate-open-p (mailbox.gate mbox)))))
 
 (defimplementation quit-lisp ()
   (excl:exit 0 :quiet t))
