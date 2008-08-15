@@ -1396,8 +1396,13 @@ public class SwankInterface {
 	}
 	
 	private class ListenerThread extends Thread {
+		private abstract class ListenerDispatch {
+			public abstract void func(LispNode node);
+		}
+
 		private BufferedReader in;
 		public boolean running = true;
+		private Hashtable<String, ListenerDispatch> dispatch = new Hashtable<String, ListenerDispatch>();
 		
 		public ListenerThread(InputStream stream) {
 			super("Swank Listener");
@@ -1409,81 +1414,115 @@ public class SwankInterface {
             	e.printStackTrace();
             	throw new IllegalStateException("Could not initialize swank listener -- UTF-8 character set not available.", e);
             }
+            
+            // You would think that there's an easier way to fill the Hashtable,
+            // but... put the special case handler actions in the dispatch hash
+            // table:
+            dispatch.put(":debug-activate", new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		signalListeners(debugListeners, node);
+            	}
+            });
+            dispatch.put(":debug", new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		signalListeners(debugInfoListeners, node);
+            	}
+            });
+            dispatch.put(":debug-return", new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		signalListeners(debugReturnListeners, node);
+            	}
+            });
+            dispatch.put(":read-string", new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		signalListeners(readListeners, node);
+            	}
+            });
+            dispatch.put(":presentation-start", new ListenerDispatch() {
+            	public void func(LispNode node) {
+					String node1_value = node.get(1).value;
+					for (SwankRunnable r : displayListeners) {
+						((SwankDisplayRunnable) r).startPresentation(node1_value);
+					}
+            	}
+            });
+            dispatch.put(":presentation-end", new ListenerDispatch() {
+            	public void func(LispNode node) {
+					for (SwankRunnable r : displayListeners) {
+						((SwankDisplayRunnable) r).endPresentation();
+					}
+            	}
+            });
+            dispatch.put(":write-string", new ListenerDispatch() {
+            	public void func(LispNode node) {
+					signalListeners(displayListeners, node);
+            	}
+            });
+            dispatch.put(":indentation-update", new ListenerDispatch() {
+            	public void func(LispNode node) {
+					signalListeners(indentationListeners, node);
+            	}
+            });
 		}
 		
 		
 		private void handle(LispNode node) {
 			try {
-				if (node.car().value.equalsIgnoreCase(":debug-activate")) {
-					signalListeners(debugListeners, node);
-				} else if (node.car().value.equalsIgnoreCase(":debug")) {
-					signalListeners(debugInfoListeners, node);
-				} else if (node.car().value.equalsIgnoreCase(":debug-return")) {
-					signalListeners(debugReturnListeners, node);
-				} else if (node.car().value.equalsIgnoreCase(":read-string")) {
-					signalListeners(readListeners, node);
-				} else if (node.car().value.equalsIgnoreCase(":presentation-start")) {
-					for (int i=0; i<displayListeners.size(); ++i) {
-						SwankDisplayRunnable runnable = (SwankDisplayRunnable) displayListeners.get(i);
-						runnable.startPresentation(node.get(1).value);
-					}
-				} else if (node.car().value.equalsIgnoreCase(":presentation-end")) {
-					for (int i=0; i<displayListeners.size(); ++i) {
-						SwankDisplayRunnable runnable = (SwankDisplayRunnable) displayListeners.get(i);
-						runnable.endPresentation();
-					}
-				} else if (node.car().value.equalsIgnoreCase(":write-string")) {
-					signalListeners(displayListeners, node);
-				} else if (node.car().value.equalsIgnoreCase(":indentation-update")) {
-					signalListeners(indentationListeners, node);
-				} else {
+				ListenerDispatch l = dispatch.get(node.car().value);
+				if (l != null)
+					l.func(node);
+				else
 					signalResponse(node);
-				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		
 		public void run() {
+			// Each message is prefixed by a hex length, so create a permanent
+			// buffer to receive it:
+			char [] lbuf = new char[6];
+			// rbuf is the raw reply buffer, initially sized to something reasonable
+			// Note: this is reallocated to a larger size as needed to keep the
+			// amount of object allocation down to a reasonable minimum.
+			char [] rbuf = new char[256];
+			// reply is the String version of rbuf.
+			String reply = new String();
+			int nread = 0;
+			
 			while (running) {
 				try {
 					if (true) {
-						StringBuilder sb = new StringBuilder();
-						for (int i=0; i<6; ++i) {
-							int c = in.read();
-							if (c >= 0) {
-								sb.append((char)c);
-							} else {
+						nread = in.read(lbuf, 0, lbuf.length);
+						if (nread < 0) {
+							System.out.println("Connection closed");
+							signalListeners(disconnectListeners, new LispNode());
+							return;
+						}
+						
+						String lstring = new String(lbuf, 0, lbuf.length);
+						int length = Integer.parseInt(lstring, 16);
+						
+						if (length > rbuf.length)
+							rbuf = new char[length];
+						
+						// Because we're sitting on a network socket, there's a good possibility
+						// that the reply exceeds the host's localhost MTU, so we need to be aggressive
+						// in collecting the entire reply (and there will only be one MTU "in flight"
+						// at any given point in time.)
+						nread = 0;
+						do {
+							int n = in.read(rbuf, nread, length - nread);
+							if (n < 0) {
 								System.out.println("Connection closed");
 								signalListeners(disconnectListeners, new LispNode());
 								return;
 							}
-						}
-						int length = Integer.parseInt(sb.toString(), 16);
-						sb = new StringBuilder();
-						for (int i=0; i<length; ++i) {
-							int c = in.read();
-							if (c >= 0) {
-								sb.append((char)c);
-							} else {
-								System.out.println("Connection closed");
-								signalListeners(disconnectListeners, new LispNode());
-								return;
-							}
-						}
-						String reply = sb.toString();
-					/*String reply = in.readLine();
-					
-					if (reply != null && !reply.equals("")) {
-						//make sure we don't end early because of newlines in the length
-						reply += "\n";
-						while (!checkParens(reply) || reply.length() <= 3) {
-							String more = in.readLine();
-							if (more != null && !more.equals("")) {
-								reply += more + "\n";
-							}
-							if (!running) return; // break out of here if we're done.
-						} // while*/
+							nread += n;
+						} while (nread < length);
+						
+						// Materialize the string...
+						reply = String.copyValueOf(rbuf, 0, nread);
 						System.out.println("<--" + reply);
 						System.out.flush();
 						if (reply.contains("open-dedicated-output-stream")) {
@@ -1643,7 +1682,7 @@ public class SwankInterface {
 		}
 		
 		public void filter(String str) {
-			if (str.indexOf("Swank started") >= 0) {
+			if (str.contains("Swank started")) {
 				synchronized (this) {
 					got_start_string = true;
 					notifyAll();
