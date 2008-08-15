@@ -1164,10 +1164,17 @@ public class SwankInterface {
  		fileFullPath = implementation.translateLocalFilePath(fileFullPath);
  		String[] fpathparts = fileFullPath.split("/");
  		if( fpathparts.length > 0 && fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
- 			/*String tmp = */sendEvalAndGrab("(load \"" + fileFullPath + "\")",2000);
- 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
  			registerCallback(new CompileRunnable(callBack));
- 			String msg = "(swank:operate-on-system-for-emacs \"" + asdName + "\" \"LOAD-OP\")";
+ 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
+ 			// Note from Tim:
+ 			// I changed this back, because the newer implementation assumed
+ 			// that (load ...) will get done in two seconds, which is a false
+ 			// assumption, particularly on most of my pet projects.
+ 			// If you want to alter this, you'll need to make sure the
+ 			// load-op command is not issued until load is done.
+ 			// Might need some callback-fu.
+ 			String msg = "(cl:progn (cl:load \"" + fileFullPath + "\") (asdf:oos 'asdf:load-op \"" + asdName + "\"))";
+ 			
  			emacsRex(msg);			
  		}
  	}
