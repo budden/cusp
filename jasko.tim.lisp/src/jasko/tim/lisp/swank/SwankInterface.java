@@ -1359,7 +1359,9 @@ public class SwankInterface {
 		try {
 			if (out != null) {
 				//Messages are prepending by their length, given as a 6-char string
-				// which is a hexadecimal number. Not sure why they do it this way.
+				// which is a hexadecimal number. It tells you how many bytes to read
+				// and hexadecimal expresses a larger range than decimal (and who's
+				// going to read 16M?)
 				String hexLen = Integer.toHexString(message.length());
 				
 	            switch (hexLen.length()) {
@@ -1463,6 +1465,11 @@ public class SwankInterface {
 					signalListeners(indentationListeners, node);
             	}
             });
+            dispatch.put(":return", new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		signalResponse(node);
+            	}
+            });
 		}
 		
 		
@@ -1472,7 +1479,7 @@ public class SwankInterface {
 				if (l != null)
 					l.func(node);
 				else
-					signalResponse(node);
+					System.out.println("** unhandled node type: " + node.toString());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -1500,7 +1507,7 @@ public class SwankInterface {
 							return;
 						}
 						
-						String lstring = new String(lbuf, 0, lbuf.length);
+						String lstring = String.copyValueOf(lbuf, 0, lbuf.length);
 						int length = Integer.parseInt(lstring, 16);
 						
 						if (length > rbuf.length)
