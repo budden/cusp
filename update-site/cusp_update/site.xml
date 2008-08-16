@@ -3,6 +3,9 @@
    <feature url="features/jasko.tim.lisp_0.9.218.jar" id="jasko.tim.lisp" version="0.9.218">
       <category name="cusp"/>
    </feature>
+   <feature url="features/jasko.tim.lisp_0.9.245.jar" id="jasko.tim.lisp" version="0.9.245">
+      <category name="cusp"/>
+   </feature>
    <category-def name="cusp" label="Cusp">
       <description>
          Cusp plugins with lisp libraries.
