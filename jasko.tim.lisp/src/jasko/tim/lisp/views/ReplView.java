@@ -1430,7 +1430,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 				}
 				int pos = res.getf(":position").asInt();
 				String snippet = res.getf(":snippet").value;
-				// swank.runAfterLispStart();
 				LispEditor.jumpToDefinition(file, pos, snippet);
 				setFocus();
 			}
