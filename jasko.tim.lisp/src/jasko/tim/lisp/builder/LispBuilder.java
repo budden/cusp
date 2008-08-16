@@ -8,6 +8,7 @@ import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.util.LispUtil;
 import jasko.tim.lisp.util.TopLevelItem;
+import jasko.tim.lisp.views.ReplView;
 
 
 import java.io.*;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 
 
@@ -220,13 +222,24 @@ public class LispBuilder extends IncrementalProjectBuilder {
  		IFile file;
  		int offset;
  		int length;
+ 		boolean compiledByAsd = false;
+ 		String asdFile = "";
   		
  		public CompileListener(IFile file) {
  			this.file = file;
  			offset = 0;
  			length = 0;
+ 			compiledByAsd = false;
+ 			asdFile = "";
   		}
   		
+ 		public CompileListener(boolean compByAsd, String asdfile) {
+ 			this.file = null;
+ 			offset = 0;
+ 			length = 0;
+ 			compiledByAsd = true;
+ 			asdFile = asdfile;
+  		}
  		public CompileListener(IFile file, int offset, int length) {
  			this.file = file;
  			this.offset = offset;
@@ -244,8 +257,19 @@ public class LispBuilder extends IncrementalProjectBuilder {
   			} else if ( file != null && length > 0) {
   				deleteMarkers(file,offset,length);
   			}
+ 			
+			ReplView repl = (ReplView)PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+				.getActivePage().findView(ReplView.ID);
+ 			
   			LispNode guts = result.getf(":return").getf(":ok").getf(":swank-compilation-unit");
- 			if (! guts.isEmpty()) {
+  			if ( guts.isEmpty() ){
+  				if( compiledByAsd ){
+  	  				repl.appendText("Loaded package " + asdFile + "\n");
+  				}
+  			}
+  			else{
+  				int nerrors = 0;
+  				int nwarnings = 0;
  				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
 				for (LispNode error: guts.params) {
 					String msg = error.getf(":message").value;
@@ -267,7 +291,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					int sev = IMarker.SEVERITY_WARNING;
 					if (severity.equalsIgnoreCase(":error")) {
   						sev = IMarker.SEVERITY_ERROR;
+  						++nerrors;
   					}
+					else {
+						++nwarnings;
+					}
   					
  					Map<String, Object> attr = new HashMap<String, Object>();
  					attr.put(IMarker.CHAR_START, new Integer(offset));
@@ -304,6 +332,19 @@ public class LispBuilder extends IncrementalProjectBuilder {
  					//	System.out.printf("CompileListener: Filename {%s} is not equal buffer {%s} or filename from compiler notes {%s}\n", 
  					//			file.getLocation().toString(), fileName, buffer);
   					}
+ 					if( compiledByAsd ){
+ 	 					String torepl = "Package" + asdFile + " is loaded with ";
+ 	 					if( nerrors > 0){
+ 	 						torepl = torepl + "errors ";
+ 	 						if( nwarnings > 0){
+ 	 							torepl = torepl + " and ";
+ 	 						}
+ 	 					}
+ 	 					if( nwarnings > 0 ){
+ 	 						torepl = torepl + "warnings";
+ 	 					}
+ 	 	  				repl.appendText(torepl);
+ 					}
 					
 				}
 			}

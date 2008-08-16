@@ -739,7 +739,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 	}
 
-	protected void appendText(String text) {		
+	public void appendText(String text) {		
 		if(LispPlugin.getDefault().getPreferenceStore()
 				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))
 		{
@@ -1257,21 +1257,25 @@ public class ReplView extends ViewPart implements SelectionListener {
 				//appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
 
 				String txt = trace.car().value + "] " + trace.cadr().value;
-				if( txt.toLowerCase().contains("swank") ){
-					if( LispPlugin.getDefault().getPreferenceStore()
-							.getBoolean(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES)){
-						break; // I am not interested in swank frames						
+				String txtlow = txt.toLowerCase();
+				
+				if( !txtlow.contains("bogus stack frame")){
+					if( txtlow.contains("swank") ){
+						if( LispPlugin.getDefault().getPreferenceStore()
+								.getBoolean(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES)){
+							break; // I am not interested in swank frames						
+						}
 					}
+					
+					TreeItem item = new TreeItem(bt, 0);
+					item.setText(txt);
+					item.setData(null);
+					item.setData("frame", i);
+					
+					TreeItem tmp = new TreeItem(item, 0);
+					tmp.setText("Getting data...");					
 				}
-				
-				TreeItem item = new TreeItem(bt, 0);
-				item.setText(txt);
-				item.setData(null);
-				item.setData("frame", i);
-				
-				TreeItem tmp = new TreeItem(item, 0);
-				tmp.setText("Getting data...");
-				
+								
 			} // for
 			bt.setExpanded(true);
 			
@@ -1384,7 +1388,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if (sel.getData("frame") != null) {
 				final Object frame = sel.getData("frame");
 				
-				// all stupidity of this procedure, to make tree behave civilized on linux
+				// all stupidity of this procedure, to make tree behave civilized on Linux
 				// it would be much clearer and strightforward to just delete all old items and
 				// add create new ones, instead we need to reuse existing items
 				getSwank().sendGetFrameLocals(frame.toString(), thread, new SwankRunnable() {
