@@ -1152,7 +1152,7 @@ public class SwankInterface {
 		String msg = "(swank:compile-string-for-emacs \""
 			+ formatCode(expr) + "\" \""
 			+ formatCode(dir + file) + "\" " + (offset+1) + " \"" + formatCode(dir)
-			+ "\" nil)"; // FIXME: maximum debug setting for compilation
+			+ "\" 3)"; // 3 = debug level
 		if (pckg.equalsIgnoreCase("nil")) {
 			emacsRex(msg);
 		} else {
