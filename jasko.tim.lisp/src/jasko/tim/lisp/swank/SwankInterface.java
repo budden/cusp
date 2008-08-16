@@ -56,6 +56,7 @@ public class SwankInterface {
 	/** Holds whether we are connected to Swank. */
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
+	private String lispVersion = "(NO CL IMPLEMENTATION)";
 	
 	public String getCurrPackage() {
 		return currPackage;
@@ -200,6 +201,10 @@ public class SwankInterface {
 		return connected;
 	}
 	
+	public String getLispVersion() {
+		return lispVersion;
+	}
+	
 
 	public boolean managePackages = false;
 
@@ -213,6 +218,10 @@ public class SwankInterface {
 
 	public void runAfterLispStart() {
 		if( isConnected() ){
+			
+			lispVersion = 
+				sendEvalAndGrab("(format nil \"~a ~a \" (lisp-implementation-type) (lisp-implementation-version))\n", 1000);
+			lispVersion = lispVersion.replace('"',' ').trim();
 			
 			String contribs = "(progn (swank:swank-require :swank-fuzzy)"
 				+ "(swank:swank-require :swank-asdf)"
@@ -306,8 +315,6 @@ public class SwankInterface {
 				str = str.replaceAll("\\\\", "/");
 				sendEvalAndGrab("(when (probe-file \""+str+"\") (load \""+str+"\"))\n", 3000);
 			}
-			sendEval("(format nil \"You are running ~a ~a via Cusp v" + LispPlugin.getVersion() +
-					"\" (lisp-implementation-type) (lisp-implementation-version))\n", null);
 		}
 	}
 	

@@ -437,6 +437,9 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		if (swank != null ) {
  			swank.runAfterLispStart();
+ 			appendText("You are running " + swank.getLispVersion() + 
+ 					" via Cusp v" + LispPlugin.getVersion()+"\n");
+ 			
  		}
  		
  		registerSwankListeners();
