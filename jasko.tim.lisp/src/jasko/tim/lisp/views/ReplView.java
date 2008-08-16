@@ -56,7 +56,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected ReplHistory history;
 	protected ReplEditor in;
 	
-	
 	protected Composite parentControl;
 	protected Composite mainView;
 	protected Composite debugView;
@@ -65,6 +64,20 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	protected Button btn;
 	protected Label replPackage;
+	
+	/* updates current package displayed */
+	protected void setPackageString(String pkg){
+		if(swank != null){
+	 		IStatusLineManager slm = 
+ 	 			getViewSite().getActionBars().getStatusLineManager();
+ 	 		slm.setMessage("CL: " + swank.getLispVersion() + 
+ 	 				" | Cusp: " + LispPlugin.getVersion() +
+ 	 				" | Current package: " + pkg);
+ 	 		if( replPackage != null ){
+ 	 			replPackage.setText("Current package: "+pkg);
+ 	 		}
+		}
+	}
 	
 	protected void resetState() {
 		while (states.size() > 1) {
@@ -362,7 +375,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  		prev.addSelectionListener( new PrevListener(parent));
  		
  		replPackage = new Label(buttonRow, SWT.PUSH);
- 		replPackage.setText("Current package: "+ swank.getCurrPackage());
+		setPackageString(swank.getCurrPackage());
  		
  		// layout stuff
  		
@@ -437,11 +450,12 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		if (swank != null ) {
  			swank.runAfterLispStart();
+ 			setPackageString(swank.getCurrPackage());
  			appendText("You are running " + swank.getLispVersion() + 
- 					" via Cusp v" + LispPlugin.getVersion()+"\n");
- 			
+ 					" via Cusp " + LispPlugin.getVersion()+"\n"); 			
+ 			setPackageString(swank.getCurrPackage());
  		}
- 		
+
  		registerSwankListeners();
  		
  		parentControl.layout(false);
@@ -642,7 +656,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 					swank.reconnect();
 					appendText("done.\n");
 					scrollDown();
-					replPackage.setText("Current package: " + swank.getCurrPackage());
+		 			appendText("You are running " + swank.getLispVersion() + 
+		 					" via Cusp " + LispPlugin.getVersion()+"\n");
+		 			setPackageString(swank.getCurrPackage());
 					
 					resetState();
 					
@@ -890,6 +906,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 	}
 
+	
 	/**
 	 * Switches the swank connection's current package to the given package name,
 	 * prints an appropriate commented message, and forces the repl to scroll to the
@@ -899,7 +916,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		swank.setPackage(packageName);
 		appendText(";Package changed to " + packageName + "\n");
 		scrollDown();
-		replPackage.setText("Current package: " + packageName);
+		setPackageString(packageName);
 	}
 
 	protected void eval() {
