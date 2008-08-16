@@ -618,7 +618,7 @@ public class SwankInterface {
 		currPackage = newPackage;
 	}
 	
-	//finds definitions in package pkg
+	//finds definitions in package pkg: 
 	private synchronized boolean haveDefinitionsPkg(String symbol, String pkg, long timeout) {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
@@ -638,7 +638,9 @@ public class SwankInterface {
 			msg = "(locally (declare (sb-ext:muffle-conditions sb-ext:compiler-note)) "
 				+ msg + ")";
 		}
-		return (!sendEvalAndGrab(msg,2000).equalsIgnoreCase("nil"));
+		String res = sendEvalAndGrab(msg,2000);
+		
+		return (!(res.equalsIgnoreCase("nil") || res.contains(":ERROR")));
 	}
 
 	//finds definitions in package pkg or global context
@@ -1141,7 +1143,8 @@ public class SwankInterface {
 	
 	// Compiling
 	
-	public synchronized void sendCompileString(String expr, String file, String dir, int offset, String pckg, SwankRunnable callBack) {
+	public synchronized void sendCompileString(String expr, String file, 
+			String dir, int offset, String pckg, SwankRunnable callBack) {
 		registerCallback(callBack);
 		System.out.println(file);
 		System.out.println(dir);
@@ -1181,7 +1184,8 @@ public class SwankInterface {
  			// If you want to alter this, you'll need to make sure the
  			// load-op command is not issued until load is done.
  			// Might need some callback-fu.
- 			String msg = "(cl:progn (cl:load \"" + fileFullPath + "\") (asdf:oos 'asdf:load-op \"" + asdName + "\"))";
+ 			String msg = "(cl:progn (cl:load \"" + fileFullPath + 
+ 				"\") (asdf:oos 'asdf:load-op \"" + asdName + "\"))";
  			
  			emacsRex(msg);			
  		}
