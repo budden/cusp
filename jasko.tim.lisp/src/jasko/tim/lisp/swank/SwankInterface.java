@@ -913,6 +913,7 @@ public class SwankInterface {
 		public LispNode result = new LispNode();
 	}
 	
+	
 	public synchronized void sendEval(String message, SwankRunnable callBack) {
 		registerCallback(callBack);
 		message = message + "\n";
@@ -1319,6 +1320,11 @@ public class SwankInterface {
 		return sendRaw(msg);
 	}
 	
+	protected synchronized void sendPong(String n1, String n2) {
+		String msg = "(:emacs-pong " + n1 + " " + n2 + ")";
+		sendRaw(msg);
+	}
+	
 	
 	public synchronized boolean sendRaw(String message) {
 		//message = message + "\n";
@@ -1413,6 +1419,11 @@ public class SwankInterface {
             	}
             };
             
+            dispatch.put(":ping", new ListenerDispatch() {
+            	public void func(LispNode node) {
+            		sendPong(node.get(1).value, node.get(2).value);
+            	}
+            });
             dispatch.put(":debug-activate", new ListenerDispatch() {
             	public void func(LispNode node) {
             		signalListeners(debugListeners, node);
