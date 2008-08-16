@@ -35,8 +35,9 @@ public class LoadAsdAction implements IActionDelegate {
 				for( IFile f: files){
 					LispBuilder.deleteMarkers(f);
 				}
-				LispPlugin.getDefault().getSwank().sendLoadASDF(file.getLocation().toString(), 
-						new LispBuilder.CompileListener(null));
+				String asdfile = file.getLocation().toString();
+				LispPlugin.getDefault().getSwank().sendLoadASDF(asdfile, 
+						new LispBuilder.CompileListener(true,asdfile));
 			}
 		}
 	}
