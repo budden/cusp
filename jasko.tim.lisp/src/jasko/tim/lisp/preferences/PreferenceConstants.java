@@ -64,6 +64,7 @@ public interface PreferenceConstants {
     public static final String REPL_INSPECTABLE_FG_COLOR = "REPLInspectableColorFG";
     public static final String REPL_INSPECTABLE_UNDERLINE = "REPLInspectableUnderline";
     public static final String REPL_FONT_SIZE = "REPLFontSize";
+	public static final String DEBUG_HIDE_SWANK_FRAMES = "debugHideSwankFrames";
     
     public static final String OUTLINE_SORT = "OutlineSort";
 }

@@ -1255,14 +1255,23 @@ public class ReplView extends ViewPart implements SelectionListener {
 			for (int i=0; i<backtrace.params.size(); ++i) {
 				LispNode trace = backtrace.get(i);
 				//appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
+
+				String txt = trace.car().value + "] " + trace.cadr().value;
+				if( txt.toLowerCase().contains("swank") ){
+					if( LispPlugin.getDefault().getPreferenceStore()
+							.getBoolean(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES)){
+						break; // I am not interested in swank frames						
+					}
+				}
 				
 				TreeItem item = new TreeItem(bt, 0);
-				item.setText(trace.car().value + "] " + trace.cadr().value);
+				item.setText(txt);
 				item.setData(null);
 				item.setData("frame", i);
 				
 				TreeItem tmp = new TreeItem(item, 0);
 				tmp.setText("Getting data...");
+				
 			} // for
 			bt.setExpanded(true);
 			
