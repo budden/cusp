@@ -1215,6 +1215,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 			
 			appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
 			
+			TreeItem slimeTopLevelOption = null;
+			TreeItem breakContinueOption = null;
 			TreeItem quickOption = null;
 			TreeItem firstItem = null;
 			for (int i=0; i<options.params.size(); ++i) {
@@ -1228,12 +1230,21 @@ public class ReplView extends ViewPart implements SelectionListener {
 				if ( i == 0) {
 					firstItem = item;
 				}
-				if ( i == 0 
-						|| option.cadr().value.equalsIgnoreCase(
-								"Return to SLIME's top level.") ) {
-					quickOption = item;
+				String itm = option.cadr().value;
+				if ( itm.equalsIgnoreCase("Return to SLIME's top level.")){
+					slimeTopLevelOption = item;
+				}
+				if ( itm.equalsIgnoreCase("Return from BREAK.")){
+					breakContinueOption = item;
 				}
 			} // for
+			if( breakContinueOption != null ){
+				quickOption = breakContinueOption;
+			} else if ( slimeTopLevelOption != null ){
+				quickOption = slimeTopLevelOption;
+			} else {
+				quickOption = firstItem;
+			}
 			
 			scrollDown();
 			
