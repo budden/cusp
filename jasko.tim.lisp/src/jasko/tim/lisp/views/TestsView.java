@@ -59,8 +59,38 @@ public class TestsView extends ViewPart {
 	
 	private void populate(LispNode contents){
 		output.setRedraw(false);
-		output.setText(/*contents.get(1).value*/contents.toString());
-		output.setRedraw(true);		
+		String str = /*contents.get(1).value*/contents.toString();
+		output.setText(str);
+		int ind = 0;
+		int len = "failed".length();
+		Display display = TestsView.this.getSite().getShell().getDisplay();
+		while( ind >= 0 ){ //failed
+			ind = str.indexOf("failed",ind);
+			if( ind >= 0 ){
+				StyleRange style = new StyleRange();
+				style.start = ind;
+				style.length = len;
+				style.foreground = display.getSystemColor(SWT.COLOR_RED);
+				style.fontStyle = SWT.BOLD;
+				output.setStyleRange(style);
+				ind += len;
+			}
+		}
+		ind = 0;
+		len = "passed".length();
+		while( ind >= 0 ){ //failed
+			ind = str.indexOf("passed",ind);
+			if( ind >= 0 ){
+				StyleRange style = new StyleRange();
+				style.start = ind;
+				style.length = len;
+				style.foreground = display.getSystemColor(SWT.COLOR_GREEN);
+				style.fontStyle = SWT.BOLD;
+				output.setStyleRange(style);
+				ind += len;
+			}
+		}
+		output.setRedraw(true);
 	}
 
 	protected void fillNormalToolBar() {
