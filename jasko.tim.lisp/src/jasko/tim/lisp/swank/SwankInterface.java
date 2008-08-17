@@ -207,6 +207,7 @@ public class SwankInterface {
 	
 
 	public boolean managePackages = false;
+	public boolean useUnitTest = false;
 
 	public String translateRemoteFilePath(String path) {
 		if (implementation != null) {
@@ -237,6 +238,15 @@ public class SwankInterface {
 				LispPlugin.getDefault().getPreferenceStore();
 			managePackages = 
 				prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
+			useUnitTest = 
+				prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST);
+			
+			
+			if ( useUnitTest ){
+				sendEvalAndGrab("(load \"" + LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/lisp-unit.lisp" + "\")", 3000);				
+			}
+
 			if( managePackages){
 				
 				String asdfext = LispPlugin.getDefault().getPluginPath() 
@@ -254,7 +264,7 @@ public class SwankInterface {
 			            		&& file.toString().matches(".*jasko\\.tim\\.lisp\\.libs.*"));
 			        }
 			    };
-			    			    
+
 			    ArrayList<File> topLevelDirs = new ArrayList<File>();
 			    topLevelDirs.add(new File(path));
 			    

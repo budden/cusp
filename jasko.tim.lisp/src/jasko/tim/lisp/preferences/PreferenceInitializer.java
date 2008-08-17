@@ -48,6 +48,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 		}
         
 		store.setDefault(MANAGE_PACKAGES, true);
+		store.setDefault(USE_UNIT_TEST, true);
 		store.setDefault(BUILD_TYPE, USE_AUTO_BUILD);
 		
 		store.setDefault(SHOW_OUTLINE_HINT, true);
