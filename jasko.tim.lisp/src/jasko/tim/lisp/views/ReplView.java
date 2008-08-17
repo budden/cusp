@@ -553,6 +553,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	private Action pauseButton;
 	private Action clearButton;
 	private Action stepButton;
+	private Action runTestsButton;
 	
 	protected void fillNormalToolBar() {
 		if (clearButton != null) {
@@ -564,6 +565,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			tbm.add(packageButton);
 			tbm.add(loadPackageButton);
 			tbm.add(connectButton);
+			tbm.add(runTestsButton);
 			tbm.update(true);
 		}
 	}
@@ -723,6 +725,28 @@ public class ReplView extends ViewPart implements SelectionListener {
 		stepButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.STEP));
 		stepButton.setToolTipText("Step");
+
+		runTestsButton = new Action("Run Tests") {
+			public void run() {
+				SwankInterface swank = LispPlugin.getDefault().getSwank();
+				if( swank != null && swank.useUnitTest ){
+					PackageDialog pd = 
+						new PackageDialog(ReplView.this.getSite().getShell(),
+								swank.getPackagesWithTests(1000), 
+								swank.getlastTestPackage(),true);
+					if (pd.open() == Dialog.OK) {
+						swank.sendRunTests(pd.getPackage(), new TestsRunnable());
+					}					
+				} else {
+					ArrayList<String> strings = new ArrayList<String>(2);
+					strings.add("Cannot run tests,");
+				}
+			}
+		};
+		runTestsButton.setImageDescriptor(
+				LispImages.getImageDescriptor(LispImages.RUN_TESTS));
+		runTestsButton.setToolTipText("Run tests");
+		
 		
 		this.fillNormalToolBar();
 	}
