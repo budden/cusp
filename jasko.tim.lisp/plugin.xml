@@ -210,6 +210,14 @@
 			class="jasko.tim.lisp.views.AproposView"
 			id="jasko.tim.lisp.views.AproposView" />
 			
+		<!-- Tests view -->
+		<view
+			name="Tests"
+			icon="icons/test-results.gif"
+			category="jasko.tim.lisp"
+			class="jasko.tim.lisp.views.TestsView"
+			id="jasko.tim.lisp.views.TestsView" />
+			
 		<!-- Threads view -->
 		<view
 			name="Threads"

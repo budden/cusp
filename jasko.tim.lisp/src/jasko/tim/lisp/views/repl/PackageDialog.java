@@ -79,7 +79,18 @@ public class PackageDialog extends Dialog implements KeyListener {
 		Collections.sort(this.packages);
 	}
 	
-	
+	//change package dialog
+	public PackageDialog(Shell parentShell, ArrayList<String> packages, 
+			String currPackage, boolean test) {
+		super(parentShell);
+		this.currPackage = currPackage;
+		this.packages = packages;
+		groupTitle = "Most recent test package: " + currPackage;
+		title = "Run tests in package";
+		loadDialog = false;
+		Collections.sort(this.packages);
+	}
+		
 	public String getPackage() {
 		return result;
 	}

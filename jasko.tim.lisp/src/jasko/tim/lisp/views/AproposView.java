@@ -45,6 +45,7 @@ public class AproposView extends ViewPart implements KeyListener {
  		gd.grabExcessHorizontalSpace = true;
  		gd.grabExcessVerticalSpace = true;
  		output.setLayoutData(gd);
+ 		output.setEditable(false);
 	}
 
 	@Override

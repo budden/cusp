@@ -115,9 +115,9 @@ public class InspectorView extends ViewPart {
 
 		tbm.add(backButton);
 		tbm.add(foreButton);
-	}	
+	}
 	
-	public void populate(String title, String type, LispNode content) {
+public void populate(String title, String type, LispNode content) {
 		output.clear();
 		this.title = title;
 		this.type = type;
