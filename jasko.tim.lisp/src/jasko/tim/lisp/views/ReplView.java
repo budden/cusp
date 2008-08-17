@@ -65,6 +65,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected Button btn;
 	protected Label replPackage;
 	
+	private boolean replInited = false;
+	
+	public boolean isReplInited(){
+		return replInited;
+	}
+	
 	/* updates current package displayed */
 	protected void setPackageString(String pkg){
 		if(swank != null){
@@ -449,7 +455,6 @@ public class ReplView extends ViewPart implements SelectionListener {
  		fillMenu(parent);
  		
  		if (swank != null ) {
- 			swank.runAfterLispStart();
  			setPackageString(swank.getCurrPackage());
  			appendText("You are running " + swank.getLispVersion() + 
  					" via Cusp " + LispPlugin.getVersion()+"\n"); 			
@@ -484,6 +489,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG)){
 			LispPlugin.getDefault().out("Lisp compiler log:");			
 		}
+		replInited = true;
 	}
 	
 	private void hideFrame(Composite control) {
