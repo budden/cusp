@@ -13,7 +13,8 @@ public class Templater {
 	private static String[] inspirations = new String[] {
 		"This is your lisp file. May it serve you well.",
 		"This is your lisp file. There are many like it, but this one is yours.",
-		"Behold, the power of lisp."
+		"My lisp code, without me, is useless. Without my lisp code, I am useless. I must code my lisp true.",
+		"Behold, the power of lisp!"
 	};
 	
 	
