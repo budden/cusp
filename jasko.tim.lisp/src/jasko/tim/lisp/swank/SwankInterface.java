@@ -240,7 +240,7 @@ public class SwankInterface {
 			if( managePackages){
 				
 				String asdfext = LispPlugin.getDefault().getPluginPath() 
-					+ "asdf-extensions/asdf-extensions.lisp";
+					+ "lisp-extensions/asdf-extensions.lisp";
 				System.out.printf("asdf path: %s\n", asdfext);
 				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
 				
