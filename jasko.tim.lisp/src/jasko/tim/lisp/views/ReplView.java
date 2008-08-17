@@ -688,7 +688,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		packageButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.DEFPACKAGE));
 		packageButton.setToolTipText("Change Package");
-		
+				
 		pauseButton = new Action("Interrupt execution") {
 			public void run() {
 				getSwank().sendInterrupt(null);

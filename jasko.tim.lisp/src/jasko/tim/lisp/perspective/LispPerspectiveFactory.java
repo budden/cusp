@@ -14,19 +14,26 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		//	 Get the editor area.
 		String editorArea = layout.getEditorArea();
 		
+		// Right: Tests view
+//		IFolderLayout right = layout.createFolder("right", IPageLayout.RIGHT, 0.25f,
+//			"right");
+//		right.addView(TestsView.ID);
+
 		// Top left: Resource Navigator view
-		IFolderLayout topLeft = layout.createFolder("topLeft", IPageLayout.LEFT, 0.25f,
-			editorArea);
+		IFolderLayout topLeft = 
+			layout.createFolder("topLeft", IPageLayout.LEFT, 0.25f, editorArea);
 		topLeft.addView(LispNavigator.ID);
 
 		// Bottom left: Outline view and Property Sheet view
-		IFolderLayout bottomLeft = layout.createFolder("bottomLeft", IPageLayout.BOTTOM, 0.60f,
-			"topLeft");
+		IFolderLayout bottomLeft = 
+			layout.createFolder("bottomLeft", IPageLayout.BOTTOM, 0.60f, "topLeft");
 		bottomLeft.addView(IPageLayout.ID_OUTLINE);
 
 		// Bottom right: Task List view
-		IFolderLayout bottom = layout.createFolder("bottom", IPageLayout.BOTTOM, 0.60f, editorArea);
+		IFolderLayout bottom = 
+			layout.createFolder("bottom", IPageLayout.BOTTOM, 0.60f, editorArea);
 		bottom.addView(ReplView.ID);
+		bottom.addView(TestsView.ID);
 		bottom.addView(IPageLayout.ID_PROBLEM_VIEW);
 		bottom.addView(IPageLayout.ID_TASK_LIST);
 		bottom.addView(AproposView.ID);
@@ -37,6 +44,7 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		layout.addShowViewShortcut(ReplView.ID);
 		layout.addShowViewShortcut(IPageLayout.ID_PROBLEM_VIEW);
 		layout.addShowViewShortcut(IPageLayout.ID_TASK_LIST);
+		layout.addShowViewShortcut(TestsView.ID);
 		layout.addShowViewShortcut(AproposView.ID);
 		layout.addShowViewShortcut(ThreadView.ID);
 		layout.addShowViewShortcut(InspectorView.ID);

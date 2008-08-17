@@ -57,9 +57,14 @@ public class SwankInterface {
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
 	private String lispVersion = "(NO CL IMPLEMENTATION)";
+	private String lastTestPackage = "COMMON-LISP-USER";
 	
 	public String getCurrPackage() {
 		return currPackage;
+	}
+	
+	public String getlastTestPackage() {
+		return lastTestPackage;
 	}
 	
 	private ListenerThread listener;
@@ -972,6 +977,16 @@ public class SwankInterface {
 		} // catch
 	}
 	
+	public synchronized void sendRunTests(String pkg, SwankRunnable callBack){
+		registerCallback(callBack);
+		lastTestPackage = pkg;
+		String msg = "(lisp-unit:run-all-tests "+pkg+")";
+//		msg = "(let ((*standard-output* str))"+msg+")";
+//		msg = "(with-output-to-string (str) "+msg+"str)";
+		msg = "(swank:eval-and-grab-output \""+msg+"\")";
+		
+		emacsRex(msg,"COMMON-LISP-USER");
+	}
 		
 	public synchronized void sendDebug(String commandNum, String sldbLevel, String threadId, SwankRunnable callBack) {
 		registerCallback(callBack);
