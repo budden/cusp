@@ -71,6 +71,11 @@ public class TestsView extends ViewPart {
 			tbm.removeAll();
 			tbm.add(runTestsButton);
 			tbm.update(true);
+			SwankInterface swank = LispPlugin.getDefault().getSwank();
+			if ( swank != null ){
+			//	runTestsButton.setEnabled(swank.useUnitTest);
+			// if repl is not first, then 
+			}
 		}
 	}
 	
@@ -79,11 +84,10 @@ public class TestsView extends ViewPart {
 		runTestsButton = new Action("Run Tests") {
 			public void run() {
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				ArrayList<String> packages = swank.getAvailablePackages(1000);
-				if( packages.contains("LISP-UNIT")){
+				if( swank != null && swank.useUnitTest ){
 					PackageDialog pd = 
 						new PackageDialog(TestsView.this.getSite().getShell(),
-								swank.getAvailablePackages(1000), 
+								swank.getPackagesWithTests(1000), 
 								swank.getlastTestPackage(),true);
 					if (pd.open() == Dialog.OK) {
 						swank.sendRunTests(pd.getPackage(), new TestsRunnable());

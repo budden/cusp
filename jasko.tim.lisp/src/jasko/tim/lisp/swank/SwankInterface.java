@@ -1106,6 +1106,17 @@ public class SwankInterface {
 		emacsRex(msg, pkg);
 	}
 	
+	public synchronized void sendUndefineTest(String symbol, String pkg, SwankRunnable callBack) {
+		registerCallback(callBack);
+		lastTestPackage = pkg;
+		String msg = "(lisp-unit:remove-tests '("+pkg+"::"+formatCode(symbol)+") '"+pkg+")";
+//		msg = "(let ((*standard-output* str))"+msg+")";
+//		msg = "(with-output-to-string (str) "+msg+"str)";
+		msg = "(swank:eval-and-grab-output \""+msg+"\")";
+		
+		emacsRex(msg,"COMMON-LISP-USER");
+	}
+	
 	public synchronized void sendInterrupt(SwankRunnable callBack) {
 		registerCallback(callBack);
 		String msg = "(:emacs-interrupt :repl-thread)\n";
@@ -1252,6 +1263,29 @@ public class SwankInterface {
 
 		return packageNames;
 	}
+
+	public synchronized ArrayList<String> getPackagesWithTests(long timeout) {
+		if ( useUnitTest ){
+			
+			SyncCallback callback = new SyncCallback();
+			++messageNum;
+			syncJobs.put(new Integer(messageNum).toString(), callback);
+
+			java.util.ArrayList<String> packageNames = new java.util.ArrayList<String>();
+
+			String res = sendEvalAndGrab("(let ((res '())) (dolist (pkg (swank:list-all-package-names t) res)"+
+			  "(if (lisp-unit:get-tests pkg) (push pkg res))))",
+					"COMMON-LISP-USER", timeout);
+			LispNode resnode = LispParser.parse(res).get(0);
+			for (LispNode p : resnode.params) {
+				packageNames.add(p.value);
+			}
+			return packageNames;
+		} else {
+			return null;
+		}
+	}
+
 	
 	public synchronized void sendGetInstalledPackages(SwankRunnable callBack) {
 		if (managePackages) {
