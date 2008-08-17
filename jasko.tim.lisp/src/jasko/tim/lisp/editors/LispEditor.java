@@ -762,12 +762,16 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			}
 		}
 		
-		// === undefine removed forms (at the moment functions only)
+		// === undefine removed forms (at the moment functions and tests only)
+		boolean undefineTests = LispPlugin.getDefault().getSwank().useUnitTest; 
 		for( String itm: toUndefine){
 			String[] item = itm.split(",");
 			if( item[0].equalsIgnoreCase("defun") ){
 				LispPlugin.getDefault().getSwank().sendUndefine(item[1], item[2], null);
+			} else if ( undefineTests && item[0].equalsIgnoreCase("define-test") ){
+				LispPlugin.getDefault().getSwank().sendUndefineTest(item[1], item[2], null);
 			}
+			
 		}
 		
 		topForms = newForms;
