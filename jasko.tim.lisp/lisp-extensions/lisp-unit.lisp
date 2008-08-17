@@ -147,6 +147,29 @@ For more information, see lisp-unit.html.
 
 ;;; ASSERT macros
 
+(defun expand-extras (extras)
+  `#'(lambda ()
+       (list ,@(mapcan #'(lambda (form) (list `',form form)) extras))))
+
+(defun expand-assert (type form body expected extras &key (test #'eql))
+  `(internal-assert
+    ,type ',form #'(lambda () ,body) #'(lambda () ,expected) ,(expand-extras extras), test))
+  
+(defun expand-error-form (form)
+  `(handler-case ,form
+     (condition (error) error)))
+
+(defun expand-output-form (form)
+  (let ((out (gensym)))
+    `(let* ((,out (make-string-output-stream))
+            (*standard-output* (make-broadcast-stream *standard-output* ,out)))
+       ,form
+       (get-output-stream-string ,out))))
+
+(defun expand-macro-form (form env)
+  `(macroexpand-1 ',form ,env))
+
+
 (defmacro assert-eq (expected form &rest extras)
  (expand-assert :equal form form expected extras :test #'eq))
 
@@ -180,58 +203,167 @@ For more information, see lisp-unit.html.
 
 (defmacro assert-true (form &rest extras)
   (expand-assert :result form form t extras))
-
-
-(defun expand-assert (type form body expected extras &key (test #'eql))
-  `(internal-assert
-    ,type ',form #'(lambda () ,body) #'(lambda () ,expected) ,(expand-extras extras), test))
-  
-(defun expand-error-form (form)
-  `(handler-case ,form
-     (condition (error) error)))
-
-(defun expand-output-form (form)
-  (let ((out (gensym)))
-    `(let* ((,out (make-string-output-stream))
-            (*standard-output* (make-broadcast-stream *standard-output* ,out)))
-       ,form
-       (get-output-stream-string ,out))))
-
-(defun expand-macro-form (form env)
-  `(macroexpand-1 ',form ,env))
-
-(defun expand-extras (extras)
-  `#'(lambda ()
-       (list ,@(mapcan #'(lambda (form) (list `',form form)) extras))))
     
 
-;;; RUN-TESTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Useful equality predicates for tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmacro run-all-tests (package &rest tests)
-  `(let ((*package* (find-package ',package)))
-     (run-tests
-      ,@(mapcar #'(lambda (test) (find-symbol (symbol-name test) package))
-          tests))))
+;;; (LOGICALLY-EQUAL x y) => true or false
+;;;   Return true if x and y both false or both true
 
-(defmacro run-tests (&rest names)
-  `(run-test-thunks (get-test-thunks ,(if (null names) '(get-tests *package*) `',names))))
+(defun logically-equal (x y)
+  (eql (not x) (not y)))
 
-(defun get-test-thunks (names &optional (package *package*))
-  (mapcar #'(lambda (name) (get-test-thunk name package))
-    names))
+;;; (SET-EQUAL l1 l2 :test) => true or false
+;;;   Return true if every element of l1 is an element of l2
+;;;   and vice versa.
 
-(defun get-test-thunk (name package)
-  (assert (get-test-code name package) (name package)
-          "No test defined for ~S in package ~S" name package)
-  (list name (coerce `(lambda () ,@(get-test-code name)) 'function)))
+(defun set-equal (l1 l2 &key (test #'equal))
+  (and (listp l1)
+       (listp l2)
+       (subsetp l1 l2 :test test)
+       (subsetp l2 l1 :test test)))
 
-(defun use-debugger (&optional (flag t))
-  (setq *use-debugger* flag))
 
-;;; WITH-TEST-LISTENER
-(defmacro with-test-listener (listener &body body)
-  `(let ((*test-listener* #',listener)) ,@body))
-  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Private functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;; OUTPUT support
+
+(defun get-failure-message (type)
+  (case type
+    (:error "~&~@[Should have signalled ~{~S~^; ~} but saw~] ~{~S~^; ~}")
+    (:macro "~&Should have expanded to ~{~S~^; ~} ~<~%~:;but saw ~{~S~^; ~}~>")
+    (:output "~&Should have printed ~{~S~^; ~} ~<~%~:;but saw ~{~S~^; ~}~>")
+    (t "~&Expected ~{~S~^; ~} ~<~%~:;but saw ~{~S~^; ~}~>")
+    ))
+
+(defun show-failure (type msg name form expected actual extras)
+  (format t "~&~@[~S: ~]~S failed: " name form)
+  (format t msg expected actual)
+  (format t "~{~&   ~S => ~S~}~%" extras)
+  type)
+
+(defun show-summary (name test-count pass-count &optional error-count)
+  (format t "~&~A: ~S assertions passed, ~S failed~@[, ~S execution errors~]."
+          name pass-count (- test-count pass-count) error-count))
+
+(defun collect-form-values (form values)
+  (mapcan #'(lambda (form-arg value)
+              (if (constantp form-arg)
+                  nil
+                (list form-arg value)))
+          (cdr form)
+          values))
+
+
+;;; DEFINE-TEST support
+
+(defun get-package-table (package &key create)
+  (let ((table (gethash (find-package package) *tests*)))
+    (or table
+        (and create
+             (setf (gethash package *tests*)
+                   (make-hash-table))))))
+
+(defun get-test-name (form)
+  (if (atom form) form (cadr form)))
+
+(defun store-test-code (name code &optional (package *package*))
+  (setf (gethash name
+                 (get-package-table package :create t))
+        code))
+
+
+;;; RUN-TESTS support
+
+(defun use-debugger-p (e)
+  (and *use-debugger*
+       (or (not (eql *use-debugger* :ask))
+           (y-or-n-p "~A -- debug?" e))))
+
+(defun run-test-thunk (*test-name* thunk)
+  (if (null thunk)
+      (format t "~&    Test ~S not found" *test-name*)
+    (prog ((*test-count* 0)
+           (*pass-count* 0)
+           (error-count 0))
+      (handler-bind 
+          ((error #'(lambda (e)
+                      (let ((*print-escape* nil))
+                        (setq error-count 1)         
+                        (format t "~&    ~S: ~W" *test-name* e))
+                      (if (use-debugger-p e) e (go exit)))))
+        (funcall thunk)
+        (show-summary *test-name* *test-count* *pass-count*))
+      exit
+      (return (values *test-count* *pass-count* error-count)))))
+
+(defun run-test-thunks (test-thunks)
+  (unless (null test-thunks)
+    (let ((total-test-count 0)
+          (total-pass-count 0)
+          (total-error-count 0))
+      (dolist (test-thunk test-thunks)
+        (multiple-value-bind (test-count pass-count error-count)
+            (run-test-thunk (car test-thunk) (cadr test-thunk))
+          (incf total-test-count test-count)
+          (incf total-pass-count pass-count)
+          (incf total-error-count error-count)))
+      (unless (null (cdr test-thunks))
+        (show-summary 'total total-test-count total-pass-count total-error-count))
+      (values))))
+
+;;; ASSERTION support
+
+(defun record-result (passed type form expected actual extras)
+  (funcall (or *test-listener* 'default-listener)
+           passed type *test-name* form expected actual 
+           (and extras (funcall extras))
+           *test-count* *pass-count*))
+
+(defun default-listener
+    (passed type name form expected actual extras test-count pass-count)
+  (declare (ignore test-count pass-count))
+  (unless passed
+    (show-failure type (get-failure-message type)
+                  name form expected actual extras)))
+
+(defun test-passed-p (type expected actual test)
+  (ecase type
+    (:error
+     (or (eql (car actual) (car expected))
+         (typep (car actual) (car expected))))
+    (:equal
+     (and (<= (length expected) (length actual))
+          (every test expected actual)))
+    (:macro
+     (equal (car actual) (car expected)))
+    (:output
+     (string= (string-trim '(#\newline #\return #\space) 
+                           (car actual))
+              (car expected)))
+    (:result
+     (logically-equal (car actual) (car expected)))
+    ))
+
+(defun internal-assert (type form code-thunk expected-thunk extras test)
+  (let* ((expected (multiple-value-list (funcall expected-thunk)))
+         (actual (multiple-value-list (funcall code-thunk)))
+         (passed (test-passed-p type expected actual test)))
+    
+    (incf *test-count*)
+    (when passed
+      (incf *pass-count*))
+    
+    (record-result passed type form expected actual extras)
+    
+    passed))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Public functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -267,163 +399,32 @@ For more information, see lisp-unit.html.
     (remhash (find-package package) *tests*)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Private functions
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; RUN-TESTS
 
+(defun get-test-thunk (name package)
+  (assert (get-test-code name package) (name package)
+          "No test defined for ~S in package ~S" name package)
+  (list name (coerce `(lambda () ,@(get-test-code name)) 'function)))
 
-;;; DEFINE-TEST support
+(defun get-test-thunks (names &optional (package *package*))
+  (mapcar #'(lambda (name) (get-test-thunk name package))
+    names))
 
-(defun get-package-table (package &key create)
-  (let ((table (gethash (find-package package) *tests*)))
-    (or table
-        (and create
-             (setf (gethash package *tests*)
-                   (make-hash-table))))))
+(defmacro run-all-tests (package &rest tests)
+  `(let ((*package* (find-package ',package)))
+     (run-tests
+      ,@(mapcar #'(lambda (test) (find-symbol (symbol-name test) package))
+          tests))))
 
-(defun get-test-name (form)
-  (if (atom form) form (cadr form)))
+(defmacro run-tests (&rest names)
+  `(run-test-thunks (get-test-thunks ,(if (null names) '(get-tests *package*) `',names))))
 
-(defun store-test-code (name code &optional (package *package*))
-  (setf (gethash name
-                 (get-package-table package :create t))
-        code))
+(defun use-debugger (&optional (flag t))
+  (setq *use-debugger* flag))
 
-
-;;; ASSERTION support
-
-(defun internal-assert (type form code-thunk expected-thunk extras test)
-  (let* ((expected (multiple-value-list (funcall expected-thunk)))
-         (actual (multiple-value-list (funcall code-thunk)))
-         (passed (test-passed-p type expected actual test)))
-    
-    (incf *test-count*)
-    (when passed
-      (incf *pass-count*))
-    
-    (record-result passed type form expected actual extras)
-    
-    passed))
-
-(defun record-result (passed type form expected actual extras)
-  (funcall (or *test-listener* 'default-listener)
-           passed type *test-name* form expected actual 
-           (and extras (funcall extras))
-           *test-count* *pass-count*))
-
-(defun default-listener
-    (passed type name form expected actual extras test-count pass-count)
-  (declare (ignore test-count pass-count))
-  (unless passed
-    (show-failure type (get-failure-message type)
-                  name form expected actual extras)))
-
-(defun test-passed-p (type expected actual test)
-  (ecase type
-    (:error
-     (or (eql (car actual) (car expected))
-         (typep (car actual) (car expected))))
-    (:equal
-     (and (<= (length expected) (length actual))
-          (every test expected actual)))
-    (:macro
-     (equal (car actual) (car expected)))
-    (:output
-     (string= (string-trim '(#\newline #\return #\space) 
-                           (car actual))
-              (car expected)))
-    (:result
-     (logically-equal (car actual) (car expected)))
-    ))
-
-
-;;; RUN-TESTS support
-
-(defun run-test-thunks (test-thunks)
-  (unless (null test-thunks)
-    (let ((total-test-count 0)
-          (total-pass-count 0)
-          (total-error-count 0))
-      (dolist (test-thunk test-thunks)
-        (multiple-value-bind (test-count pass-count error-count)
-            (run-test-thunk (car test-thunk) (cadr test-thunk))
-          (incf total-test-count test-count)
-          (incf total-pass-count pass-count)
-          (incf total-error-count error-count)))
-      (unless (null (cdr test-thunks))
-        (show-summary 'total total-test-count total-pass-count total-error-count))
-      (values))))
-
-(defun run-test-thunk (*test-name* thunk)
-  (if (null thunk)
-      (format t "~&    Test ~S not found" *test-name*)
-    (prog ((*test-count* 0)
-           (*pass-count* 0)
-           (error-count 0))
-      (handler-bind 
-          ((error #'(lambda (e)
-                      (let ((*print-escape* nil))
-                        (setq error-count 1)         
-                        (format t "~&    ~S: ~W" *test-name* e))
-                      (if (use-debugger-p e) e (go exit)))))
-        (funcall thunk)
-        (show-summary *test-name* *test-count* *pass-count*))
-      exit
-      (return (values *test-count* *pass-count* error-count)))))
-
-(defun use-debugger-p (e)
-  (and *use-debugger*
-       (or (not (eql *use-debugger* :ask))
-           (y-or-n-p "~A -- debug?" e))))
-
-;;; OUTPUT support
-
-(defun get-failure-message (type)
-  (case type
-    (:error "~&~@[Should have signalled ~{~S~^; ~} but saw~] ~{~S~^; ~}")
-    (:macro "~&Should have expanded to ~{~S~^; ~} ~<~%~:;but saw ~{~S~^; ~}~>")
-    (:output "~&Should have printed ~{~S~^; ~} ~<~%~:;but saw ~{~S~^; ~}~>")
-    (t "~&Expected ~{~S~^; ~} ~<~%~:;but saw ~{~S~^; ~}~>")
-    ))
-
-(defun show-failure (type msg name form expected actual extras)
-  (format t "~&~@[~S: ~]~S failed: " name form)
-  (format t msg expected actual)
-  (format t "~{~&   ~S => ~S~}~%" extras)
-  type)
-
-(defun show-summary (name test-count pass-count &optional error-count)
-  (format t "~&~A: ~S assertions passed, ~S failed~@[, ~S execution errors~]."
-          name pass-count (- test-count pass-count) error-count))
-
-(defun collect-form-values (form values)
-  (mapcan #'(lambda (form-arg value)
-              (if (constantp form-arg)
-                  nil
-                (list form-arg value)))
-          (cdr form)
-          values))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Useful equality predicates for tests
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; (LOGICALLY-EQUAL x y) => true or false
-;;;   Return true if x and y both false or both true
-
-(defun logically-equal (x y)
-  (eql (not x) (not y)))
-
-;;; (SET-EQUAL l1 l2 :test) => true or false
-;;;   Return true if every element of l1 is an element of l2
-;;;   and vice versa.
-
-(defun set-equal (l1 l2 &key (test #'equal))
-  (and (listp l1)
-       (listp l2)
-       (subsetp l1 l2 :test test)
-       (subsetp l2 l1 :test test)))
-
+;;; WITH-TEST-LISTENER
+(defmacro with-test-listener (listener &body body)
+  `(let ((*test-listener* #',listener)) ,@body))
+  
 
 (provide "lisp-unit")
