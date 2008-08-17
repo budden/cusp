@@ -67,6 +67,12 @@ public class SwankInterface {
 		return lastTestPackage;
 	}
 	
+	private boolean ranafterLispStart = false;
+	
+	public boolean ranAfterLispStart(){
+		return ranafterLispStart;
+	}
+	
 	private ListenerThread listener;
 	private DisplayListenerThread displayListener;
 	
@@ -331,6 +337,7 @@ public class SwankInterface {
 				sendEvalAndGrab("(when (probe-file \""+str+"\") (load \""+str+"\"))\n", 3000);
 			}
 		}
+		ranafterLispStart = true;
 	}
 	
 	/** 
@@ -414,6 +421,7 @@ public class SwankInterface {
 		} else {
 			connected = false;
 		}
+		runAfterLispStart();
 		return connected;
 	}
 	

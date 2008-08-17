@@ -114,7 +114,7 @@ public class TestsView extends ViewPart {
 		runTestsButton = new Action("Run Tests") {
 			public void run() {
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				if( swank != null && swank.useUnitTest ){
+				if( swank != null && swank.ranAfterLispStart() && swank.useUnitTest ){
 					PackageDialog pd = 
 						new PackageDialog(TestsView.this.getSite().getShell(),
 								swank.getPackagesWithTests(1000), 
@@ -156,7 +156,7 @@ public class TestsView extends ViewPart {
  		output.setEditable(false);
 
  		fillToolBar(parent);
-	}
+ 	}
 
 	@Override
 	public void setFocus() {
