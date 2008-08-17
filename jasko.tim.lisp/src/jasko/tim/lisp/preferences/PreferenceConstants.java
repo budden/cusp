@@ -24,6 +24,7 @@ public interface PreferenceConstants {
 	public static final String LISP_INI = "lispIni";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
 	public static final String MANAGE_PACKAGES = "managePackages";
+	public static final String USE_UNIT_TEST= "useUnitTest";
 	public static final String CONSOLE_COMPILER_LOG = "consoleCompilerLog";
 	public static final String SYSTEMS_PATH = "systemsPath";
 	public static final String USE_AUTO_BUILD = "useAutoBuild";
