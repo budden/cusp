@@ -1,4 +1,4 @@
-package jasko.tim.lisp.editors;
+package jasko.tim.lisp.editors.autoedits;
 
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.preferences.PreferenceConstants;
@@ -9,6 +9,11 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
+
+/*
+ * To add new AutoEdits create a class extending IAutoEditStrategy and 
+ * add create it in getAutoEditStrategies function in LispConfiguration.java
+ */
 
 public class PairAutoEdit implements IAutoEditStrategy {
 

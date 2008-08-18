@@ -334,7 +334,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  			new HandlerDef(NextREPLCommandAction.class, "jasko.tim.lisp.actions.NextREPLCommandAction", false),
  			new HandlerDef(ContentAssistAction.class, "jasko.tim.lisp.editors.actions.ContentAssistAction", true),
  			new HandlerDef(ParameterHintsAction.class, "jasko.tim.lisp.editors.actions.ParameterHintsAction", true),
- 			new HandlerDef(IndentAction.class, "jasko.tim.lisp.editors.actions.Indent", true),
+ 			new HandlerDef(IndentAction.class, "jasko.tim.lisp.editors.actions.IndentAction", true),
  			new HandlerDef(ExpandSelectionAction.class, "jasko.tim.lisp.editors.actions.ExpandSelectionAction", true),
  			new HandlerDef(SelectCurrentExpressionAction.class, "jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction", true),
  			new HandlerDef(JumpForwardAction.class, "jasko.tim.lisp.editors.actions.JumpForwardAction", true),

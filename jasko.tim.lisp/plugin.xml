@@ -625,7 +625,7 @@
 			commandId="jasko.tim.lisp.editors.actions.IndentAction"
 			contextId="jasko.tim.lisp.context1"
 			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Tab"/>
+			sequence="Ctrl+Tab"/>
 	</extension>
 	<extension point="org.eclipse.ui.editorActions">
 		<editorContribution

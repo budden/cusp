@@ -1,4 +1,4 @@
-package jasko.tim.lisp.editors.assist;
+package jasko.tim.lisp.editors.autoedits;
 
 import jasko.tim.lisp.*;
 import jasko.tim.lisp.editors.LispPartitionScanner;
@@ -14,7 +14,7 @@ import org.eclipse.jface.text.*;
  * @author Tim
  *
  */
-public class LispIndenter implements IAutoEditStrategy {
+public class LispIndentOnEnter implements IAutoEditStrategy {
 
 
 	public void customizeDocumentCommand(IDocument doc, DocumentCommand comm) {
@@ -27,7 +27,7 @@ public class LispIndenter implements IAutoEditStrategy {
 			}
 		} catch (BadLocationException e) {
 			e.printStackTrace();
-		}
+		} 
 	}
 	
 	public static String calculateIndent(int offset, IDocument doc) {

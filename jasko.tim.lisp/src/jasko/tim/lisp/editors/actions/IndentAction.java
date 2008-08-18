@@ -2,7 +2,7 @@ package jasko.tim.lisp.editors.actions;
 
 import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispPartitionScanner;
-import jasko.tim.lisp.editors.assist.*;
+import jasko.tim.lisp.editors.autoedits.LispIndentOnEnter;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.*;
@@ -14,7 +14,7 @@ import org.eclipse.ui.IEditorPart;
  * If somebody has a better understanding of these things, feel free to implement this in a more
  *  proper fashion.
  * @author Tim Jasko
- * @see jasko.tim.lisp.editors.assist.LispIndenter
+ * @see jasko.tim.lisp.editors.autoedits.LispIndentOnEnter
  */
 public class IndentAction extends LispAction {
 
@@ -31,23 +31,24 @@ public class IndentAction extends LispAction {
         editor = (ILispEditor)targetEditor;
     }    
 	
-	private int getIndent(String str){
+	private static int getIndent(String str){
 		int i = 0;
 		while( i < str.length() && Character.isWhitespace(str.charAt(i)) ){
 			++i;
 		}
 		return i;
 	}
-	
-	public void run() {
-		ITextSelection ts = 
-			(ITextSelection) editor.getSelectionProvider().getSelection();
-		int offset = ts.getOffset();
-		IDocument doc = editor.getDocument();
 
+	public static int[] doIndent(int offset, int length, IDocument doc, int i0){
+		int newOffset = offset;
+		int newOffsetLength = length;
+		int newi0Offset = i0;
+		int i0length = i0 - offset;
+		
 		try {
 			int firstLine = doc.getLineOfOffset(offset);
-			int lastLine = doc.getLineOfOffset(offset+ts.getLength());
+			int i0Line = doc.getLineOfOffset(i0);
+			int lastLine = doc.getLineOfOffset(offset+length);
 			// get first line indent0
 			IRegion firstLineInfo = doc.getLineInformation(firstLine);
 			int firstIndent = 
@@ -57,6 +58,17 @@ public class IndentAction extends LispAction {
 			int firstTrimedOffset = 
 				Math.max(0, offset - firstLineInfo.getOffset() - firstIndent);
 			
+			// get i0 line indent0
+			IRegion i0LineInfo = doc.getLineInformation(i0Line);
+			int i0Indent = 
+				getIndent(doc.get(i0LineInfo.getOffset(),
+						i0LineInfo.getLength()));
+			// get last line trimmed position
+			int i0TrimedOffset = Math.max(0, 
+					offset + i0length - i0LineInfo.getOffset() - i0Indent);
+
+			int newi0LineOffset = i0LineInfo.getOffset();
+			
 			// get last line indent0
 			IRegion lastLineInfo = doc.getLineInformation(lastLine);
 			int lastIndent = 
@@ -64,11 +76,13 @@ public class IndentAction extends LispAction {
 						lastLineInfo.getLength()));
 			// get last line trimmed position
 			int lastTrimedOffset = Math.max(0, 
-					offset + ts.getLength() - lastLineInfo.getOffset() - lastIndent);
+					offset + length - lastLineInfo.getOffset() - lastIndent);
 
 			int newLastLineOffset = lastLineInfo.getOffset();
+
 			int firstIndentNew = 0;
 			int lastIndentNew = 0;
+			int i0IndentNew = 0;
 			for (int funcLine = firstLine; funcLine <= lastLine; ++funcLine) {
 				IRegion lineInfo = doc.getLineInformation(funcLine);
 				
@@ -82,24 +96,41 @@ public class IndentAction extends LispAction {
                 	continue;                	
                 }                
 				
-				String indent = LispIndenter.calculateIndent(lineInfo.getOffset(), doc);
+				String indent = LispIndentOnEnter.calculateIndent(lineInfo.getOffset(), doc);
 				int indentOld = getIndent(doc.get(lineInfo.getOffset(),lineInfo.getLength()));
 				if( funcLine == firstLine ){
 					firstIndentNew = indent.length();
 				}
 				if( funcLine == lastLine ){
-					lastIndentNew = indent.length();					
+					lastIndentNew = indent.length();	
 				} else {
 					newLastLineOffset += indent.length() - indentOld;
 				}
+				if( funcLine < i0Line ){
+					newi0LineOffset += indent.length() - indentOld;
+				} else if (funcLine == i0Line ){
+					i0IndentNew = indent.length();	
+				}
 				doc.replace(lineInfo.getOffset(), indentOld, indent);
 			}
-			int newOffset = firstLineInfo.getOffset() + firstIndentNew + firstTrimedOffset;
-			int newOffsetEnd = newLastLineOffset + lastIndentNew + lastTrimedOffset;
-			editor.getSelectionProvider().setSelection(new TextSelection(newOffset,newOffsetEnd-newOffset));			
+			newOffset = 
+				firstLineInfo.getOffset() + firstIndentNew + firstTrimedOffset;
+			newOffsetLength = 
+				newLastLineOffset + lastIndentNew + lastTrimedOffset;
+			newi0Offset = newi0LineOffset + i0IndentNew + i0TrimedOffset; 
+			
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
+		
+		return new int[] {newOffset, newOffsetLength, newi0Offset};
+	}
+	
+	public void run() {
+		ITextSelection ts = 
+			(ITextSelection) editor.getSelectionProvider().getSelection();
+		int newOffset[] = doIndent(ts.getOffset(),ts.getLength(),editor.getDocument(),ts.getOffset());
+		editor.getSelectionProvider().setSelection(new TextSelection(newOffset[0],newOffset[1]-newOffset[0]));			
 	}
 
 }

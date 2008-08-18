@@ -6,6 +6,7 @@ import java.net.URL;
 import jasko.tim.lisp.ColorManager;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.assist.*;
+import jasko.tim.lisp.editors.autoedits.*;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.util.LispUtil;
 
@@ -192,7 +193,8 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 	}
 	
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
-		return new IAutoEditStrategy[] {new LispIndenter(), new PairAutoEdit() };
+		return new IAutoEditStrategy[] {new LispIndentOnTab(),
+				new LispIndentOnEnter(), new PairAutoEdit()};
 	}
 	
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer,
