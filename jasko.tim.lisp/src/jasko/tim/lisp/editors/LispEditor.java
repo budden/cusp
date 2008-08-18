@@ -348,86 +348,8 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		setKeyBindingScopes(new String[] { "jasko.tim.lisp.context1" });  
 	}
 	
-	/**
-	 * Behold, my secret shame.
-	 * What you see below is technically wrong, or at the very least, obsolete.
-	 * This is no longer how the Eclipse folks want you to set up key bindings.
-	 * HOWEVER, their documentation is not very clear on how to do this in the
-	 *  new fashion, and I finally settled on this in frustration.
-	 *  
-	 *  TODO: register our key bindings like good little boys.
-	 */
 	protected void createActions() {
 		super.createActions();
-		/*
-		IKeyBindingService keys = this.getSite().getKeyBindingService();
-		IndentAction indent = new IndentAction(this);
-		indent.setActionDefinitionId(IndentAction.ID);
-		keys.registerAction(indent);
-		*/
-		/*CompileAction compile = new CompileAction(this);
-		compile.setActionDefinitionId("jasko.tim.lisp.actions.CompileAction");
-		keys.registerAction(compile);
-		
-		CompileSlowAction compileSlow = new CompileSlowAction(this);
-		compileSlow.setActionDefinitionId("jasko.tim.lisp.actions.CompileSlowAction");
-		keys.registerAction(compileSlow);
-		
-		CompileTopAction compileTop = new CompileTopAction(this, true);
-		compileTop.setActionDefinitionId("jasko.tim.lisp.actions.CompileTopAction");
-		keys.registerAction(compileTop);
-		
-		CompileTopAction compileTopSlow = new CompileTopAction(this, false);
-		compileTopSlow.setActionDefinitionId("jasko.tim.lisp.actions.CompileTopSlowAction");
-		keys.registerAction(compileTopSlow);
-		
-		LispDocAction lispdoc = new LispDocAction(this);
-		lispdoc.setActionDefinitionId("jasko.tim.lisp.actions.LispDocAction");
-		keys.registerAction(lispdoc);
-		
-		HyperSpecAction hyperSpec = new HyperSpecAction(this);
-		hyperSpec.setActionDefinitionId("jasko.tim.lisp.actions.HyperSpecAction");
-		keys.registerAction(hyperSpec);
-		
-		EvalTopLevelExpAction evalTopLevelExp = new EvalTopLevelExpAction(this);
-		evalTopLevelExp.setActionDefinitionId("jasko.tim.lisp.actions.EvalTopLevelExpAction");
-		keys.registerAction(evalTopLevelExp);
-		
-		EditDefinitionAction editDefinition = new EditDefinitionAction(this);
-		editDefinition.setActionDefinitionId("jasko.tim.lisp.actions.EditDefinitionAction");
-		keys.registerAction(editDefinition);
-		
-		IndentAction indent = new IndentAction(this);
-		indent.setActionDefinitionId("jasko.tim.lisp.actions.IndentAction");
-		keys.registerAction(indent);
-		
-		MacroExpandAction macroExpand = new MacroExpandAction(this, false);
-		macroExpand.setActionDefinitionId("jasko.tim.lisp.actions.MacroExpandAction");
-		keys.registerAction(macroExpand);
-		
-		MacroExpandAction macroExpandAll = new MacroExpandAction(this, true);
-		macroExpandAll.setActionDefinitionId("jasko.tim.lisp.actions.MacroExpandAllAction");
-		keys.registerAction(macroExpandAll);
-		
-		UndefineFunctionAction undefineFunc = new UndefineFunctionAction(this);
-		undefineFunc.setActionDefinitionId("jasko.tim.lisp.actions.UndefineFunctionAction");
-		keys.registerAction(undefineFunc);
-		
-		FindCallersAction findCallersFunc = new FindCallersAction(this);
-		findCallersFunc.setActionDefinitionId("jasko.tim.lisp.actions.FindCallersAction");
-		keys.registerAction(findCallersFunc);
-		
-		SwitchToReplAction switchToRepl = new SwitchToReplAction(this);
-		undefineFunc.setActionDefinitionId("jasko.tim.lisp.actions.SwitchToReplAction");
-		keys.registerAction(switchToRepl);
-		
-		ProfileFunctionAction profileFunc = new ProfileFunctionAction(this);
-		profileFunc.setActionDefinitionId(ProfileFunctionAction.ID);
-		keys.registerAction(profileFunc);
-		
-		ProfileResetAction profileReset = new ProfileResetAction(this);
-		profileReset.setActionDefinitionId(ProfileResetAction.ID);
-		keys.registerAction(profileReset);*/
 	}
 
 
