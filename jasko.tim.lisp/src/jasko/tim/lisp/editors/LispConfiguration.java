@@ -193,8 +193,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 	}
 	
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
-		return new IAutoEditStrategy[] {new LispIndentOnTab(),
-				new LispIndentOnEnter(), new PairAutoEdit()};
+		return AllAutoEdits.get();
 	}
 	
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer,

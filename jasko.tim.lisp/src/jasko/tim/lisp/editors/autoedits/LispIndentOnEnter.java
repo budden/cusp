@@ -7,13 +7,6 @@ import jasko.tim.lisp.util.*;
 
 import org.eclipse.jface.text.*;
 
-/**
- * Doesn't actually handle the indenting that is done when you press Tab.
- *  I find the caret moves more predictably if I do that in IndentAction
- * @see jasko.tim.lisp.editors.actions.IndentAction
- * @author Tim
- *
- */
 public class LispIndentOnEnter implements IAutoEditStrategy {
 
 
