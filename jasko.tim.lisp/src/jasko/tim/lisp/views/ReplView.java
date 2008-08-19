@@ -769,36 +769,34 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 	}
 
-	public void appendText(String text) {		
+	public void appendText(String text) {
+		String strs[] = text.split("\\n");
+		String replStr = "";
+		String consoleStr = "";
+		for(int i = 0; i < strs.length; ++i){
+			String str = strs[i];
+			//this works for SBCL
+			if( str.trim().startsWith(";") || str.trim().equals("")){
+				if( i == strs.length-1){
+					consoleStr = consoleStr + str;
+				} else {
+					consoleStr = consoleStr + str + "\n";				
+				}
+			} else {
+				if( i == strs.length-1){
+					consoleStr = consoleStr + str;
+					replStr = replStr + str;  										
+				} else {
+					consoleStr = consoleStr + str + "\n";						
+					replStr = replStr + str + "\n";
+				}
+			}
+		}
+		history.appendText(replStr);
 		if(LispPlugin.getDefault().getPreferenceStore()
 				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))
 		{
-			String strs[] = text.split("\\n");
-			String replStr = "";
-			String consoleStr = "";
-			for(int i = 0; i < strs.length; ++i){
-				String str = strs[i];
-				//this works for SBCL
-				if( str.trim().startsWith(";") || str.trim().equals("")){
-					if( i == strs.length-1){
-						consoleStr = consoleStr + str;
-					} else {
-						consoleStr = consoleStr + str + "\n";				
-					}
-				} else {
-					if( i == strs.length-1){
-						consoleStr = consoleStr + str;
-						replStr = replStr + str;  										
-					} else {
-						consoleStr = consoleStr + str + "\n";						
-						replStr = replStr + str + "\n";
-					}
-				}
-			}
-			history.appendText(replStr);
 			LispPlugin.getDefault().out(consoleStr);
-		} else {
-			history.appendText(text);
 		}
 	}
 	
