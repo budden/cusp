@@ -1,5 +1,6 @@
 package jasko.tim.lisp.preferences;
 
+import java.util.StringTokenizer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,6 +69,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         store.setDefault(MAX_HINT_LINES, 10);
         store.setDefault(ARGLIST_BELOW, false);
         store.setDefault(DEBUG_HIDE_SWANK_FRAMES, true);
+        store.setDefault(CUSTOM_AUTO_EDITS, "");
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
         store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);
@@ -94,4 +96,63 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
 		return "" + rgb.red + "," + rgb.green + "," + rgb.blue + "";
 	}
 
+	/*
+	 *  Dealing with CustomAutoEdits preferences - probably not the best place in initializer
+	 */
+	private static String PREFERENCE_DELIMITER = "\t"; //how auto edits delimited
+	private static String AUTO_EDIT_DELIMITER = ";"; //how input is delimited from output in one auto
+	
+	public static String[] getDefaultCustomAutoEditsPreference() {
+		return convert(
+				LispPlugin.getDefault().getPreferenceStore().getDefaultString(CUSTOM_AUTO_EDITS));
+	}
+	
+	public static String[] getCustomAutoEditsPreference() {
+		return convert(LispPlugin.getDefault().getPreferenceStore().getString(CUSTOM_AUTO_EDITS));
+	}
+		
+	public static String[] getCustomAutoEditsPreference2() {
+		return convert2(LispPlugin.getDefault().getPreferenceStore().getString(CUSTOM_AUTO_EDITS));
+	}
+
+	private static String[] convert(String preferenceValue) {
+		StringTokenizer tokenizer =
+			new StringTokenizer(preferenceValue, PREFERENCE_DELIMITER);
+		int tokenCount = tokenizer.countTokens();
+		String[] elements = new String[tokenCount];
+		for (int i = 0; i < tokenCount; ++i) {
+				elements[i] = tokenizer.nextToken();
+		}
+
+		return elements;
+	}
+
+	// get strings: odd - match, even - replace
+	private static String[] convert2(String prefVal){
+		String[] str1 = convert(prefVal);
+		String[] res = new String[2*str1.length];
+		for( int i = 0; i < str1.length; ++i ){
+			StringTokenizer tk = new StringTokenizer(str1[i],AUTO_EDIT_DELIMITER);
+			if( tk.countTokens() == 2 ){
+				res[2*i] = tk.nextToken();
+				res[2*i+1] = tk.nextToken();
+			} else {
+				res[2*i] = null;
+				res[2*i+1] = null;
+				System.out.print("<> Bad auto-edit string: "+str1[i]);
+			}
+		}
+		return res;
+	}
+	
+
+	public static void setCustomAutoEditPreference(String[] elements) {
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0; i < elements.length; i++) {
+			buffer.append(elements[i]);
+			buffer.append(PREFERENCE_DELIMITER);
+		}
+		LispPlugin.getDefault().getPreferenceStore().setValue(CUSTOM_AUTO_EDITS, buffer.toString());
+	}
+	
 }

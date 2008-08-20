@@ -56,6 +56,8 @@ public interface PreferenceConstants {
     public static final String MAX_HINT_LINES = "maxHintLines";
     public static final String ARGLIST_BELOW = "arglistBelow";
     
+    public static final String CUSTOM_AUTO_EDITS = "customAutoEdits";
+    
 	public static final String SHOW_EVAL_IN_REPL = "showEvalInRepl";
 	public static final String USE_CTRL_ENTER = "useCtrlEnter";
     public static final String REPL_INPUT_BG_COLOR = "REPLInputColorBG";
