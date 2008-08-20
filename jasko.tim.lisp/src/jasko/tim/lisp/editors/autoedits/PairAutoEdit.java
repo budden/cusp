@@ -49,7 +49,7 @@ public class PairAutoEdit implements IAutoEditStrategy {
 				&& prefs.getBoolean(PreferenceConstants.PAIR_EDIT_COMMENTS)){
 				c.text = "|  |#";
 				cmdEnd(c);
-				return;				
+				return;
 			}
 		} catch (BadLocationException e) {
 			e.printStackTrace();

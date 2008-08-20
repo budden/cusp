@@ -1280,6 +1280,11 @@
           id="jasko.tim.lisp.preferences.ColorsPreferencePage"
           name="Colors"/>
     <page
+          category="jasko.tim.lisp.preferences.EditorPreferencePage"
+          class="jasko.tim.lisp.preferences.AutoEditsPreferencePage"
+          id="jasko.tim.lisp.preferences.AutoEditsPreferencePage"
+          name="Auto Edits"/>
+    <page
           category="jasko.tim.lisp.preferences.CuspPreferencePage"
           class="jasko.tim.lisp.preferences.ImplementationsPreferencePage"
           id="jasko.tim.lisp.preferences.CuspPreferencePage"
