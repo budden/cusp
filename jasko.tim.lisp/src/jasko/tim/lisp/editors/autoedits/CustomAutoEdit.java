@@ -11,49 +11,137 @@ import org.eclipse.jface.text.IDocument;
 public class CustomAutoEdit implements IAutoEditStrategy {
 
 	private static String CARET_CHAR = "|";
-	private static int MAX_MATCH_LENGTH = 20;
 
-	// ending character -> match keyword -> keywords
-	private HashMap<String,HashMap<String,AutoEditData>> autoEditRegistry;
+	private AutoEditData tree;
 	
-	private class AutoEditData{
-		public String replace;
-		public int caretMove;
-		public int offset;
+	public class AutoEditData{
+		public String replace = null;
+		public int caretMove = 0;
+		public int offset = 0;
+		public int maxMatchLength = 0;
+		
+		public HashMap<String,AutoEditData> subtree = null;
 
-		public AutoEditData(String match, String replace1){
-			offset = match.length();
-			caretMove = replace1.indexOf(CARET_CHAR) - offset - 1;
-			replace = replace1.replace(CARET_CHAR, "");
+		/*
+		 * SK: I bet this all can be done in more elegant way using regex,
+		 * but I was not able to come up how to do that yet. So I'll
+		 * leave that exercise for the RegexAutoEdit class
+		 */
+		
+		public AutoEditData(){
 		}
+
+		private void addMatch(String match, AutoEditData ae0, int level, String subst){
+			if( ae0 == null || subst == null || subst.contentEquals("") ){
+				return;
+			}
+			if( match == null || match.contentEquals("") ){ //nothing to add
+				return;
+			}
+			if( match.length() == 1 ){ //create terminal node
+				if( ae0.subtree == null ){
+					ae0.subtree = new HashMap<String,AutoEditData>();
+				}
+				AutoEditData ae = new AutoEditData();
+				ae.replace = subst;
+				ae.offset = level;
+				ae.caretMove = subst.indexOf(CARET_CHAR) - ae.offset;
+				ae.replace = subst.replace(CARET_CHAR, "");
+				ae.subtree = null;
+				ae0.subtree.put(match, ae);
+				return;
+			} else { // traverse tree
+				if( ae0.subtree == null ){ //will create whole subtree
+					ae0.subtree = new HashMap<String,AutoEditData>();
+				}
+				String last_char =	match.substring(match.length()-1);
+				String new_match = match.substring(0,match.length()-1);
+				AutoEditData ae;
+				if( ae0.subtree.containsKey(last_char) ){
+					ae = ae0.subtree.get(last_char);
+				} else {
+					ae = new AutoEditData(); //create subtree if does not exist
+					ae0.subtree.put(last_char, ae);
+				}
+				addMatch(new_match,ae,level+1,subst);
+				return;
+			}
+		}
+
+		private AutoEditData findMatch(String match, AutoEditData ae0){
+			if( ae0 == null ){
+				return null;
+			}
+			if( match == null || match.contentEquals("")){ //initial match string is shorter than tree
+				if( ae0.replace != null ){ // but still got match
+					return ae0;
+				} else {
+					return null;
+				}
+			}
+			String last_char =	match.substring(match.length()-1);
+			String new_match = match.substring(0,match.length()-1);
+			if( ae0.replace != null ){ // found potential match
+				if( ae0.subtree == null ){ // found match
+					return ae0;
+				} else { // try to find longer match
+					AutoEditData ae1 = findMatch(new_match,ae0.subtree.get(last_char));
+					if( ae1 != null ){ // found longer match
+						return ae1;
+					} else { // did not find longer match
+						return ae0;
+					}
+				}
+			}
+			if( ae0.subtree.containsKey(last_char) ){ // continue with next character
+				return findMatch(new_match,ae0.subtree.get(last_char)); 
+			} else { // no match
+				return null;
+			}		
+		}
+
+		public String toString(){
+			String sub = "null";
+			if( subtree != null ){
+				sub = subtree.toString();
+			}
+			String res = "{"+offset+","+caretMove+","+replace+","+sub+"}";
+			return res;
+		}
+		
+		public void addMatch(String match, String subst){
+			if( match == null || match.contentEquals("") ){
+				return;
+			} else {
+				addMatch(match,this,0,subst);
+				maxMatchLength = Math.max(maxMatchLength, match.length());
+				return;
+			}
+		}
+		
+		public AutoEditData findMatch(String match){
+			if( match == null || match.contentEquals("") ){
+				return null;
+			} else {
+				return findMatch(match,this);				
+			}
+		}		
 	}
 
-	private void initAutoEditRegistry(){
+	private void initAutoEditTree(){
 		String[] strs = PreferenceInitializer.getCustomAutoEditsPreference2();
 		int n = strs.length/2;
-		autoEditRegistry = new HashMap<String,HashMap<String,AutoEditData>>();
+		tree = new AutoEditData();
 		for( int i = 0; i < n; ++i ){
 			if( strs[2*i] != null && strs[2*i+1] != null && strs[2*i].length()>0
 					&& strs[2*i+1].contains(CARET_CHAR)){
-				String match = strs[2*i];
-				AutoEditData ad = new AutoEditData(match,strs[2*i+1]);
-				String ending = match.substring(match.length()- 1);
-				if( autoEditRegistry.containsKey(ending) ){
-					HashMap<String,AutoEditData> map = 
-						autoEditRegistry.get(ending);
-					map.put(match, ad);
-				} else {
-					HashMap<String,AutoEditData> map = 
-						new HashMap<String,AutoEditData>();
-					map.put(match, ad);
-					autoEditRegistry.put(ending, map);
-				}
+				tree.addMatch(strs[2*i], strs[2*i+1]);
 			}
 		}
 	}
 	
 	public CustomAutoEdit(){
-		initAutoEditRegistry();
+		initAutoEditTree();
 	}
 	
 	private void cmdEnd(IDocument d, DocumentCommand c, AutoEditData data){
@@ -64,28 +152,26 @@ public class CustomAutoEdit implements IAutoEditStrategy {
 		}
 		c.shiftsCaret = false;
 		c.caretOffset = c.offset + data.caretMove;
+		c.text = "";
 		c.doit = false;
 		return;
 	}
 
 	public void customizeDocumentCommand(IDocument d,
 			DocumentCommand c) {
-		if( autoEditRegistry.containsKey(c.text) ){ //candidate for autoedit
-			// search if there is a valid autoedit
-			HashMap<String,AutoEditData> map = 
-				autoEditRegistry.get(c.text);
+		if( tree != null && tree.subtree != null &&
+				tree.subtree.containsKey(c.text) ){ //candidate for autoedit
 			int max_match_length = 
-				MAX_MATCH_LENGTH - Math.max(0, MAX_MATCH_LENGTH - c.offset);
+				tree.maxMatchLength - Math.max(0, tree.maxMatchLength - c.offset - 1);
 			try{
-				String max_match_str = 
-					d.get(c.offset - max_match_length, max_match_length);
-				for(int i = 1; i < max_match_length; ++i ){
-					String match_candidate = 
-						max_match_str.substring(max_match_length-i);
-					if( map.containsKey(match_candidate) ){
-						cmdEnd(d,c,map.get(match_candidate));
-						return;
-					}
+				String max_match_str = "";
+				if( max_match_length > 1 ){
+					max_match_str =
+						d.get(c.offset - max_match_length + 1, max_match_length - 1);
+				}
+				AutoEditData ae = tree.findMatch(max_match_str+c.text);
+				if( ae != null ){
+					cmdEnd(d,c,ae);					
 				}
 			} catch (BadLocationException e) {
 				e.printStackTrace();

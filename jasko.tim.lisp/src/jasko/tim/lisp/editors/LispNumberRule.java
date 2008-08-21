@@ -19,7 +19,7 @@ public class LispNumberRule implements IRule {
 	}
 
 	public IToken evaluate(ICharacterScanner scanner) {
-		int c= scanner.read();
+		int c = scanner.read();
 		if (Character.isDigit((char)c) || c == '-' || c == '+' || c == '.' || c == '#') {			
 			StringBuffer buf = new StringBuffer();
 			do {
