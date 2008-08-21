@@ -775,6 +775,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 		String consoleStr = "";
 		for(int i = 0; i < strs.length; ++i){
 			String str = strs[i];
+			if( i == strs.length-1){
+				replStr = replStr + str;  										
+			} else {
+				replStr = replStr + str + "\n";
+			}
 			//this works for SBCL
 			if( str.trim().startsWith(";") || str.trim().equals("")){
 				if( i == strs.length-1){
@@ -785,10 +790,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 			} else {
 				if( i == strs.length-1){
 					consoleStr = consoleStr + str;
-					replStr = replStr + str;  										
 				} else {
 					consoleStr = consoleStr + str + "\n";						
-					replStr = replStr + str + "\n";
 				}
 			}
 		}
