@@ -190,6 +190,25 @@ public class SwankInterface {
 		// All additional custom indents will go here
 		indents = new Hashtable<String, Integer>();
 		indents.put("do", 2);
+		indents.put("with-open-stream", 1);
+		indents.put("with-open-file", 1);
+		indents.put("with-accessors", 1);
+		indents.put("with-alien", 1);
+		indents.put("with-compilation-unit", 1);
+		indents.put("with-compilation-restarts", 1);
+		indents.put("with-condition-restarts", 1);
+		indents.put("with", 1);
+		indents.put("with-hash-table-iterator", 1);
+		indents.put("with-input-from-string", 1);
+		indents.put("with-locked-hash-table", 1);
+		indents.put("with-output-to-string", 1);
+		indents.put("with-package-iterator", 1);
+		indents.put("with-simple-restart", 1);
+		indents.put("with-slots", 2);
+		indents.put("with-timeout", 1);
+		indents.put("with-unlocked-packages", 1);
+		
+		
 		
 		addIndentationListener(new SwankRunnable() {
 			public void run() {
