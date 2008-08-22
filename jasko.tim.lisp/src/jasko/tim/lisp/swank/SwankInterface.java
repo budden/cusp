@@ -144,9 +144,6 @@ public class SwankInterface {
 	public Hashtable<String, Integer> indents;
 	public Hashtable<String, String> handlerCaseIndents;
 
-	// stores all compile problems, I am not sure this is the best place
-	public List<IFile> filesWithCompileProblems = new ArrayList<IFile>();
-	
 	private void initIndents() {
 		// for forms that get indented like flet
 		fletIndents = new Hashtable<String, String>();

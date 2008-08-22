@@ -9,7 +9,7 @@ import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.util.*;
-import jasko.tim.lisp.builder.LispBuilder;
+import jasko.tim.lisp.builder.*;
 
 import java.util.Iterator;
 import java.util.HashMap;
@@ -562,7 +562,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 										if( end > start ){
 											range[0] = start;
 											range[1] = end - start + 1;
-											LispBuilder.deleteMarkers(getIFile(), range[0], range[1]);
+											LispMarkers.deleteMarkers(getIFile(), range[0], range[1]);
 										} else {
 											range[0] = -1;
 											range[1] = 0;

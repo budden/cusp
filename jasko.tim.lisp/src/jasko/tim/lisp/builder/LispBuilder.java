@@ -13,7 +13,6 @@ import jasko.tim.lisp.views.ReplView;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
@@ -21,17 +20,11 @@ import java.util.ArrayList;
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.texteditor.MarkerUtilities;
-
 
 public class LispBuilder extends IncrementalProjectBuilder {
 
 	public static final String BUILDER_ID = "jasko.tim.lisp.lispBuilder";
-	public static final String MARKER_TYPE = "jasko.tim.lisp.lispProblem";
-	public static final String TASK_MARKER_TYPE = "jasko.tim.lisp.lispTask";
-	public static final String COMPILE_PROBLEM_MARKER = "jasko.tim.lisp.lispCompile";
 	
-
 /*	// We ended up not using asd files for incremental build. However these couple of functions
     // might be useful for future code handling project management with asd files. So I leave them commented out.
 	private ArrayList<IFile> asdFiles = null;
@@ -249,13 +242,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
   		public void run() {
  			ArrayList<String> files = new ArrayList<String>();
  			if ( file != null && length == 0){
- 				try {
- 					file.deleteMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
- 				} catch (CoreException e1) {
- 					e1.printStackTrace();
- 				}				
+ 				LispMarkers.deleteMarkers(file);
   			} else if ( file != null && length > 0) {
-  				deleteMarkers(file,offset,length);
+  				LispMarkers.deleteMarkers(file,offset,length);
   			}
  			
 			ReplView repl = (ReplView)PlatformUI.getWorkbench().getActiveWorkbenchWindow()
@@ -288,46 +277,27 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					} catch (NumberFormatException e) {
 					}
 					
-					int sev = IMarker.SEVERITY_WARNING;
-					if (severity.equalsIgnoreCase(":error")) {
-  						sev = IMarker.SEVERITY_ERROR;
-  						++nerrors;
-  					}
-					else {
+					boolean isError = severity.equalsIgnoreCase(":error");
+					if( isError ){
+						++nerrors;
+					} else {
 						++nwarnings;
 					}
-  					
- 					Map<String, Object> attr = new HashMap<String, Object>();
- 					attr.put(IMarker.CHAR_START, new Integer(offset));
- 					attr.put(IMarker.CHAR_END, new Integer(offset+1));
- 					
- 					attr.put(IMarker.MESSAGE, msg);
- 					attr.put(IMarker.SEVERITY, sev);
+					
  					if ( file == null && !fileName.equals("")){
- 						IResource fl = wk.findMember(new Path(fileName.replace(wk.getLocation().toString(), "")));
- 						if ( fl != null ) {
+ 						IResource resource = wk.findMember(new Path(fileName.replace(wk.getLocation().toString(), "")));
+ 						if ( resource != null && resource instanceof IFile ) {
+ 							IFile fl = (IFile)resource;
  							if ( !files.contains(fileName) ){
  								files.add(fileName);
- 								try {
- 									fl.deleteMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
- 								} catch (CoreException e1) {
- 									e1.printStackTrace();
- 								}											
+ 								LispMarkers.deleteCompileMarkers(fl);
  							}
- 							try {
- 								MarkerUtilities.createMarker(fl, attr, COMPILE_PROBLEM_MARKER);
- 							} catch (CoreException e) {
- 								System.out.println(e);
- 							}							
+ 							LispMarkers.addCompileMarker(fl, offset, 1, msg, isError);
   						}
  					} else if ( file.getLocation().toPortableString().equals(fileName)
  							|| file.getName().equals(buffer)
- 							|| file.getLocation().toPortableString().equals(buffer)) {						
-  						try {
-  							MarkerUtilities.createMarker(file, attr, COMPILE_PROBLEM_MARKER);
-  						} catch (CoreException e) {
-  							e.printStackTrace();
-  						}
+ 							|| file.getLocation().toPortableString().equals(buffer)) {
+ 						LispMarkers.addCompileMarker(file, offset, 1, msg, isError);
   					} else { //cannot resolve error location
  					//	System.out.printf("CompileListener: Filename {%s} is not equal buffer {%s} or filename from compiler notes {%s}\n", 
  					//			file.getLocation().toString(), fileName, buffer);
@@ -350,78 +320,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			}
 			
 		}
-	}
-	
-	public static void deleteMarkers(IFile file) {
-		if( file == null ){
-			return;
-		}
-		try {
-			file.deleteMarkers(MARKER_TYPE, false, IResource.DEPTH_ZERO);
-			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
-			List<IFile> files = 
-				LispPlugin.getDefault().getSwank().filesWithCompileProblems;
-			if (files != null && files.contains(file)){
-				files.remove(file);
-			}			
-		} catch (CoreException ce) {
-		}
-	}
-	
-	public static void deleteMarkers(IFile file, int offset, int length){
-		if( file == null || offset < 0 || length <= 0 ){
-			return;
-		}
-		try{
-			IMarker[] markers = 
-				file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
-			for( IMarker m: markers ){
-				int moffset = (Integer)m.getAttribute(IMarker.CHAR_START); 
-				if( moffset >= offset && moffset <= offset + length ){
-					m.delete();
-				}
-			}
-			markers = file.findMarkers(COMPILE_PROBLEM_MARKER, true, IResource.DEPTH_ZERO);
-			List<IFile> files = 
-				LispPlugin.getDefault().getSwank().filesWithCompileProblems;
-			if ( markers.length == 0 
-					&& files != null && files.contains(file)){
-				files.remove(file);
-			}
-		} catch (CoreException e1) {
-			e1.printStackTrace();
-		}
-	}
-
-	private static void addMarker(IFile file, String msg, 
-			int offsetStart, int offsetEnd, int lineNum){
-		if( file == null){
-			return;
-		}
-		Map<String, Object> attr = new HashMap<String, Object>();
-		attr.put(IMarker.CHAR_START, offsetStart);
-		attr.put(IMarker.CHAR_END, offsetEnd);
-		attr.put(IMarker.LINE_NUMBER, lineNum);
-		
-		attr.put(IMarker.MESSAGE, msg);
-		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
-		try {
-			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);
-			List<IFile> files = 
-				LispPlugin.getDefault().getSwank().filesWithCompileProblems;
-			if( files != null && !files.contains(file) ){
-				files.add(file);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private static void addBadPackageMarker(IFile file, int offsetStart, int offsetEnd,
-			int lineNum, String pkg){
-		addMarker(file,"Package "+ pkg + " is not loaded",offsetStart,offsetEnd+1,lineNum);
-		/*( List<IFile> files = 
-			LispPlugin.getDefault().getSwank().filesWithCompileProblems; */
 	}
 
 	private static boolean checkPackageDependence(LispNode code, IFile file){
@@ -449,8 +347,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							for(int i = 1; i < subnode.params.size(); ++i){
 								LispNode usepkg = subnode.params.get(i);
 								if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
-									addBadPackageMarker(file,usepkg.offset,
-											usepkg.endOffset+1,usepkg.line,
+									LispMarkers.addPackageMarker(file, usepkg.offset, 
+											usepkg.endOffset+1, usepkg.line, 
 											LispUtil.formatPackage(usepkg.value));
 									cancompile = false;
 								}									
@@ -461,13 +359,13 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							LispNode usepkg = subnode.cadr();
 							if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
 								if (usepkg.offset == 0) {
-									addBadPackageMarker(file,subnode.offset,
-											subnode.offset + subtype.length(), subnode.line,
-											LispUtil.formatPackage(usepkg.value));										
+									LispMarkers.addPackageMarker(file, subnode.offset,
+											subnode.offset+subtype.length(),
+											subnode.line, LispUtil.formatPackage(usepkg.value));
 								} else {
-									addBadPackageMarker(file,usepkg.offset,
-											usepkg.endOffset, usepkg.line,
-											LispUtil.formatPackage(usepkg.value));										
+									LispMarkers.addPackageMarker(file, usepkg.offset, 
+											usepkg.endOffset, usepkg.line, 
+											LispUtil.formatPackage(usepkg.value));
 								}
 								cancompile = false;
 							}
@@ -487,13 +385,14 @@ public class LispBuilder extends IncrementalProjectBuilder {
 						for(LispNode usepkg: uses.params){
 							if(!pkgs.contains(LispUtil.formatPackage(usepkg.value))){
 								if (usepkg.offset == 0) {
-									addBadPackageMarker(file,node.offset,
-											node.offset + nodetype.length(), node.line,
-											LispUtil.formatPackage(usepkg.value));										
+									LispMarkers.addPackageMarker(file, node.offset, 
+											node.offset + nodetype.length(),
+											node.line,
+											LispUtil.formatPackage(usepkg.value));
 								} else {
-									addBadPackageMarker(file,usepkg.offset,
+									LispMarkers.addPackageMarker(file, usepkg.offset, 
 											usepkg.endOffset, usepkg.line,
-											LispUtil.formatPackage(usepkg.value));										
+											LispUtil.formatPackage(usepkg.value));
 								}
 								cancompile = false;									
 							}
@@ -503,13 +402,13 @@ public class LispBuilder extends IncrementalProjectBuilder {
 					LispNode pkgnode = node.cadr();
 					if(!pkgs.contains(LispUtil.formatPackage(pkgnode.value))){
 						if (pkgnode.offset == 0) {
-							addBadPackageMarker(file,node.offset,
+							LispMarkers.addPackageMarker(file, node.offset, 
 									node.offset + nodetype.length(), node.line,
-									LispUtil.formatPackage(pkgnode.value));										
+									LispUtil.formatPackage(pkgnode.value));
 						} else {
-							addBadPackageMarker(file,pkgnode.offset,
+							LispMarkers.addPackageMarker(file,pkgnode.offset,
 									pkgnode.endOffset, pkgnode.line,
-									LispUtil.formatPackage(pkgnode.value));										
+									LispUtil.formatPackage(pkgnode.value));
 						}
 						cancompile = false;							
 					}
@@ -523,30 +422,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	private static void addMultMarker(IFile file, int offsetStart, int offsetEnd, boolean last){
-		if( file == null){
-			return;
-		}
-		Map<String, Object> attr = new HashMap<String, Object>();
-		attr.put(IMarker.CHAR_START, offsetStart);
-		attr.put(IMarker.CHAR_END, offsetEnd);
-		
-		String msg = "";
-		if( last ){
-			msg = "The definition redefines the function defined earlier in the file";
-		} else {
-			msg = "The function is redefined by other definition(s) later in the file";
-		}
-		
-		attr.put(IMarker.MESSAGE, msg);
-		attr.put(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
-		try {
-			MarkerUtilities.createMarker(file, attr, MARKER_TYPE);			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	private static void checkMultipleDefuncs(LispNode code, IFile file){
 		if( file == null ){
 			return;
@@ -573,25 +448,21 @@ public class LispBuilder extends IncrementalProjectBuilder {
 				for( int i = 0; i < lst.size() - 1; ++i ){
 					int offset = lst.get(i).offset+"defun".length()+2;
 					int offsetEnd = offset + lst.get(i).name.length();
-					addMultMarker(file,offset,offsetEnd,false);
+					LispMarkers.addMultMarker(file, offset, offsetEnd, false);
 				}
 				int i = lst.size()-1;
 				int offset = lst.get(i).offset+"defun".length()+2;
 				int offsetEnd = offset + lst.get(i).name.length();
-				addMultMarker(file,offset,offsetEnd,true);
+				LispMarkers.addMultMarker(file,offset,offsetEnd,true);
 			}
 		}
 		
 	}
 	
-	private static void addCommaMarker(IFile file, int offset, int lineNum){
-		addMarker(file,"Comma is not inside a backquote",offset,offset+1,lineNum);
-	}
-	
 	private static boolean checkCommas(LispNode code, IFile file){
 		boolean res = true;
 		if( code.value.equals(",") && !code.isString){
-			addCommaMarker(file,code.offset,code.line);
+			LispMarkers.addCommaMarker(file,code.offset,code.line);
 			res = false;
 		}
 		boolean inBackQuote = false;
@@ -606,15 +477,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			}
 		}
 		return res;
-	}
-	
-	private static void addParenMarker(IFile file, int offset, 
-			int lineNum, boolean unmatchedOpen){
-		if(unmatchedOpen){
-			addMarker(file,"Unmatched open parenthesis.",offset,offset+1,lineNum);
-		} else {
-			addMarker(file,"Unmatched closing parenthesis.",offset,offset+1,lineNum);
-		}
 	}
 	
 	private static boolean checkParenBalancing(IFile file){
@@ -666,7 +528,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 								// reset everything so we don't throw off the rest of the matching
 								close = open;
 								res = false;
-								addParenMarker(file, charOffset, lineNum, false);
+								LispMarkers.addParenMarker(file, charOffset, lineNum, false);
 							} // if
 						} else if (c == ';' && !inQuotes && !(i > 1 && line.charAt(i-1) == '\\' && line.charAt(i-2) == '#')) {
 							charOffset += line.length() - i;
@@ -699,7 +561,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							if(open>close){
 								// reset everything so we don't throw off the rest of the matching
 								open = close;
-								addParenMarker(file,parenData.get(k)[1],parenData.get(k)[2],true);
+								LispMarkers.addParenMarker(file,parenData.get(k)[1],parenData.get(k)[2],true);
 							}
 						}
 					} //for k
@@ -722,7 +584,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			
 			try {
 				IFile file = (IFile) resource;
-				deleteMarkers(file);
+				LispMarkers.deleteMarkers(file);
 				System.out.println("*builder");
 				boolean paren = checkParenBalancing(file);
 				LispNode code = LispParser.parse(file);

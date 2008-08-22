@@ -151,17 +151,26 @@
 	
 	
 	<!-- The marker for problems in lisp files -->
-	<extension point="org.eclipse.core.resources.markers"
-		id="lispCompile"
-		name="Lisp Problem">
-		<super type="org.eclipse.core.resources.problemmarker"/>
-		<persistent value="true"/>
-	 </extension>
-	<extension point="org.eclipse.core.resources.markers"
-		id="lispProblem"
-		name="Lisp Problem">
-		<super type="org.eclipse.core.resources.problemmarker"/>
-		<persistent value="true"/>
+	<extension id="lispMarker" point="org.eclipse.core.resources.markers"/>
+	<extension id="lispMarkerCompile" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.core.resources.problemmarker"/>
+   		<super type="jasko.tim.lisp.lispMarker"/>
+   		<persistent value="true"/>
+	</extension>
+	<extension id="lispMarkerCompileError" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.core.resources.problemmarker"/>
+   		<super type="jasko.tim.lisp.lispMarkerCompile"/>
+   		<persistent value="true"/>
+	</extension>
+	<extension id="lispMarkerCompileWarning" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.core.resources.problemmarker"/>
+   		<super type="jasko.tim.lisp.lispMarkerCompile"/>
+   		<persistent value="true"/>
+	</extension>
+	<extension id="lispMarkerCompilePackage" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.core.resources.problemmarker"/>
+   		<super type="jasko.tim.lisp.lispMarkerCompile"/>
+   		<persistent value="true"/>
 	</extension>
 	 
 	<!-- Preference Page -->
