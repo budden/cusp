@@ -8,7 +8,6 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
-import jasko.tim.lisp.editors.LispPartitionScanner;
 
 /* autoedit snippets, like (let) (progn) etc */
 public class CustomAutoEdit implements IAutoEditStrategy {

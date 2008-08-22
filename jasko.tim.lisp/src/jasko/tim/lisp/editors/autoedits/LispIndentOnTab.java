@@ -25,6 +25,13 @@ public class LispIndentOnTab implements IAutoEditStrategy {
 				int offsets[] = 
 					IndentAction.doIndent(topLvlRange[0], topLvlRange[1], d,c.offset);
 				cmdEnd(c,offsets[2]);				
+			} else { // when offset is just next to top-level bracket want to indent
+				topLvlRange = LispUtil.getTopLevelRange(d, c.offset+1);
+				if( topLvlRange != null ){
+					int offsets[] = 
+						IndentAction.doIndent(topLvlRange[0], topLvlRange[1], d,c.offset);
+					cmdEnd(c,offsets[2]);				
+				}
 			}
 		}
 		
