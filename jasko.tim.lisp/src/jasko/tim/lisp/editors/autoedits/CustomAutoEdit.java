@@ -1,11 +1,14 @@
 package jasko.tim.lisp.editors.autoedits;
 
 import java.util.HashMap;
+
+import jasko.tim.lisp.editors.LispPartitionScanner;
 import jasko.tim.lisp.preferences.PreferenceInitializer;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
+import jasko.tim.lisp.editors.LispPartitionScanner;
 
 /* autoedit snippets, like (let) (progn) etc */
 public class CustomAutoEdit implements IAutoEditStrategy {
@@ -159,23 +162,28 @@ public class CustomAutoEdit implements IAutoEditStrategy {
 
 	public void customizeDocumentCommand(IDocument d,
 			DocumentCommand c) {
-		if( tree != null && tree.subtree != null &&
-				tree.subtree.containsKey(c.text) ){ //candidate for autoedit
-			int max_match_length = 
-				tree.maxMatchLength - Math.max(0, tree.maxMatchLength - c.offset - 1);
-			try{
-				String max_match_str = "";
-				if( max_match_length > 1 ){
-					max_match_str =
-						d.get(c.offset - max_match_length + 1, max_match_length - 1);
-				}
-				AutoEditData ae = tree.findMatch(max_match_str+c.text);
-				if( ae != null ){
-					cmdEnd(d,c,ae);					
-				}
-			} catch (BadLocationException e) {
-				e.printStackTrace();
+		try{
+			if( tree != null && tree.subtree != null 
+					&& d.getContentType(c.offset) != LispPartitionScanner.LISP_STRING
+					&& d.getContentType(c.offset) != LispPartitionScanner.LISP_COMMENT
+					&& tree.subtree.containsKey(c.text) ){ //candidate for autoedit
+				// check if in string
+				
+				
+				int max_match_length = 
+					tree.maxMatchLength - Math.max(0, tree.maxMatchLength - c.offset - 1);
+					String max_match_str = "";
+					if( max_match_length > 1 ){
+						max_match_str =
+							d.get(c.offset - max_match_length + 1, max_match_length - 1);
+					}
+					AutoEditData ae = tree.findMatch(max_match_str+c.text);
+					if( ae != null ){
+						cmdEnd(d,c,ae);					
+					}
 			}
+		} catch (BadLocationException e) {
+			e.printStackTrace();
 		}
 	}
 
