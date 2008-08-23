@@ -456,8 +456,10 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		if (swank != null ) {
  			setPackageString(swank.getCurrPackage());
- 			appendText("You are running " + swank.getLispVersion() + 
- 					" via Cusp " + LispPlugin.getVersion()+"\n"); 			
+ 			getSwank().sendEval("(format nil \"You are running ~a ~a via Cusp " + LispPlugin.getVersion() + "\" (lisp-implementation-type) (lisp-implementation-version))\n",
+ 					new ReturnHandler());
+ 			//appendText("You are running " + swank.getLispVersion() + 
+ 			//		" via Cusp " + LispPlugin.getVersion()+"\n"); 			
  			setPackageString(swank.getCurrPackage());
  		}
 
