@@ -247,9 +247,12 @@ public class SwankInterface {
 	public void runAfterLispStart() {
 		if( isConnected() ){
 			
-			lispVersion = 
-				sendEvalAndGrab("(format nil \"~a ~a \" (lisp-implementation-type) (lisp-implementation-version))\n", 1000);
-			lispVersion = lispVersion.replace('"',' ').trim();
+			sendEval("(format nil \"~a ~a \" (lisp-implementation-type) (lisp-implementation-version))\n", new SwankRunnable() {
+				public void run() {
+					lispVersion = getReturn().value;
+					lispVersion = lispVersion.replace('"',' ').trim();
+				}
+			});
 			
 			String contribs = "(progn (swank:swank-require :swank-fuzzy)"
 				+ "(swank:swank-require :swank-asdf)"
