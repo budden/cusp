@@ -97,7 +97,7 @@
 		</objectContribution>
 	</extension>
 	<!-- menubarPath="group.add" -->
-	<extension point="org.eclipse.ui.popupMenus">
+	<!--<extension point="org.eclipse.ui.popupMenus">
 		<objectContribution
 			id="jasko.tim.lisp.navigator.LoadAsdAction.folder"
 			objectClass="org.eclipse.core.resources.IFile"
@@ -108,6 +108,21 @@
 				icon="icons/load-asd.gif"
 				menubarPath="group.add"
 				class="jasko.tim.lisp.navigator.LoadAsdAction"
+				enablesFor="1">
+			</action>
+		</objectContribution>
+	</extension>-->
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution
+			id="jasko.tim.lisp.navigator.LoadProjectAction.folder"
+			objectClass="org.eclipse.core.resources.IResource"
+			>
+			<action
+				id="jasko.tim.lisp.navigator.LoadProjectAction"
+				label="Load Project"
+				icon="icons/load-asd.gif"
+				menubarPath="group.add"
+				class="jasko.tim.lisp.navigator.LoadProjectAction"
 				enablesFor="1">
 			</action>
 		</objectContribution>
