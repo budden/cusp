@@ -41,6 +41,15 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
 public class LispEditor extends TextEditor implements ILispEditor {
+	/** The ID of this editor as defined in plugin.xml */
+	public static final String EDITOR_ID = "jasko.tim.lisp.editors.LispEditor";
+    /** The ID of the editor context menu */
+    public static final String EDITOR_CONTEXT = EDITOR_ID + ".context";
+    /** The ID of the editor ruler context menu */
+    public static final String RULER_CONTEXT = EDITOR_CONTEXT + ".ruler";
+
+	
+	
 	private LispOutlinePage outline;
 	private ArrayList<TopLevelItem> topForms;
 	// private ColorManager.ChangeEventListener colorPrefChangeListener;
@@ -59,6 +68,12 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
     private final String TOP_LVL_POS = 
     	"jasko.tim.lisp.doc.top_lvl_pos";
+    
+    protected void initializeEditor() {
+        super.initializeEditor();
+        setEditorContextMenuId(EDITOR_CONTEXT);
+        setRulerContextMenuId(RULER_CONTEXT);
+    }    
     
     public void addOutlinePosition(Position pos){
 		IDocument doc = getDocument();
@@ -788,6 +803,4 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 	}
 	
-	
-
 }

@@ -600,6 +600,18 @@
 			</action>
 		</editorContribution>
 	</extension>
+	<extension point="org.eclipse.ui.popupMenus"> 
+	   <viewerContribution 
+	      	id="jasko.tim.lisp.editors.LispEditor.popup"
+			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+	      <action
+	         id="jasko.tim.lisp.actions.EvalTopLevelExpAction" 
+	         label="Eval Top-level Expression"
+	         menubarPath="Lisp" 
+	         class="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"> 
+	      </action> 
+	   </viewerContribution> 
+	</extension>
 	
 	<!-- Eval Current Expression -->
 	<extension point="org.eclipse.ui.commands">
@@ -634,6 +646,18 @@
 				tooltip="Evaluate current expression.">
 			</action>
 		</editorContribution>
+	</extension>
+	<extension point="org.eclipse.ui.popupMenus"> 
+	   <viewerContribution 
+	      	id="jasko.tim.lisp.editors.LispEditor.popup"
+			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+	      <action
+	         id="jasko.tim.lisp.actions.EvalCurrentExpAction" 
+	         label="Eval Current Expression"
+	         menubarPath="Lisp" 
+	         class="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"> 
+	      </action> 
+	   </viewerContribution> 
 	</extension>
 
 	<!-- Indent -->
@@ -1021,7 +1045,18 @@
 			</action>
 		</editorContribution>
 	</extension>
-	
+	<extension point="org.eclipse.ui.popupMenus"> 
+	   <viewerContribution 
+	      	id="jasko.tim.lisp.editors.LispEditor.popup"
+			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+	      <action
+	         id="jasko.tim.lisp.actions.FindCallersAction" 
+	         label="Find Callers"
+	         menubarPath="Lisp" 
+	         class="jasko.tim.lisp.editors.actions.FindCallersAction"> 
+	      </action> 
+	   </viewerContribution> 
+	</extension>
 	
 	<!-- Find Callees -->
 	<extension point="org.eclipse.ui.commands">
@@ -1029,7 +1064,7 @@
 			categoryId="jasko.tim.lisp.category1"
 			description="Finds the functions this function calls."
 			id="jasko.tim.lisp.actions.FindCalleesAction"
-			name="Find Callers"/>
+			name="Find Callees"/>
 	</extension>
 	<extension point="org.eclipse.ui.bindings">
 		<key
@@ -1056,6 +1091,18 @@
 				tooltip="Find Callees.">
 			</action>
 		</editorContribution>
+	</extension>
+	<extension point="org.eclipse.ui.popupMenus"> 
+	   <viewerContribution 
+	      	id="jasko.tim.lisp.editors.LispEditor.popup"
+			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+	      <action
+	         id="jasko.tim.lisp.actions.FindCalleesAction" 
+	         label="Find Callees"
+	         menubarPath="Lisp" 
+	         class="jasko.tim.lisp.editors.actions.FindCalleesAction"> 
+	      </action> 
+	   </viewerContribution> 
 	</extension>
 	
 	<!-- LispDoc Lookup-->
@@ -1262,11 +1309,6 @@
 		</editorContribution>
 	</extension>
 	 
-	
-	
-	
-	
-
  <!-- Remove this later --> 
  <extension point="org.eclipse.ui.popupMenus">
     <objectContribution
