@@ -1244,6 +1244,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 			fillDebugToolBar();
 			debugLabel.setText(desc.car().value + "\n" + desc.cadr().value);
 			debugLabel.setToolTipText(debugLabel.getText());
+			Point size = debugLabel.getSize();
+			if (size.y > 50) {
+				debugLabel.setSize(size.x, 50);
+			}
 			debugTree.removeAll();
 			
 			appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
