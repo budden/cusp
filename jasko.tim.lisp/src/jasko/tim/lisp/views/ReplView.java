@@ -772,7 +772,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 
 	public void appendText(String text) {
-		String strs[] = text.split("\\n");
+		/*String strs[] = text.split("\\n");
 		String replStr = "";
 		String consoleStr = "";
 		for(int i = 0; i < strs.length; ++i){
@@ -797,11 +797,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 				}
 			}
 		}
-		history.appendText(replStr);
+		history.appendText(replStr);*/
+		history.appendText(text);
 		if(LispPlugin.getDefault().getPreferenceStore()
 				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))
 		{
-			LispPlugin.getDefault().out(consoleStr);
+			LispPlugin.getDefault().out(text);
 		}
 	}
 	
