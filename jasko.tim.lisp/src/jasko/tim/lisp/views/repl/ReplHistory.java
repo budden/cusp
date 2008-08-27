@@ -115,14 +115,25 @@ public class ReplHistory extends SourceViewer
 		try {
 			int start = doc.getLength();
 			String[] lines = text.split("\\n");
-			for(int i = 0; i < lines.length; ++i){
-				String line = lines[i] + "\n";
-				doc.replace(doc.getLength(), 0, line);
-				int pos = parseLineForComment(line);
-				if( pos >= 0 ){
-					applyCommentStyle(start+pos,line.length()-pos);
+			if (lines.length == 0) { // happens when the text is just a newline
+				doc.replace(doc.getLength(), 0, text);
+			} else {
+				for(int i = 0; i < lines.length; ++i){
+					String line = lines[i];
+					if (i == lines.length-1) {
+						if (text.endsWith("\n")) {
+							line += "\n";
+						}
+					} else {
+						line += "\n";
+					}
+					doc.replace(doc.getLength(), 0, line);
+					int pos = parseLineForComment(line);
+					if( pos >= 0 ){
+						applyCommentStyle(start+pos,line.length()-pos);
+					}
+					start += line.length();
 				}
-				start += line.length();
 			}
 			//doc.replace(doc.getLength(), 0, text);
 		} catch (BadLocationException e) {
