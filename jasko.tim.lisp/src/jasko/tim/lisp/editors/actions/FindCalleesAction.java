@@ -55,9 +55,9 @@ public class FindCalleesAction extends LispAction {
 								String tip = possibility.getf(":location").getf(":file").value;
 								optionNames.add(name);
 								optionData.add(possibility);
-								tips.add(tip);								
+								tips.add(tip);
 							}
-						}						
+						}
 					}
 				}
 				
