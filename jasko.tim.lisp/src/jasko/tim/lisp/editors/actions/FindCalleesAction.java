@@ -39,13 +39,25 @@ public class FindCalleesAction extends LispAction {
 				ArrayList<LispNode> optionData = new ArrayList<LispNode>(guts.params.size());
 				ArrayList<String> tips = new ArrayList<String>(guts.params.size());
 				for (LispNode gut: guts.params) {
-					for (int i = 1; i<gut.params.size(); ++i) {
-						LispNode possibility = gut.params.get(i);
-						String name = possibility.get(0).value;
-						String tip = possibility.getf(":location").getf(":file").value;
-						optionNames.add(name);
-						optionData.add(possibility);
-						tips.add(tip);
+					if ( gut.params.size() == 2 && gut.params.get(1).get(0).value.equalsIgnoreCase(":location") ){
+						String name = gut.get(0).value;
+						if( !name.equalsIgnoreCase(":error")){
+							String tip = gut.getf(":location").getf(":file").value;
+							optionNames.add(name);
+							optionData.add(gut);
+							tips.add(tip);							
+						}
+					} else {
+						for (int i = 1; i<gut.params.size(); ++i) {
+							LispNode possibility = gut.params.get(i);
+							String name = possibility.get(0).value;
+							if( !name.equalsIgnoreCase(":error")){
+								String tip = possibility.getf(":location").getf(":file").value;
+								optionNames.add(name);
+								optionData.add(possibility);
+								tips.add(tip);								
+							}
+						}						
 					}
 				}
 				
