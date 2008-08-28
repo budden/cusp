@@ -105,10 +105,14 @@ public class LispOutlinePage extends ContentOutlinePage
 		
 		//run over elements in tree, update offsets of items,
 		//and modify name and type if necessary
+		//also remove cached tooltips
 		//also resort if by alpha or type
 		for( TopLevelItem item : itemPos.keySet()){
 			Position pos = itemPos.get(item);
-			item.offset = pos.offset-1;
+			if( item.offset != pos.offset-1){
+				item.offset = pos.offset-1;
+				item.info = "";
+			}
 			if( modifiedPos.contains(new Integer(item.offset))){
 				TopLevelItem itm = null; //"throw away" item
 				try{
@@ -133,6 +137,7 @@ public class LispOutlinePage extends ContentOutlinePage
 				if( itm != null ){
 					item.offset = itm.offset;
 					item.offsetEnd = itm.offsetEnd;
+					item.info = "";
 					TreeItem tr = itemTr.get(item);
 					tr.setImage(LispImages.getImageForType(itm.type));
 
@@ -806,46 +811,52 @@ public class LispOutlinePage extends ContentOutlinePage
 				if( !tr.type.equals("section") ){
 					Position pos = itemPos.get(tr);
 					if( pos != null ){
-						//IDocument doc = editor.getDocument();
-						//int offset = tr.nameOffset + 1;
-						final String variable = tr.name;//LispUtil.getCurrentFullWord(doc, offset);
-						final SwankInterface swank = LispPlugin.getDefault().getSwank();
-						swank.sendGetArglist(variable, tr.pkg, new SwankRunnable() {
-							public void run() {
-										
-								final String args = getReturn().value; //swank.getArglist(variable, 1000, pkg);
-								swank.sendGetDocumentation(variable, tr.pkg, new SwankRunnable() {
-									public void run() {
-										
-										String docstr = getReturn().value; //swank.getDocumentation(variable, pkg, 1000);
-										String info = args;
-										if( info.equalsIgnoreCase("nil") ){
-											info = "";
-										}
-										if(docstr != null && !docstr.equals("") 
-												&& !docstr.equals("nil")){
-											if( info.equals("") ){
-												info = docstr;
+						if( tr.info == null || tr.info.equals("") || tr.info.equals("nil") ){ //not cached
+							final String variable = tr.name;
+							final SwankInterface swank = LispPlugin.getDefault().getSwank();
+							swank.sendGetArglist(variable, tr.pkg, new SwankRunnable() {
+								public void run() {										
+									final String args = getReturn().value;
+									swank.sendGetDocumentation(variable, tr.pkg, new SwankRunnable() {
+										public void run() {
+											String docstr = getReturn().value;
+											tr.info = args;
+											if( tr.info.equalsIgnoreCase("nil") ){
+												tr.info = "";
+											}
+											if(docstr != null && !docstr.equals("") 
+													&& !docstr.equals("nil")){
+												if( tr.info.equals("") ){
+													tr.info = docstr;
+												} else {
+													tr.info += "\n"+docstr;										
+												}
+											}
+											if( tr.info != null && !tr.info.equals("") 
+													&& !tr.info.equals("nil") ){
+												tooltip.dispose();
+												tooltip = tooltipCreator.createInformationControl(tree.getShell());
+												tooltip.setInformation(tr.info);
+												Point size = tooltip.computeSizeHint();
+												tooltip.setSize(size.x, size.y);
+												tooltip.setLocation(tree.toDisplay(ptHint));
+												tooltip.setVisible(true);
 											} else {
-												info = info+"\n"+docstr;										
+												tooltip.setVisible(false);
 											}
 										}
-										if( info != null && !info.equals("") 
-												&& !info.equals("nil") ){
-											tooltip.dispose();
-											tooltip = tooltipCreator.createInformationControl(tree.getShell());
-											tooltip.setInformation(info);
-											Point size = tooltip.computeSizeHint();
-											tooltip.setSize(size.x, size.y);
-											tooltip.setLocation(tree.toDisplay(ptHint));
-											tooltip.setVisible(true);
-										} else {
-											tooltip.setVisible(false);
-										}
-									}
-								});
-							}
-						});
+									});
+								}
+							});				
+						} else { //cached
+							tooltip.dispose();
+							tooltip = tooltipCreator.createInformationControl(tree.getShell());
+							tooltip.setInformation(tr.info);
+							Point size = tooltip.computeSizeHint();
+							tooltip.setSize(size.x, size.y);
+							tooltip.setLocation(tree.toDisplay(ptHint));
+							tooltip.setVisible(true);
+						}
 					} else {
 						tooltip.setVisible(false);
 					}
