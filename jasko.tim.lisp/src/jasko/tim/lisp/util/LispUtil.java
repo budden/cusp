@@ -547,6 +547,7 @@ public class LispUtil {
 	public static TopLevelItem getTopLevelItem(LispNode exp, String pkg, int offset){
 		TopLevelItem item = new TopLevelItem();
 		
+		item.info = "";
 		item.type = exp.get(0).value.toLowerCase();
 		item.name = exp.get(1).toLisp();
 		item.nameOffset = exp.get(1).offset + offset;
@@ -592,6 +593,7 @@ public class LispUtil {
 		if ( comment.isSectionComment() ) {
 			TopLevelItem item = new TopLevelItem();
 			
+			item.info = "";
 			item.type = "section";
 			item.name = comment.SectionName();
 			item.offset = comment.offset;
