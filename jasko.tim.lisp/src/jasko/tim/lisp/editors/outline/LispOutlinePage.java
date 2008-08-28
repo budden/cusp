@@ -110,7 +110,7 @@ public class LispOutlinePage extends ContentOutlinePage
 			Position pos = itemPos.get(item);
 			item.offset = pos.offset-1;
 			if( modifiedPos.contains(new Integer(item.offset))){
-				TopLevelItem itm = null; //"through away" item
+				TopLevelItem itm = null; //"throw away" item
 				try{
 					if( doc.getChar(item.offset) == ';'){ //section
 						String val = doc.get(item.offset,
@@ -807,8 +807,8 @@ public class LispOutlinePage extends ContentOutlinePage
 					Position pos = itemPos.get(tr);
 					if( pos != null ){
 						IDocument doc = editor.getDocument();
-						int offset = tr.nameOffset + 1;
-						final String variable = LispUtil.getCurrentFullWord(doc, offset);
+						//int offset = tr.nameOffset + 1;
+						final String variable = tr.name;//LispUtil.getCurrentFullWord(doc, offset);
 						final SwankInterface swank = LispPlugin.getDefault().getSwank();
 						swank.sendGetArglist(variable, tr.pkg, new SwankRunnable() {
 							public void run() {
