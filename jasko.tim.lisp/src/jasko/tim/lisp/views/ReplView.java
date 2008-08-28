@@ -854,7 +854,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 				if( !swank.isConnected() ){
 					connectButton.setImageDescriptor(
 							LispImages.getImageDescriptor(
-									LispImages.DISCONNECTED));					
+									LispImages.DISCONNECTED));
+			 		IStatusLineManager slm = 
+		 	 			getViewSite().getActionBars().getStatusLineManager();
+		 	 		slm.setMessage("Disconnected");
+		 	 		appendText("Disconnected\n");
 				}
 			}
 		});
