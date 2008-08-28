@@ -964,7 +964,7 @@ public class SwankInterface {
 		}
 	}
 	
-	private class SyncCallback {
+	private class SyncCallback{
 		public LispNode result = new LispNode();
 	}
 	
