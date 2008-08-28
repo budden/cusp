@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotation;
@@ -351,13 +350,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		licm.showInformation();
 	}
 	
-	protected void editorContextMenuAboutToShow(IMenuManager menu) {
-		super.editorContextMenuAboutToShow(menu);
-		/*FindCalleesAction action = new FindCalleesAction(this);
-		action.setText("Open Call Hierarchy");
-		menu.add(action);*/
-	}
-	
     protected void initializeKeyBindingScopes() {
 		super.initializeKeyBindingScopes();
 		setKeyBindingScopes(new String[] { "jasko.tim.lisp.context1" });  
@@ -375,7 +367,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}		
 		try {
 			file.deleteMarkers(IMarker.TASK, false, IResource.DEPTH_ZERO);
-			//file.deleteMarkers(null, false, IResource.DEPTH_ZERO);
 		} catch (CoreException ce) {
 		}
 	}
@@ -408,13 +399,13 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		String[] lines = getDocument().get().split("\n");
 		int numLines = 0;
 		for( String line : lines ){
-			if ( line.matches(".*;.*TODO:.*") ){
-				String[] strs = line.split("TODO:");
+			if ( line.matches(".*;.*TODO:.*\\s*") ){
+				String[] strs = line.trim().split("TODO:");
 				for ( int i = 1; i < strs.length; ++i ) {
 					addTask("TODO:" + strs[i],numLines+1);
 				}
 			}
-			++numLines;			
+			++numLines;	
 		}
 	}
 	
