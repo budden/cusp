@@ -7,7 +7,6 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
 
@@ -42,6 +41,8 @@ C:\sbcl\bin\sbcl.exe --load "C:/slime/swank-loader.lisp" --eval "(swank:create-s
  */
 public class SwankInterface {
 	
+	// Probably lisp implementation specific - tested with SBCL
+	private String fatalError = "fatal error";
 	public LispImplementation implementation;
 	 	
 	/** Port of the Swank server */
@@ -247,7 +248,8 @@ public class SwankInterface {
 	public void runAfterLispStart() {
 		if( isConnected() ){
 			
-			sendEval("(format nil \"~a ~a \" (lisp-implementation-type) (lisp-implementation-version))\n", new SwankRunnable() {
+			sendEval("(format nil \"~a ~a \" (lisp-implementation-type) (lisp-implementation-version))\n", 
+					new SwankRunnable() {
 				public void run() {
 					lispVersion = getReturn().value;
 					lispVersion = lispVersion.replace('"',' ').trim();
@@ -510,6 +512,8 @@ public class SwankInterface {
 	}
 	
 	public void disconnect() {
+		connected = false;
+		signalListeners(disconnectListeners, new LispNode());
 		System.out.println("*disconnect");
 		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
 			if (lispEngine != null) {
@@ -977,6 +981,7 @@ public class SwankInterface {
 		return sendEvalAndGrab(message,"nil", timeout);
 	}
 	
+	/* TODO: - make it with progress bar */
 	public synchronized String sendEvalAndGrab(String message,  String pkg, long timeout) {
 		SyncCallback callBack = new SyncCallback();
 		++messageNum;
@@ -1758,6 +1763,9 @@ public class SwankInterface {
 							System.out.print("]");
 							System.out.println(curr);
 							runFilters(curr);
+							if(curr.toLowerCase().contains(fatalError)){
+								disconnect();
+							}
 						}
 					}
 				} catch (IOException e) {
@@ -1796,6 +1804,7 @@ public class SwankInterface {
 			}
 		}
 	} // class
+
 } // class
 	
 

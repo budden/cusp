@@ -806,7 +806,7 @@ public class LispOutlinePage extends ContentOutlinePage
 				if( !tr.type.equals("section") ){
 					Position pos = itemPos.get(tr);
 					if( pos != null ){
-						IDocument doc = editor.getDocument();
+						//IDocument doc = editor.getDocument();
 						//int offset = tr.nameOffset + 1;
 						final String variable = tr.name;//LispUtil.getCurrentFullWord(doc, offset);
 						final SwankInterface swank = LispPlugin.getDefault().getSwank();
