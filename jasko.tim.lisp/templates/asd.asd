@@ -14,7 +14,8 @@
   :version "0.1"
   :serial t
   :components ((:file "defpackage")
-               (:file "main")
+               (:file "main" :depends-on ("defpackage"))
+               ${with-tests}
                
                ; As you add files to your project,
                ; make sure to add them here as well

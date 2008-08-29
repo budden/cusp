@@ -18,7 +18,8 @@ public class Templater {
 	};
 	
 	
-	public static InputStream getTemplate(String fileName, String pkg) {
+	public static InputStream getTemplate(String fileName, String pkg, 
+			boolean withTests, boolean withExample) {
 		try {
 			URL installURL = Platform.getBundle("jasko.tim.lisp").getEntry("/");
 			URL url = new URL(installURL, "templates/" + fileName);
@@ -38,6 +39,27 @@ public class Templater {
 			contents = contents.replace("${inspiration}", getInspiration());
 			contents = contents.replace("${time}", getTime());
 			contents = contents.replace("${package}", pkg);
+			if(withTests){
+				contents = contents.replace("${with-tests}", 
+				    "(:file \"tests\" :depends-on (\"defpackage\" \"main\"))");
+				contents = contents.replace("${lisp-unit}",":lisp-unit");
+			} else {
+				contents = contents.replace("${with-tests}","");				
+				contents = contents.replace("${lisp-unit}","");
+			}
+			if(withExample){
+				if(withTests){
+					contents = contents.replace("${example-test}","(define-test hello-test\n  (assert-equal \"hello\" (hello-function)))");					
+				} else {
+					contents = contents.replace("${example-test}","");					
+				}
+				contents = contents.replace("${example-export}","#:hello-function");
+				contents = contents.replace("${example-source}","(defun hello-function ()\n  \"This function returns string 'hello'.\"\n \"hello\")");
+			} else {
+				contents = contents.replace("${example-test}","");
+				contents = contents.replace("${example-export}","");
+				contents = contents.replace("${example-source}","");
+			}
 			
 			return new ByteArrayInputStream(contents.getBytes());
 		} catch (MalformedURLException e) {

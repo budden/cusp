@@ -11,6 +11,7 @@
 package jasko.tim.lisp.wizards;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.builder.LispBuilder;
 import jasko.tim.lisp.builder.LispNature;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.swank.SwankRunnable;
@@ -69,10 +70,13 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 	public boolean performFinish() {
 		final String projectName = page.getProjectName();
 		final String customProjectPath = page.getCustomProjectPath();
+		final boolean useLispUnit = page.useUnitTests;
+		final boolean makeExampleFunction = page.makeExampleFunction;
 		IRunnableWithProgress op = new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException {
 				try {
-					doFinish(projectName, customProjectPath, monitor);
+					doFinish(projectName, customProjectPath, 
+							useLispUnit,makeExampleFunction,monitor);
 				} catch (CoreException e) {
 					e.printStackTrace();
 					throw new InvocationTargetException(e);
@@ -104,7 +108,9 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 	 * The worker method. It will create a new project, then
 	 * create the appropriate Soar heirarchy and files.
 	 */
-	private void doFinish (String projectName, String customProjectPath, IProgressMonitor monitor) throws CoreException {
+	private void doFinish (String projectName, String customProjectPath,
+			boolean useLispUnit, boolean makeExample,
+			IProgressMonitor monitor) throws CoreException {
   		monitor.beginTask("Creating " + projectName, 10);
   		
   		IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -142,7 +148,8 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		// Create the contents of the project's root directory
 		final String pkg = makePackageName(projectName);
 		
-		InputStream contents = Templater.getTemplate("main.lisp", pkg);
+		InputStream contents = 
+			Templater.getTemplate("main.lisp", pkg, useLispUnit, makeExample);
 		final IFile main = newProject.getFile("main.lisp");
 		if (!main.exists()) {
 			main.create(contents ,true, monitor);
@@ -154,7 +161,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		monitor.worked(1);
 		
 		// Make the asd file
-		contents = Templater.getTemplate("asd.asd", pkg);
+		contents = Templater.getTemplate("asd.asd", pkg, useLispUnit, makeExample);
 		final IFile asd = newProject.getFile(pkg + ".asd");
 		if (!asd.exists()) {
 			asd.create(contents, true, monitor);
@@ -166,7 +173,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		monitor.worked(1);
 		
 		// Make the defpackage file
-		contents = Templater.getTemplate("defpackage.lisp", pkg);
+		contents = Templater.getTemplate("defpackage.lisp", pkg, useLispUnit, makeExample);
 		final IFile defpackage = newProject.getFile("defpackage.lisp");
 		if (!defpackage.exists()) {
 			defpackage.create(contents, true, monitor);
@@ -177,14 +184,27 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		}
 		monitor.worked(1);
 		
+		// Make the tests file
+		if( useLispUnit ){
+			contents = Templater.getTemplate("tests.lisp", pkg, useLispUnit, makeExample);
+			final IFile tests = newProject.getFile("tests.lisp");
+			if (!tests.exists()) {
+				tests.create(contents, true, monitor);
+			}
+			try {
+				contents.close();
+			} catch (IOException e) {
+			}
+			monitor.worked(1);			
+		}		
 		
 		newProject.close(monitor);
 		newProject.open(monitor);
 		
 
-		// Compile the defpackage file, then switch to that package once it's done
-		SwankInterface swank = LispPlugin.getDefault().getSwank();
-		swank.sendCompileFile(defpackage.getLocation().toString(), 
+		// Load asd file.
+		String asdfile = asd.getLocation().toString();
+		LispPlugin.getDefault().getSwank().sendLoadASDF(asdfile, 
 				new SwankRunnable() {
 					public void run() {
 						ReplView rv = ReplView.getInstance();
@@ -192,9 +212,8 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 							rv.switchPackage(pkg);
 						}
 					}
-		});
-		
-		
+				});
+
 		
 		monitor.setTaskName("Opening files for editing...");
 		getShell().getDisplay().asyncExec(new Runnable() {

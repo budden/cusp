@@ -29,6 +29,8 @@ import org.eclipse.core.resources.*;
 public class NewProjectWizPage1 extends WizardPage {
 	private Text projectName;
 	private Text customProjectPath;
+	public boolean useUnitTests = true;
+	public boolean makeExampleFunction = true;
 
 	/**
 	 * Constructor.
@@ -77,6 +79,14 @@ public class NewProjectWizPage1 extends WizardPage {
 		chooseLocation.setEnabled(false);
 		customProjectPath.setEnabled(false);
 
+		final Button useTests = new Button(container, SWT.CHECK);
+		new Label(container, SWT.NULL);
+		new Label(container, SWT.NULL);
+
+		final Button makeExample = new Button(container, SWT.CHECK);
+		new Label(container, SWT.NULL);
+		new Label(container, SWT.NULL);
+		
 		useDefaultLocation.setSelection(true);
 		useDefaultLocation.addSelectionListener(new SelectionListener () {
 			public void widgetDefaultSelected (SelectionEvent e) {
@@ -90,6 +100,30 @@ public class NewProjectWizPage1 extends WizardPage {
 			}
 		});
 		useDefaultLocation.setText("Use default location");
+
+		useTests.setSelection(true);
+		useTests.addSelectionListener(new SelectionListener () {
+			public void widgetDefaultSelected (SelectionEvent e) {
+				widgetSelected(e);
+			}
+
+			public void widgetSelected (SelectionEvent e) {
+				useUnitTests= useTests.getSelection();
+			}
+		});
+		useTests.setText("Use lisp-unit testing framework");
+
+		makeExample.setSelection(true);
+		makeExample.addSelectionListener(new SelectionListener () {
+			public void widgetDefaultSelected (SelectionEvent e) {
+				widgetSelected(e);
+			}
+
+			public void widgetSelected (SelectionEvent e) {
+				makeExampleFunction = makeExample.getSelection();
+			}
+		});
+		makeExample.setText("Generate code for an example function.");
 
 		chooseLocation.setText("Browse...");
 		chooseLocation.addMouseListener(new MouseAdapter () {

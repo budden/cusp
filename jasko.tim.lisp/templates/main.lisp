@@ -3,3 +3,4 @@
 
 (in-package :${package})
 
+${example-source}
