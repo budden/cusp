@@ -1417,4 +1417,30 @@
 	    overviewRulerPreferenceKey="jasko.tim.lisp.editors.LispEditor.outer-sexp.overviewruler" />
 </extension>
 
+<extension
+         point="org.eclipse.ui.themes">
+      <fontDefinition
+            categoryId="org.eclipse.compare.contentmergeviewer.TextMergeViewer"
+            id="jasko.tim.lisp.views.LispFormattingMergeViewer"
+            label="Lisp compare text font">
+         <description>
+            The Lisp compare text font is used by Lisp compare/merge tools.
+         </description>
+      </fontDefinition>     
+</extension>
+
+<extension
+     point="org.eclipse.compare.contentMergeViewers">
+     <viewer
+           extensions="lisp"
+           class="jasko.tim.lisp.views.LispContentViewerCreator"
+	       id="jasko.tim.lisp.views.LispContentViewerCreator">
+     </viewer>
+     <contentTypeBinding
+	          contentTypeId="jasko.tim.lisp.lispSource"
+	          contentMergeViewerId="jasko.tim.lisp.views.LispContentViewerCreator">
+     </contentTypeBinding>               
+ </extension>
+
+
 </plugin>
