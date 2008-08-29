@@ -41,8 +41,6 @@ C:\sbcl\bin\sbcl.exe --load "C:/slime/swank-loader.lisp" --eval "(swank:create-s
  */
 public class SwankInterface {
 	
-	// Probably lisp implementation specific - tested with SBCL
-	private String fatalError = "fatal error";
 	public LispImplementation implementation;
 	 	
 	/** Port of the Swank server */
@@ -1764,7 +1762,7 @@ public class SwankInterface {
 							System.out.print("]");
 							System.out.println(curr);
 							runFilters(curr);
-							if(curr.toLowerCase().contains(fatalError)){
+							if(curr.toLowerCase().contains(implementation.fatalErrorString())){
 								disconnect();
 							}
 						}
