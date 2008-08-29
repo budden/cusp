@@ -5,6 +5,11 @@ import java.io.IOException;
 public abstract class LispImplementation {
 	protected String flispType = ""; //possible values SBCL, CLISP etc.
 	protected boolean hasthreads = true; 
+	
+	// Probably lisp implementation specific - tested with SBCL
+	protected String fatalError = "fatal error";
+	public String fatalErrorString(){ return fatalError; }
+	
 	public String lispType(){ return flispType; }
 	public boolean hasThreads(){ return hasthreads; }
 	/**
