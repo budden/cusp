@@ -1574,6 +1574,7 @@ public class SwankInterface {
             dispatch.put(":return", default_dispatch);
             dispatch.put(":reader-error", default_dispatch);
             dispatch.put(":new-features", default_dispatch);
+            dispatch.put(":new-package", default_dispatch);
 		}
 		
 		
