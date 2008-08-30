@@ -584,8 +584,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			
 			try {
 				IFile file = (IFile) resource;
-				LispMarkers.deleteMarkers(file);
-				System.out.println("*builder");
+				LispMarkers.deleteMarkers(file); //do we really want to delete warnings here?
+				System.out.println("*builder*");
 				boolean paren = checkParenBalancing(file);
 				LispNode code = LispParser.parse(file);
 				boolean pack = checkPackageDependence(code,file);
