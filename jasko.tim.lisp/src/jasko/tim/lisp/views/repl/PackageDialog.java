@@ -79,7 +79,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 		Collections.sort(this.packages);
 	}
 	
-	//change package dialog
+	//test package dialog
 	public PackageDialog(Shell parentShell, ArrayList<String> packages, 
 			String currPackage, boolean test) {
 		super(parentShell);
@@ -119,7 +119,11 @@ public class PackageDialog extends Dialog implements KeyListener {
 		for(String p: packages) {
 			lstEnums.add(p);
 		}
-		lstEnums.setSelection(new String[] { currPackage });
+		if( packages.contains(currPackage) ){
+			lstEnums.setSelection(new String[] { currPackage });			
+		} else if ( packages.size() > 0 ){
+			lstEnums.setSelection(new String[] { packages.get(0) });
+		}
 		gridData = new GridData();
 		gridData.grabExcessHorizontalSpace = true;
 		gridData.grabExcessVerticalSpace = true;

@@ -57,7 +57,7 @@ public class SwankInterface {
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
 	private String lispVersion = "(NO CL IMPLEMENTATION)";
-	private String lastTestPackage = "COMMON-LISP-USER";
+	private String lastTestPackage = "nil";
 	
 	public String getCurrPackage() {
 		return currPackage;

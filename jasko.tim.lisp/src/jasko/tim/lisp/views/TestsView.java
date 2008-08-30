@@ -104,7 +104,6 @@ public class TestsView extends ViewPart {
 			SwankInterface swank = LispPlugin.getDefault().getSwank();
 			if ( swank != null ){
 			//	runTestsButton.setEnabled(swank.useUnitTest);
-			// if repl is not first, then 
 			}
 		}
 	}
