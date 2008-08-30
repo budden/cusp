@@ -1,5 +1,7 @@
 package jasko.tim.lisp.swank;
 
+import jasko.tim.lisp.LispPlugin;
+
 import java.io.IOException;
 
 /**
@@ -38,6 +40,7 @@ public abstract class LispImplementation {
 	 * @return true if successful, false - otherwise
 	 */
 	public boolean createExe(String exeFile, String asdFile, String toplevel, String pkg){
+		LispPlugin.getDefault().out("Creating executable is not implemented for your CL implementation ("+flispType+")");
 		return false;
 	}
 	
