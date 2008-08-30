@@ -21,20 +21,6 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.views.contentoutline.*;
 
-/**
- *  DONE: Make this not clear out and repopulate every time we save the document.
- *  A clever man could get it to only remove those items which were removed and 
- *  add only those which we added.
- *  A <i>really</i> clever man could get it to update <i>as the user types</i>.
- *  Clever would be more than enough.
- * @author Tim Jasko
- *
- * SK: I am <i>really</i> clever man! :) Actually once you figure how to be 
- * clever, to get to <i>really</i> part is trivial. However code is a mess and
- * will definitely require refactoring for it to be maintanable.
- * Hopefully the code does not contains too many bugs.
- *
- */
 public class LispOutlinePage extends ContentOutlinePage 
 	implements MouseListener, KeyListener, MouseTrackListener{
 	

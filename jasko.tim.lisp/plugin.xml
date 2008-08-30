@@ -256,6 +256,14 @@
 			class="jasko.tim.lisp.views.TestsView"
 			id="jasko.tim.lisp.views.TestsView" />
 			
+		<!-- Xref view -->
+		<view
+			name="Xref"
+			icon="icons/xref.gif"
+			category="jasko.tim.lisp"
+			class="jasko.tim.lisp.views.XrefView"
+			id="jasko.tim.lisp.views.XrefView" />
+
 		<!-- Threads view -->
 		<view
 			name="Threads"

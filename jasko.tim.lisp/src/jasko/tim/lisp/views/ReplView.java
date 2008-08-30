@@ -772,32 +772,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 
 	public void appendText(String text) {
-		/*String strs[] = text.split("\\n");
-		String replStr = "";
-		String consoleStr = "";
-		for(int i = 0; i < strs.length; ++i){
-			String str = strs[i];
-			if( i == strs.length-1){
-				replStr = replStr + str;  										
-			} else {
-				replStr = replStr + str + "\n";
-			}
-			//this works for SBCL
-			if( str.trim().startsWith(";") || str.trim().equals("")){
-				if( i == strs.length-1){
-					consoleStr = consoleStr + str;
-				} else {
-					consoleStr = consoleStr + str + "\n";				
-				}
-			} else {
-				if( i == strs.length-1){
-					consoleStr = consoleStr + str;
-				} else {
-					consoleStr = consoleStr + str + "\n";						
-				}
-			}
-		}
-		history.appendText(replStr);*/
 		history.appendText(text);
 		if(LispPlugin.getDefault().getPreferenceStore()
 				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG))

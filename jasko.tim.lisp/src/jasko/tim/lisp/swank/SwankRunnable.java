@@ -21,6 +21,7 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
  */
 public abstract class SwankRunnable implements Runnable, IRunnableWithProgress {
 	public LispNode result;
+	public int messageNum;
 	
 	protected LispNode getReturn() {
 		return result.getf(":return").getf(":ok");

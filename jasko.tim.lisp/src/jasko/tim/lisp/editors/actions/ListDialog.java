@@ -15,14 +15,13 @@ import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 
 public class ListDialog<T>  extends Dialog implements KeyListener {
-	//ArrayList<String> options;
 	private String result;
 	private T resultData;
 	//int resultIndex = 0;
 	
-	ArrayList<String> options;
-	ArrayList<T> data;
-	ArrayList<String> tips = null;
+	private ArrayList<String> options;
+	private ArrayList<T> data;
+	private ArrayList<String> tips = null;
 	
 	//private List lstEnums;
 	private Tree treeOptions;
