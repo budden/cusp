@@ -2,6 +2,7 @@ package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.preferences.PreferenceConstants;
+import jasko.tim.lisp.util.LispUtil;
 
 import java.io.*;
 import java.util.*;
@@ -279,74 +280,13 @@ public class SwankInterface {
 
 			if( managePackages){
 				
-				String asdfext = LispPlugin.getDefault().getPluginPath() 
-					+ "lisp-extensions/asdf-extensions.lisp";
-				System.out.printf("asdf path: %s\n", asdfext);
-				sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
-				
-				String path = 
-					LispPlugin.getDefault().getPluginPath() + "libraries";
-
-			    // This filter only returns directories of type jasko.tim.lisp.libs
-			    FileFilter libPluginFilter = new FileFilter() {
-			        public boolean accept(File file) {
-			            return (file.isDirectory()
-			            		&& file.toString().matches(".*jasko\\.tim\\.lisp\\.libs.*"));
-			        }
-			    };
-
-			    ArrayList<File> topLevelDirs = new ArrayList<File>();
-			    topLevelDirs.add(new File(path));
-			    
-				String sysdirs[] = 
-					prefs.getString(PreferenceConstants.SYSTEMS_PATH).split(";");
-				
-				for(String sysdir: sysdirs){
-					if( sysdir != null && !sysdir.equals("")){
-						topLevelDirs.add(new File(sysdir));			
-					}
-				}
-			    
-				File pluginsDir = (new File(LispPlugin.getDefault().getPluginPath())).getParentFile();
-			    for( File dir : pluginsDir.listFiles(libPluginFilter)){
-			    	topLevelDirs.add(new File(dir.getAbsolutePath()+"/libs"));
-			    }
-				
-			    // This filter only returns directories
-			    FileFilter dirFilter = new FileFilter() {
-			        public boolean accept(File file) {
-			            return file.isDirectory();
-			        }
-			    };
-
-				ArrayList<File> subdirs = new ArrayList<File>();
-				for( File dir : topLevelDirs){
-					if( dir.isDirectory() ){
-						subdirs.add(dir);
-						for( File subdir : dir.listFiles(dirFilter) ){
-							if( subdir != null && !subdirs.contains(subdir) ){
-								subdirs.add(subdir);			
-							}
-						}						
-					}
-				}
-			    
-				if (subdirs.size() == 0) {
-					// Either dir does not exist or is not a directory
-					System.out.println("*libraries dir not found! " + path);
-				} else {
-					String code = "(progn\n";
-					for (int i = 0; i < subdirs.size(); i++) {
-						File child = subdirs.get(i);
-						String name = child.getAbsolutePath().replace("\\", "/");
-						if (!name.endsWith("/")) {
-							name += "/";
-						}
-						code += "  (com.gigamonkeys.asdf-extensions:register-source-directory\"" + name + "\")\n"; 
-					}
-					code += ")";
-					System.out.println("code: " + code);
-					System.out.println(sendEvalAndGrab(code, 1000));
+				String code = LispPlugin.getDefault().getLibsPathRegisterCode();
+				if( !code.equals("")){
+					String asdfext = LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/asdf-extensions.lisp";
+					System.out.printf("asdf path: %s\n", asdfext);
+					sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
+					System.out.println(sendEvalAndGrab(code, 1000));					
 				}
 			}
 			
@@ -656,7 +596,7 @@ public class SwankInterface {
 	
 	public synchronized void setPackage(String p) {
 		++messageNum;
-		String newPackage = formatCode(p);
+		String newPackage = LispUtil.formatCode(p);
 		emacsRex("(swank:set-package \"" + newPackage + "\")", currPackage);
 		
 		currPackage = newPackage;
@@ -668,7 +608,7 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 
-		String code = formatCode(symbol);
+		String code = LispUtil.formatCode(symbol);
 		String pkgstring = pkg;
 		if( !pkg.equals("") && pkg.startsWith(":")) {
 			pkgstring = pkg.substring(1);
@@ -718,9 +658,9 @@ public class SwankInterface {
 		}
 		msg += "\"" + start + "\" ";
 		if( pkg == null ){
-			msg += cleanPackage(currPackage)+" ";				
+			msg += LispUtil.cleanPackage(currPackage)+" ";				
 		} else {
-			msg += cleanPackage(pkg)+" ";
+			msg += LispUtil.cleanPackage(pkg)+" ";
 			usepkg = pkg;
 		}
 		if( usefuzzy  ){
@@ -731,7 +671,7 @@ public class SwankInterface {
 			msg += "))) (if (listp (first (first x))) (first x) x)";
 		}
 		msg += "))))";
-		msg += "(list lst (mapcar #'(lambda (y) (swank:operator-arglist y " + cleanPackage(pkg) + ")) lst)" +
+		msg += "(list lst (mapcar #'(lambda (y) (swank:operator-arglist y " + LispUtil.cleanPackage(pkg) + ")) lst)" +
 				" (mapcar #'(lambda (z) (swank:documentation-symbol z)) lst)))";
 		LispNode resNode = LispParser.parse(sendEvalAndGrab(msg, usepkg, timeout));
 		LispNode compl = resNode.car().get(0);
@@ -791,10 +731,10 @@ public class SwankInterface {
 			} else {
 				nlim = prefs.getInt(PreferenceConstants.AUTO_COMPLETIONS_NLIMIT);
 			}
-			msg = "(swank:fuzzy-completions \"" + start + "\" " + cleanPackage(pkg) 
+			msg = "(swank:fuzzy-completions \"" + start + "\" " + LispUtil.cleanPackage(pkg) 
 				+ " :limit " + nlimit + " :time-limit-in-msec "+ tlimit + ")";			
 		} else {
-			msg = "(swank:simple-completions \"" + start + "\" " + cleanPackage(pkg) + ")";			
+			msg = "(swank:simple-completions \"" + start + "\" " + LispUtil.cleanPackage(pkg) + ")";			
 		}
 		
 		try {
@@ -842,7 +782,7 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		
-		String msg = "(swank:operator-arglist \"" + formatCode(function) + "\" " + cleanPackage(currPackage) + " )";
+		String msg = "(swank:operator-arglist \"" + LispUtil.formatCode(function) + "\" " + LispUtil.cleanPackage(currPackage) + " )";
 		
 		try {
 			synchronized (callBack) {
@@ -862,7 +802,7 @@ public class SwankInterface {
 	
 	public synchronized void sendGetArglist(String function, String currPackage, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:operator-arglist \"" + formatCode(function) + "\" " + cleanPackage(currPackage) + ")";
+		String msg = "(swank:operator-arglist \"" + LispUtil.formatCode(function) + "\" " + LispUtil.cleanPackage(currPackage) + ")";
 		
 		emacsRex(msg, currPackage);
 	}
@@ -877,7 +817,7 @@ public class SwankInterface {
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		//(swank:arglist-for-echo-area (quote ((:make-instance "some-class" "make-instance"))))
 		String msg = "(swank:arglist-for-echo-area (quote ((\"MAKE-INSTANCE\" \"'"
-			+ formatCode(className) + "\"))))";
+			+ LispUtil.formatCode(className) + "\"))))";
 		
 		try {
 			synchronized (callBack) {
@@ -904,8 +844,8 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		//(swank:arglist-for-echo-area (quote ((:make-instance "some-class" "make-instance"))))
-		String msg = "(swank:arglist-for-echo-area (quote ((\"" + formatCode(function) + "\" \""
-			+ formatCode(arg0) + "\" ))))";
+		String msg = "(swank:arglist-for-echo-area (quote ((\"" + LispUtil.formatCode(function) + "\" \""
+			+ LispUtil.formatCode(arg0) + "\" ))))";
 		
 		try {
 			synchronized (callBack) {
@@ -925,7 +865,7 @@ public class SwankInterface {
 	
 	public synchronized void sendGetDocumentation(String function, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:documentation-symbol \"" + formatCode(function) + "\")";
+		String msg = "(swank:documentation-symbol \"" + LispUtil.formatCode(function) + "\")";
 		
 		emacsRex(msg, pkg);
 	}
@@ -939,7 +879,7 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 		
-		String msg = "(swank:documentation-symbol \"" + formatCode(function) + "\")";
+		String msg = "(swank:documentation-symbol \"" + LispUtil.formatCode(function) + "\")";
 		
 		try {
 			synchronized (callBack) {
@@ -970,7 +910,7 @@ public class SwankInterface {
 	public synchronized void sendEval(String message, SwankRunnable callBack) {
 		registerCallback(callBack);
 		message = message + "\n";
-		String msg = "(swank:listener-eval \"" + formatCode(message) + "\")";
+		String msg = "(swank:listener-eval \"" + LispUtil.formatCode(message) + "\")";
 		
 		emacsRex(msg);
 	}
@@ -985,7 +925,7 @@ public class SwankInterface {
 		++messageNum;
 		syncJobs.put(new Integer(messageNum).toString(), callBack);
 
-		String msg = "(swank:eval-and-grab-output \"" + formatCode(message) + "\")";
+		String msg = "(swank:eval-and-grab-output \"" + LispUtil.formatCode(message) + "\")";
 
 		try {
 			synchronized (callBack) {
@@ -1117,21 +1057,21 @@ public class SwankInterface {
 	
 	public synchronized void sendReadString(String input, SwankRunnable callBack, String num1, String num2) {
 		registerCallback(callBack);
-		String msg = "(:emacs-return-string " + num1 + " " + num2 + " \"" + formatCode(input) + "\")";
+		String msg = "(:emacs-return-string " + num1 + " " + num2 + " \"" + LispUtil.formatCode(input) + "\")";
 		
 		sendRaw(msg);
 	}
 	
 	public synchronized void sendFindDefinitions(String symbol, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:find-definitions-for-emacs \"" + formatCode(symbol) + "\")";
+		String msg = "(swank:find-definitions-for-emacs \"" + LispUtil.formatCode(symbol) + "\")";
 		
 		emacsRex(msg, pkg);
 	}
 	
 	public synchronized void sendUndefine(String symbol, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:undefine-function \"" + formatCode(symbol) + "\")";
+		String msg = "(swank:undefine-function \"" + LispUtil.formatCode(symbol) + "\")";
 		
 		emacsRex(msg, pkg);
 	}
@@ -1139,7 +1079,7 @@ public class SwankInterface {
 	public synchronized void sendUndefineTest(String symbol, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
 		lastTestPackage = pkg;
-		String msg = "(lisp-unit:remove-tests '("+pkg+"::"+formatCode(symbol)+") '"+pkg+")";
+		String msg = "(lisp-unit:remove-tests '("+pkg+"::"+LispUtil.formatCode(symbol)+") '"+pkg+")";
 //		msg = "(let ((*standard-output* str))"+msg+")";
 //		msg = "(with-output-to-string (str) "+msg+"str)";
 		msg = "(swank:eval-and-grab-output \""+msg+"\")";
@@ -1188,7 +1128,7 @@ public class SwankInterface {
 			regex = "\\*";
 		}
 		String msg = "(swank:apropos-list-for-emacs \""
-			+ formatCode(regex) + "\" t nil)";
+			+ LispUtil.formatCode(regex) + "\" t nil)";
 		
 		emacsRex(msg);
 	}
@@ -1199,9 +1139,9 @@ public class SwankInterface {
 		registerCallback(callBack);
 		String msg;
 		if (all) {
-			msg = "(swank:swank-macroexpand-all \"" + formatCode(code) + "\")";
+			msg = "(swank:swank-macroexpand-all \"" + LispUtil.formatCode(code) + "\")";
 		} else {
-			msg = "(swank:swank-macroexpand-1 \"" + formatCode(code) + "\")";
+			msg = "(swank:swank-macroexpand-1 \"" + LispUtil.formatCode(code) + "\")";
 		}
 		
 		emacsRex(msg, pckg);
@@ -1216,8 +1156,8 @@ public class SwankInterface {
 		System.out.println(dir);
 		dir = implementation.translateLocalFilePath(dir);
 		String msg = "(swank:compile-string-for-emacs \""
-			+ formatCode(expr) + "\" \""
-			+ formatCode(dir + file) + "\" " + (offset+1) + " \"" + formatCode(dir)
+			+ LispUtil.formatCode(expr) + "\" \""
+			+ LispUtil.formatCode(dir + file) + "\" " + (offset+1) + " \"" + LispUtil.formatCode(dir)
 			+ "\" 3)"; // 3 = debug level
 		if (pckg.equalsIgnoreCase("nil")) {
 			emacsRex(msg);
@@ -1321,7 +1261,7 @@ public class SwankInterface {
 		if (managePackages) {
 			registerCallback(callBack);
 			String msg = "(swank:eval-and-grab-output \"" 
-				+ formatCode("(get-installed-packages)") + "\")";
+				+ LispUtil.formatCode("(get-installed-packages)") + "\")";
 			emacsRex(msg,"com.gigamonkeys.asdf-extensions");
 		} else {
 			callBack.result = null;
@@ -1349,19 +1289,19 @@ public class SwankInterface {
 	
 	public synchronized void sendGetCallers(String functionName, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		emacsRex("(swank:xref (quote :callers) (quote \"" + formatCode(functionName) + "\"))", pkg);
+		emacsRex("(swank:xref (quote :callers) (quote \"" + LispUtil.formatCode(functionName) + "\"))", pkg);
 	}
 	
 	public synchronized void sendGetCallees(String functionName, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		emacsRex("(swank:xref (quote :callees) (quote \"" + formatCode(functionName) + "\"))", pkg);
+		emacsRex("(swank:xref (quote :callees) (quote \"" + LispUtil.formatCode(functionName) + "\"))", pkg);
 	}
 	
 	// Profiling
 	
 	public synchronized void sendToggleProfileFunction(String functionName, String pkg, SwankRunnable callBack) {
 		registerCallback(callBack);
-		String msg = "(swank:toggle-profile-fdefinition \"" + formatCode(functionName) + "\")"; 
+		String msg = "(swank:toggle-profile-fdefinition \"" + LispUtil.formatCode(functionName) + "\")"; 
 		emacsRex(msg, pkg);
 	}
 	
@@ -1378,22 +1318,10 @@ public class SwankInterface {
 	
 	// Message and response/reply management:
 	
-	private String formatCode(String code) {
-		return code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "");
-	}
-	
 	public String fetchDisplayText() {
 		return displayListener.fetchText();
 	}
 	
-	
-	private String cleanPackage(String pkg) {
-		if (pkg == null || pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
-			return "nil";
-		} else {
-			return "\"" + formatCode(pkg) + "\"";
-		}
-	}
 	
 	public synchronized boolean emacsRex(String message) {
 		return emacsRexWithThread(message, ":repl-thread");
@@ -1414,7 +1342,7 @@ public class SwankInterface {
 
 	public synchronized boolean emacsRexWithThread(String message, String pkg,
 			String threadId) {
-		String msg = "(:emacs-rex " + message + " " + cleanPackage(pkg) + " "
+		String msg = "(:emacs-rex " + message + " " + LispUtil.cleanPackage(pkg) + " "
 				+ threadId + " " + messageNum + ")";
 
 		return sendRaw(msg);

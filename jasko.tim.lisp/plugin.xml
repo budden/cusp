@@ -7,7 +7,7 @@
 		<perspective
         class="jasko.tim.lisp.perspective.LispPerspectiveFactory"
         fixed="false"
-        icon="icons/lispFile.gif"
+        icon="icons/lisp-file.gif"
         id="jasko.tim.lisp.perspective.LispPerspectiveFactory"
         name="Lisp">
 		</perspective>
@@ -40,7 +40,7 @@
 		<image
 			id="jasko.tim.lisp.builder.LispNatureImage"
 			natureId="jasko.tim.lisp.lispNature"
-			icon="icons/lispNature.gif">
+			icon="icons/lisp-nature.gif">
 		</image>
 	</extension>
 	
@@ -55,7 +55,7 @@
 		<wizard
 			category="jasko.tim.lisp.newWizards"
 			class="jasko.tim.lisp.wizards.NewLispFileWizard"
-			icon="icons/lispFile.gif"
+			icon="icons/lisp-file.gif"
 			id="jasko.tim.lisp.wizards.NewLispFileWizard"
 			name="Lisp File"
 			finalPerspective="jasko.tim.lisp.perspective.LispPerspectiveFactory"
@@ -67,7 +67,7 @@
 			category="jasko.tim.lisp.newWizards"
 			class="jasko.tim.lisp.wizards.NewProjectWiz"
 			finalPerspective="jasko.tim.lisp.perspective.LispPerspectiveFactory"
-			icon="icons/lispFile.gif"
+			icon="icons/lisp-file.gif"
 			id="jasko.tim.lisp.wizards.NewProjectWiz"
 			name="Lisp Project"
 			preferredPerspectives="jasko.tim.lisp.perspective.LispPerspectiveFactory"
@@ -89,7 +89,7 @@
 			<action
 				id="jasko.tim.lisp.wizards.actions.NewLispFileWizardAction"
 				label="New Lisp file..."
-				icon="icons/lispFile.gif"
+				icon="icons/lisp-file.gif"
 				menubarPath="new.ext"
 				class="jasko.tim.lisp.wizards.actions.NewLispFileWizardAction"
 				enablesFor="1">
@@ -136,7 +136,7 @@
 			<action
 				id="jasko.tim.lisp.navigator.LoadFileAction"
 				label="Load file"
-				icon="icons/lispFile.gif"
+				icon="icons/lisp-file.gif"
 				menubarPath="group.add"
 				class="jasko.tim.lisp.navigator.LoadFileAction"
 				enablesFor="1">
@@ -163,7 +163,21 @@
 		</objectContribution>
 	</extension>
 	
-	
+	<extension point="org.eclipse.ui.popupMenus">
+		<objectContribution
+			id="jasko.tim.lisp.wizards.actions.CreateExeWizardAction.folder"
+			objectClass="org.eclipse.core.resources.IResource"
+			>
+			<action
+				id="jasko.tim.lisp.wizards.actions.CreateExeWizardAction"
+				label="Create Exe"
+				icon="icons/create-exe.gif"
+				menubarPath="group.add"
+				class="jasko.tim.lisp.wizards.actions.CreateExeWizardAction"
+				enablesFor="1">
+			</action>
+		</objectContribution>
+	</extension>
 	
 	<!-- The marker for problems in lisp files -->
 	<extension id="lispMarker" point="org.eclipse.core.resources.markers"/>
@@ -213,7 +227,7 @@
 	        allowMultiple="false"
 	        category="jasko.tim.lisp"
 	        class="jasko.tim.lisp.views.ReplView"
-	        icon="icons/lispFile.gif"
+	        icon="icons/lisp-file.gif"
 	        id="jasko.tim.lisp.views.ReplView"
 	        name="REPL" />
 		
@@ -222,7 +236,7 @@
 	        allowMultiple="true"
 	        category="jasko.tim.lisp"
 	        class="jasko.tim.lisp.views.SecondaryReplView"
-	        icon="icons/lispFile.gif"
+	        icon="icons/lisp-file.gif"
 	        id="jasko.tim.lisp.views.SecondaryReplView"
 	        name="Secondary REPL" />
 		
@@ -262,7 +276,7 @@
 		<view 
 			id="jasko.tim.lisp.navigator.LispNavigator"
 			name="Lisp Navigator"
-			icon="icons/lispNav.gif"
+			icon="icons/lisp-nav.gif"
 			category="jasko.tim.lisp"
 			class="jasko.tim.lisp.navigator.LispNavigator" />
 	</extension>
@@ -293,7 +307,7 @@
 		<editor
 			name="Lisp Editor"
 			extensions="lisp,cl,el,asd"
-			icon="icons/lispFile.gif"
+			icon="icons/lisp-file.gif"
 			contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
 			class="jasko.tim.lisp.editors.LispEditor"
 			id="jasko.tim.lisp.editors.LispEditor">
@@ -1308,7 +1322,7 @@
 			</action>
 		</editorContribution>
 	</extension>
-	 
+ 
  <!-- Remove this later --> 
  <extension point="org.eclipse.ui.popupMenus">
     <objectContribution

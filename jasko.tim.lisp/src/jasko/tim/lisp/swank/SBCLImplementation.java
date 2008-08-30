@@ -1,12 +1,18 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.preferences.PreferenceConstants;
+import jasko.tim.lisp.util.*;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import org.eclipse.jface.preference.IPreferenceStore;
 
 /**
  * This is a class for finding and starting Steel Bank Common Lisp.
@@ -146,8 +152,7 @@ public class SBCLImplementation extends LispImplementation {
 	 * @param executable
 	 * @param sbclDirectory
 	 */
-	public SBCLImplementation(File executable, File sbclDirectory)
-	{
+	public SBCLImplementation(File executable, File sbclDirectory) {
 		this.executable = executable;
 		this.path = sbclDirectory;
 		flispType = "SBCL";
@@ -162,8 +167,7 @@ public class SBCLImplementation extends LispImplementation {
 	{
 		System.out.println("start");
 		
-		if (isValid())
-		{
+		if (isValid()){
 			ProcessBuilder pb;
 			String[] commandLine = new String[] {
 					executable.getPath()
@@ -177,6 +181,75 @@ public class SBCLImplementation extends LispImplementation {
 			return pb.start();
 		}
 		return null;
+	}
+
+	public boolean createExe(String exeFile, String asdFile, String toplevel, String pkg){
+		if( isValid() ){
+			IPreferenceStore prefs = 
+				LispPlugin.getDefault().getPreferenceStore();
+			
+			ArrayList<String> commandLine = new ArrayList<String>();
+			commandLine.add(executable.getPath());
+			commandLine.add("--eval");
+			commandLine.add("\"(require 'asdf)\"");
+			if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
+				commandLine.add("--load");
+				commandLine.add("\""+LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/lisp-unit.lisp\"");
+			}
+			if(prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES)){
+				String code = LispPlugin.getDefault().getLibsPathRegisterCode();
+				if( !code.equals("")){
+					String asdfext = LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/asdf-extensions.lisp";
+					commandLine.add("--load");
+					commandLine.add("\""+asdfext+"\"");
+					commandLine.add("--eval");
+					commandLine.add(LispUtil.cleanPackage(code));
+				}
+				
+			}
+	 		asdFile = asdFile.replace('\\', '/');
+	 		asdFile = translateLocalFilePath(asdFile);
+	 		String[] fpathparts = asdFile.split("/");
+	 		if( fpathparts.length <= 0 || !fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
+	 			return false;
+	 		}
+ 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
+ 			
+ 			commandLine.add("--load");
+ 			commandLine.add("\""+asdFile+"\"");
+ 			commandLine.add("--eval");
+ 			commandLine.add(LispUtil.cleanPackage("(asdf:oos 'asdf:load-op \""+asdName+"\")"));
+			
+			commandLine.add("--eval");
+			if( pkg != null && !pkg.equals("") && !pkg.equalsIgnoreCase("nil")){
+				commandLine.add(LispUtil.cleanPackage("(sb-ext:save-lisp-and-die \""
+						+exeFile+"\" :executable t :toplevel '"+pkg+"::"+toplevel+" :purify t)"));				
+			} else {
+				commandLine.add(LispUtil.cleanPackage("(sb-ext:save-lisp-and-die \""
+						+exeFile.replace('\\', '/')+"\" :executable t :toplevel '"+toplevel+" :purify t)"));				
+			}
+			
+			String[] cmd = new String[commandLine.size()];
+			ProcessBuilder pb = new ProcessBuilder(commandLine.toArray(cmd));
+			pb.environment().put("SBCL_HOME", path.getPath());
+			try{
+				LispPlugin.getDefault().out("=== Start Create Exe Log:");
+				Process p = pb.start();
+			    BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			    String line;
+			    while ((line = is.readLine()) != null)
+					LispPlugin.getDefault().out(line);			
+				
+			} catch (IOException e) {
+				
+			} finally {
+				LispPlugin.getDefault().out("=== End Create Exe Log.");				
+			}
+		}
+		
+		return true;
 	}
 	
 	public Process startHarder(String loadPath) throws IOException {

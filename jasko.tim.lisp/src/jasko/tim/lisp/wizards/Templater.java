@@ -49,12 +49,12 @@ public class Templater {
 			}
 			if(withExample){
 				if(withTests){
-					contents = contents.replace("${example-test}","(define-test hello-test\n  (assert-equal \"hello\" (hello-function)))");					
+					contents = contents.replace("${example-test}","(define-test main-test\n  (assert-equal 0 (main)))");					
 				} else {
 					contents = contents.replace("${example-test}","");					
 				}
-				contents = contents.replace("${example-export}","#:hello-function");
-				contents = contents.replace("${example-source}","(defun hello-function ()\n  \"This function returns string 'hello'.\"\n \"hello\")");
+				contents = contents.replace("${example-export}","#:main");
+				contents = contents.replace("${example-source}","(defun main ()\n  \"This function prints 'hallo' and returns 0.\"\n (format t \"hallo\") 0)");
 			} else {
 				contents = contents.replace("${example-test}","");
 				contents = contents.replace("${example-export}","");

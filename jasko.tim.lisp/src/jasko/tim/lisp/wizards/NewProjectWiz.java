@@ -11,9 +11,7 @@
 package jasko.tim.lisp.wizards;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.builder.LispBuilder;
 import jasko.tim.lisp.builder.LispNature;
-import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.views.*;
 

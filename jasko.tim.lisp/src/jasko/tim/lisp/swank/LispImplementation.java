@@ -2,6 +2,10 @@ package jasko.tim.lisp.swank;
 
 import java.io.IOException;
 
+/**
+ * Abstract Lisp Implementation class.
+ *
+ */
 public abstract class LispImplementation {
 	protected String flispType = ""; //possible values SBCL, CLISP etc.
 	protected boolean hasthreads = true; 
@@ -24,6 +28,26 @@ public abstract class LispImplementation {
 	 * @throws IOException 
 	 */
 	public abstract Process start(String loadPath, int swankPort) throws IOException;
+	
+	/**
+	 * Creates executable from asd project file.
+	 * @param exeFile - Full path to the resulting executable.
+	 * @param asdFile - Full path to package file.
+	 * @param toplevel - Top level form for executable. Must be a form with 0 arguments returning integer.
+	 * @param pkg - Package which top level form belongs to.
+	 * @return true if successful, false - otherwise
+	 */
+	public boolean createExe(String exeFile, String asdFile, String toplevel, String pkg){
+		return false;
+	}
+	
+	public String getExeExtensionForPlatform(){
+		String os = System.getProperty("os.name").toLowerCase();
+		if (os.contains("windows"))
+			return ".exe";
+		else
+			return "";
+	}
 	
 	public String getQuitForm() { return "(quit)"; }
 	
