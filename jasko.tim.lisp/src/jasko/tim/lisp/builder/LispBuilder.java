@@ -250,7 +250,8 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			ReplView repl = (ReplView)PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage().findView(ReplView.ID);
  			
-  			LispNode guts = result.getf(":return").getf(":ok").getf(":swank-compilation-unit");
+			LispNode res = result;
+  			LispNode guts = res.getf(":return").getf(":ok").getf(":swank-compilation-unit");
   			if ( guts.isEmpty() ){
   				if( compiledByAsd ){
   	  				repl.appendText("Loaded package " + asdFile + "\n");

@@ -634,12 +634,14 @@ public class LispUtil {
 	}
 
 	/**
-	 * Formats code to be send to CL as a string
+	 * Formats code to be send to CL as a string.
+	 * Note that if we replace("\r","") here, rather than in
+	 * cleanPackage, we get compilation markers in wrong positions.
 	 * @param code
 	 * @return
 	 */
 	public static String formatCode(String code) {
-		return code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "");
+		return code.replace("\\", "\\\\").replace("\"", "\\\"");
 	}
 
 	/**
@@ -652,7 +654,7 @@ public class LispUtil {
 		if (pkg == null || pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
 			return "nil";
 		} else {
-			return "\"" + formatCode(pkg).replace("\n", " ") + "\"";
+			return "\"" + formatCode(pkg).replace("\r", "").replace("\n", " ") + "\"";
 		}
 	}
 }

@@ -694,10 +694,11 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		boolean undefineTests = LispPlugin.getDefault().getSwank().useUnitTest; 
 		for( String itm: toUndefine){
 			String[] item = itm.split(",");
+			LispBuilder.CompileListener cl = new LispBuilder.CompileListener(this.getIFile());
 			if( item[0].equalsIgnoreCase("defun") ){
-				LispPlugin.getDefault().getSwank().sendUndefine(item[1], item[2], null);
+				LispPlugin.getDefault().getSwank().sendUndefine(item[1], item[2], cl);
 			} else if ( undefineTests && item[0].equalsIgnoreCase("define-test") ){
-				LispPlugin.getDefault().getSwank().sendUndefineTest(item[1], item[2], null);
+				LispPlugin.getDefault().getSwank().sendUndefineTest(item[1], item[2], cl);
 			}
 			
 		}
