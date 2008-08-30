@@ -3,11 +3,9 @@ package jasko.tim.lisp.editors.actions;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.SwankRunnable;
+import jasko.tim.lisp.views.XrefView;
 
 import java.util.ArrayList;
-
-import org.eclipse.jface.dialogs.Dialog;
-
 
 public class FindCalleesAction extends LispAction {
 	private static final int TIMEOUT = 2000;
@@ -20,14 +18,14 @@ public class FindCalleesAction extends LispAction {
 	}
 	
 	public void run() {
-		String symbol = getSymbol();
+		final String symbol = getSymbol();
 
 		boolean haveDefinition = getSwank().haveDefinitions(symbol, 
 				getPackage(), TIMEOUT);
 		
 		if ( !haveDefinition )
 		{
-			editor.showPopupInfo("No calls from this function were found");
+			XrefView.getXrefView().showResults("No calls from "+symbol+" were found.", null, null, null);
 			return;
 		}
 
@@ -61,52 +59,13 @@ public class FindCalleesAction extends LispAction {
 					}
 				}
 				
-				LispNode chosen;
-				
 				if (optionNames.size() <= 0) {
+					XrefView.getXrefView().showResults("No calls from "+symbol+" were found.", null, null, null);
 					editor.showPopupInfo("No calls from this function were found");
 					return;
-				} else if (optionNames.size() == 1) {
-					chosen = optionData.get(0);
 				} else {
-					ListDialog<LispNode> win = new ListDialog<LispNode>(editor.getSite().getShell(), optionNames, optionData, tips);
-					win.create();
-					win.setTitle("Callees");
-				
-					if (win.open() == Dialog.OK) {
-						chosen = win.getData();
-					} else {
-						return;
-					}
-				}
-				
-				LispNode location = chosen.getf(":location");
-				String path = location.getf(":file").value;
-				LispNode positionNode = location.getf(":position");
-				LispNode snippetNode = location.getf(":snippet");
-				
-				if( positionNode.value.equals("") ){
-					for( LispNode x : chosen.params ){
-						positionNode = x.getf(":position");
-						if( !positionNode.value.equals("") ){
-							break;
-						}
-					}
-				}
-				
-				if( snippetNode.value.equals("") ){
-					for( LispNode x : chosen.params ){
-						snippetNode = x.getf(":snippet");
-						if( !snippetNode.value.equals("") ){
-							break;
-						}
-					}
-				}
-				
-				int position = positionNode.asInt();
-				String snippet = snippetNode.value;
-				
-				LispEditor.jumpToDefinition(path, position, snippet);
+					XrefView.getXrefView().showResults("Callees of "+symbol+":", optionNames, optionData, tips);
+				}				
 			}
 		
 		});

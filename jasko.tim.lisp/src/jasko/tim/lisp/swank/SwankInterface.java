@@ -586,6 +586,7 @@ public class SwankInterface {
 	private void registerCallback(SwankRunnable callBack) {
 		++messageNum;
 		if (callBack != null) {
+			callBack.messageNum = messageNum;
 			jobs.put(new Integer(messageNum).toString(), callBack);
 		}
 	}

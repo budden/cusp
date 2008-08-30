@@ -4,9 +4,7 @@ import java.util.ArrayList;
 
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.*;
-
-import org.eclipse.jface.dialogs.Dialog;
-
+import jasko.tim.lisp.views.*;
 
 public class FindCallersAction extends LispAction {
 	private static final int TIMEOUT = 2000;
@@ -19,14 +17,14 @@ public class FindCallersAction extends LispAction {
 	}
 	
 	public void run() {
-		String symbol = getSymbol();
+		final String symbol = getSymbol();
 
 		boolean haveDefinition = getSwank().haveDefinitions(symbol, 
 				getPackage(), TIMEOUT);
 		
 		if ( !haveDefinition )
 		{
-			editor.showPopupInfo("No calls from this function were found");
+			XrefView.getXrefView().showResults("No calls to "+symbol+" were found.", null, null, null);
 			return;
 		}
 		
@@ -52,55 +50,16 @@ public class FindCallersAction extends LispAction {
 							optionNames.add(name);
 							optionData.add(possibility);
 							tips.add(tip);
-						}						
+						}
 					}
 				}
-				
-				LispNode chosen;
 				
 				if (optionNames.size() <= 0) {
-					editor.showPopupInfo("No calls to this function were found");
+					XrefView.getXrefView().showResults("No calls to "+symbol+" were found.", null, null, null);
 					return;
-				} else if (optionNames.size() == 1) {
-					chosen = optionData.get(0);
 				} else {
-					ListDialog<LispNode> win = new ListDialog<LispNode>(editor.getSite().getShell(), optionNames, optionData, tips);
-					win.create();
-					win.setTitle("Callers");
-					if (win.open() == Dialog.OK) {
-						chosen = win.getData();
-					} else {
-						return;
-					}
+					XrefView.getXrefView().showResults("Callers of "+symbol+":", optionNames, optionData, tips);
 				}
-				
-				LispNode location = chosen.getf(":location");
-				String path = location.getf(":file").value;
-				LispNode positionNode = location.getf(":position");
-				LispNode snippetNode = location.getf(":snippet");
-				
-				if( positionNode.value.equals("") ){
-					for( LispNode x : chosen.params ){
-						positionNode = x.getf(":position");
-						if( !positionNode.value.equals("") ){
-							break;
-						}
-					}
-				}
-				
-				if( snippetNode.value.equals("") ){
-					for( LispNode x : chosen.params ){
-						snippetNode = x.getf(":snippet");
-						if( !snippetNode.value.equals("") ){
-							break;
-						}
-					}
-				}
-				
-				int position = positionNode.asInt();
-				String snippet = snippetNode.value;
-				
-				LispEditor.jumpToDefinition(path, position, snippet);
 			}
 		
 		});
