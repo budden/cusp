@@ -639,7 +639,7 @@ public class LispUtil {
 	 * @return
 	 */
 	public static String formatCode(String code) {
-		return code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
+		return code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "");
 	}
 
 	/**
@@ -652,7 +652,7 @@ public class LispUtil {
 		if (pkg == null || pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
 			return "nil";
 		} else {
-			return "\"" + formatCode(pkg) + "\"";
+			return "\"" + formatCode(pkg).replace("\n", " ") + "\"";
 		}
 	}
 }
