@@ -69,7 +69,7 @@ public class LispImages {
 		imageReg.put(LispImages.DEFINE_ALIEN_ROUTINE, loadImageDescriptor("define-alien-routine.gif"));
 		imageReg.put(LispImages.DEFINE_ALIEN_VARIABLE, loadImageDescriptor("define-alien-variable.gif"));
 		imageReg.put(LispImages.DEFINE_ALIEN_TYPE, loadImageDescriptor("define-alien-type.gif"));
-		imageReg.put(LispImages.LAMBDA, loadImageDescriptor("lispNature.gif"));
+		imageReg.put(LispImages.LAMBDA, loadImageDescriptor("lisp-nature.gif"));
 		
 		imageReg.put(LispImages.IN_PACKAGE, loadImageDescriptor("in-package.gif"));
 		imageReg.put(LispImages.OTHER, loadImageDescriptor("other.gif"));
@@ -89,8 +89,8 @@ public class LispImages {
 		imageReg.put(LispImages.THREAD_DEBUG, loadImageDescriptor("thread-debug.gif"));
 		imageReg.put(LispImages.THREAD_KILL, loadImageDescriptor("thread-kill.gif"));
 		imageReg.put(LispImages.REFRESH, loadImageDescriptor("refresh.gif"));
-		imageReg.put(LispImages.FORWARD_NAV, loadImageDescriptor("forward_nav.gif"));
-		imageReg.put(LispImages.BACKWARD_NAV, loadImageDescriptor("backward_nav.gif"));
+		imageReg.put(LispImages.FORWARD_NAV, loadImageDescriptor("forward-nav.gif"));
+		imageReg.put(LispImages.BACKWARD_NAV, loadImageDescriptor("backward-nav.gif"));
 		
 		imageReg.put(LispImages.STEP, loadImageDescriptor("step.gif"));
 		imageReg.put(LispImages.RUN_TESTS, loadImageDescriptor("run-tests.gif"));

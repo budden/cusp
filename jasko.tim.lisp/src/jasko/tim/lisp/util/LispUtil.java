@@ -632,4 +632,27 @@ public class LispUtil {
 	public static ArrayList<TopLevelItem> getTopLevelItems(LispNode file, String pkg){
 		return getTopLevelItems(file,pkg,0);
 	}
+
+	/**
+	 * Formats code to be send to CL as a string
+	 * @param code
+	 * @return
+	 */
+	public static String formatCode(String code) {
+		return code.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", " ");
+	}
+
+	/**
+	 * Does almost same as formatCode, but also adds external quotes
+	 * @param pkg
+	 * @return
+	 * @see formatCode
+	 */
+	public static String cleanPackage(String pkg) {
+		if (pkg == null || pkg.equals("") || pkg.equalsIgnoreCase("nil")) {
+			return "nil";
+		} else {
+			return "\"" + formatCode(pkg) + "\"";
+		}
+	}
 }

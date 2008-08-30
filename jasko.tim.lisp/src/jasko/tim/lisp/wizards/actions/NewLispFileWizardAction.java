@@ -8,7 +8,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.ui.*;
 
-
 public class NewLispFileWizardAction implements IActionDelegate {
 	IStructuredSelection _selection;
 

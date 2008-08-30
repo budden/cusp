@@ -1,11 +1,17 @@
 package jasko.tim.lisp;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
 
+import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
 
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
@@ -96,6 +102,10 @@ public class LispPlugin extends AbstractUIPlugin {
 			MessageConsoleStream out = myConsole.newMessageStream();
 			out.println(str);					
 	}
+	
+	public void activateConsole(){
+		getConsole().activate();
+	}
 	    
 	/**
 	 * This method is called when the plug-in is stopped
@@ -129,6 +139,77 @@ public class LispPlugin extends AbstractUIPlugin {
 	private ColorManager cm;
 	public ColorManager getColorManager() {
 		return cm;
+	}
+	
+	public String getLibsPathRegisterCode(){
+		String code = "";
+		ArrayList<File> subdirs = getLibsPath();
+		if(subdirs.size() > 0){
+			code = "(mapcar #'com.gigamonkeys.asdf-extensions:register-source-directory '(\n";
+			for (int i = 0; i < subdirs.size(); i++) {
+				File child = subdirs.get(i);
+				String name = child.getAbsolutePath().replace("\\", "/");
+				if (!name.endsWith("/")) {
+					name += "/";
+				}
+				code += "  \"" + name + "\"\n"; 
+			}
+			code += "))";
+		}
+		return code;
+	}
+	
+	public ArrayList<File> getLibsPath(){
+		String path = getPluginPath() + "libraries";
+	
+	    // This filter only returns directories of type jasko.tim.lisp.libs
+	    FileFilter libPluginFilter = new FileFilter() {
+	        public boolean accept(File file) {
+	            return (file.isDirectory()
+	            		&& file.toString().matches(".*jasko\\.tim\\.lisp\\.libs.*"));
+	        }
+	    };
+	
+	    ArrayList<File> topLevelDirs = new ArrayList<File>();
+	    topLevelDirs.add(new File(path));
+
+		String sysdirs[] = 
+			getPreferenceStore().getString(PreferenceConstants.SYSTEMS_PATH).split(";");
+		
+		for(String sysdir: sysdirs){
+			if( sysdir != null && !sysdir.equals("")){
+				topLevelDirs.add(new File(sysdir));			
+			}
+		}
+	    
+		File pluginsDir = (new File(LispPlugin.getDefault().getPluginPath())).getParentFile();
+	    for( File dir : pluginsDir.listFiles(libPluginFilter)){
+	    	topLevelDirs.add(new File(dir.getAbsolutePath()+"/libs"));
+	    }
+		
+	    // This filter only returns directories
+	    FileFilter dirFilter = new FileFilter() {
+	        public boolean accept(File file) {
+	            return file.isDirectory();
+	        }
+	    };
+	
+		ArrayList<File> subdirs = new ArrayList<File>();
+		for( File dir : topLevelDirs){
+			if( dir.isDirectory() ){
+				subdirs.add(dir);
+				for( File subdir : dir.listFiles(dirFilter) ){
+					if( subdir != null && !subdirs.contains(subdir) ){
+						subdirs.add(subdir);			
+					}
+				}						
+			}
+		}
+		if (subdirs.size() == 0) {
+			// Either dir does not exist or is not a directory
+			System.out.println("*libraries dir not found! " + path);
+		}
+		return subdirs;
 	}
 	
 	public String getPluginPath() {
