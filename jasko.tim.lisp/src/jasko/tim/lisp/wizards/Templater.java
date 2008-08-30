@@ -1,5 +1,7 @@
 package jasko.tim.lisp.wizards;
 
+import jasko.tim.lisp.LispPlugin;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -49,12 +51,36 @@ public class Templater {
 			}
 			if(withExample){
 				if(withTests){
-					contents = contents.replace("${example-test}","(define-test main-test\n  (assert-equal 0 (main)))");					
+					contents = contents.replace("${example-test}",
+							"(define-test main-test\n" +
+							"  (assert-equal 0 (main)) ;should pass\n" +
+							"  (assert-equal 1 (main)) ;should fail\n" +
+							")");					
 				} else {
 					contents = contents.replace("${example-test}","");					
 				}
 				contents = contents.replace("${example-export}","#:main");
-				contents = contents.replace("${example-source}","(defun main ()\n  \"This function prints 'hallo' and returns 0.\"\n (format t \"hallo\") 0)");
+				
+				if( LispPlugin.getDefault().getSwank().implementation.lispType().toLowerCase().contains("sbcl")){
+					contents = contents.replace("${example-source}",
+							"(defun main ()\n"+
+							"  \"This function greets and returns 0.\n" +
+							"If this function is used as top level in executable,\n" +
+							"Prints 'Hello, World!' if no command line arguments are supplied\n" +
+							"and 'Hello, User!' if the first command line argument is 'User'.\"\n" +
+							"  (format t \"Hello, ~A!~%\"\n" +
+							"      (if (second sb-ext:*posix-argv*)\n" +
+							"          (second sb-ext:*posix-argv*)\n" +
+							"          \"World\"))\n" +
+							"  0)");					
+				} else {
+					contents = contents.replace("${example-source}",
+							"(defun main ()\n"+
+							"  \"This function greets and returns 0.\"\n" +
+							"  (format t \"Hello, ~A!~%\" \"World\")\n" +
+							"  0)");					
+				}
+
 			} else {
 				contents = contents.replace("${example-test}","");
 				contents = contents.replace("${example-export}","");
