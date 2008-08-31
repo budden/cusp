@@ -242,9 +242,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
   		public void run() {
  			ArrayList<String> files = new ArrayList<String>();
  			if ( file != null && length == 0){
- 				LispMarkers.deleteMarkers(file);
+ 				LispMarkers.deleteCompileMarkers(file);
   			} else if ( file != null && length > 0) {
-  				LispMarkers.deleteMarkers(file,offset,length);
+  				LispMarkers.deleteCompileMarkers(file,offset,length);
   			}
  			
 			ReplView repl = (ReplView)PlatformUI.getWorkbench().getActiveWorkbenchWindow()
@@ -263,10 +263,14 @@ public class LispBuilder extends IncrementalProjectBuilder {
  				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
 				for (LispNode error: guts.params) {
 					String msg = error.getf(":message").value;
-					if( LispPlugin.getDefault().getSwank().implementation.lispType().equalsIgnoreCase("SBCL") 
-							&& msg.endsWith("is defined but never used.")){
+					// Make some messages in SBCL prettier
+					if( LispPlugin.getDefault().getSwank().implementation.lispType().equalsIgnoreCase("SBCL") ){
 						String[] lines = msg.split("\n");
-						msg = lines[lines.length-1];
+						String lastLine = lines[lines.length-1];
+						if( msg.endsWith("is defined but never used.") 
+								|| lastLine.startsWith("undefined variable:")){
+							msg = lastLine;
+						}
 					}
 					String severity = error.getf(":severity").value;
 					LispNode location = error.getf(":location");
@@ -585,7 +589,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			
 			try {
 				IFile file = (IFile) resource;
-				LispMarkers.deleteMarkers(file); //do we really want to delete warnings here?
+				LispMarkers.deleteCompileMarkers(file);
 				System.out.println("*builder*");
 				boolean paren = checkParenBalancing(file);
 				LispNode code = LispParser.parse(file);

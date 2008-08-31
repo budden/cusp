@@ -201,7 +201,19 @@
    		<super type="jasko.tim.lisp.lispMarkerCompile"/>
    		<persistent value="true"/>
 	</extension>
-	 
+	<extension id="lispMarkerBreakpoint" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.core.resources.problemmarker"/>
+   		<super type="jasko.tim.lisp.lispMarker"/>
+   		<persistent value="true"/>
+	</extension>
+
+<!--
+	<extension id="lispMarkerBreakpoint" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.debug.core.breakpointMarker"/>
+   		<super type="jasko.tim.lisp.lispMarker"/>
+   		<persistent value="true"/>
+	</extension>
+-->
 	<!-- Preference Page -->
 	<!--<extension point="org.eclipse.ui.preferencePages">
 		<page
