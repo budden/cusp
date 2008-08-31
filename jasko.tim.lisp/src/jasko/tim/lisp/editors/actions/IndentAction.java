@@ -91,10 +91,12 @@ public class IndentAction extends LispAction {
                 //     but the code there is still somewhat opaque to me at the moment, and clobbering spacing in 
                 //     multiline strings can be *really* bad, so let expediency overtake purity for the nonce.
                 //     - Chas Emerick
-                if (doc.getContentType(lineInfo.getOffset()).equals(LispPartitionScanner.LISP_STRING) &&
-                        !doc.get(lineInfo.getOffset(), lineInfo.getLength()).trim().startsWith("\"")){
+				// commented out part: if string ends with return then this would add indentation after return - bad
+				//     - SK
+                if (doc.getContentType(lineInfo.getOffset()).equals(LispPartitionScanner.LISP_STRING)
+                	/*	&& !doc.get(lineInfo.getOffset(), lineInfo.getLength()).trim().startsWith("\"") */){
                 	continue;                	
-                }                
+                }
 				
 				String indent = LispIndentOnEnter.calculateIndent(lineInfo.getOffset(), doc);
 				int indentOld = getIndent(doc.get(lineInfo.getOffset(),lineInfo.getLength()));
