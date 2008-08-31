@@ -19,6 +19,10 @@ public class LispParser {
 		return new LispParser().parseCode(code);
 	}
 	
+	public static LispNode parse(String code, boolean justFirstSexp) {
+		return new LispParser().parseCode(code,justFirstSexp);
+	}
+	
 	public static String fileToString(IFile file){
 		try{
 			BufferedReader reader = new BufferedReader(
@@ -66,10 +70,18 @@ public class LispParser {
 	}
 
 	public LispNode parseCode(String code) {
+		return parseCode(code,false);
+	}
+	
+
+	public LispNode parseCode(String code, boolean justFirstSexp) {
 		int start = 0;
 		parenBalance = 0;
+
+		if( justFirstSexp && code.charAt(0) != '(' ){
+			return null;
+		}
 		
-		//System.out.println("*parsing:" + code.charAt(0));
 		LispNode ret = new LispNode(0);
 		Stack<LispNode> s = new Stack<LispNode>();
 		
@@ -106,6 +118,10 @@ public class LispParser {
 				}
 				curr.endOffset = i;
 				
+				if( parenBalance == 0 && justFirstSexp ){
+					return curr;
+				}
+				
 				try {
 					s.pop();
 				} catch (EmptyStackException e) {
@@ -113,7 +129,7 @@ public class LispParser {
 				if (!s.empty()) {
 					curr = (LispNode)s.peek();
 				}
-					
+				
 			} else if (c == '"') {
 				int offset = i;
 				char lit = '"';
@@ -215,5 +231,5 @@ public class LispParser {
 		}
 		return ret;
 	}
-	
+
 }
