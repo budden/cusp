@@ -7,7 +7,6 @@ import jasko.tim.lisp.util.*;
 
 import org.eclipse.jface.text.*;
 
-
 /**
  * Pops up info about the symbol the mouse is hovering over.
  * @author Tim Jasko
@@ -82,6 +81,20 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 		return new Region(offset, 0);
 	}
 
+/*
+    public IInformationControlCreator getHoverControlCreator()
+    {
+        return new IInformationControlCreator()
+        {
+            public IInformationControl createInformationControl(Shell parent)
+            {
+                return new DefaultInformationControl(parent, SWT.NONE,
+                        new ToolTipHandler.TooltipPresenter(), getStatusFieldMessage());
+            }
+        };
+    }
+ */	
+	
 	public IInformationControlCreator getHoverControlCreator() {
 		return new LispTextHoverControlCreator();
 	}
