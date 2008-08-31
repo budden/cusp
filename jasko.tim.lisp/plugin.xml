@@ -206,14 +206,12 @@
    		<super type="jasko.tim.lisp.lispMarker"/>
    		<persistent value="true"/>
 	</extension>
-
-<!--
-	<extension id="lispMarkerBreakpoint" point="org.eclipse.core.resources.markers">
-   		<super type="org.eclipse.debug.core.breakpointMarker"/>
+	<extension id="lispMarkerWatch" point="org.eclipse.core.resources.markers">
+   		<super type="org.eclipse.core.resources.problemmarker"/>
    		<super type="jasko.tim.lisp.lispMarker"/>
    		<persistent value="true"/>
 	</extension>
--->
+
 	<!-- Preference Page -->
 	<!--<extension point="org.eclipse.ui.preferencePages">
 		<page
@@ -780,6 +778,36 @@
 				label="Toggle Breakpoint"
 				menubarPath="Lisp/grpMisc"
 				tooltip="Toggle Breakpoint">
+			</action>
+		</editorContribution>
+	</extension>
+	
+	<!-- Watch -->
+	<extension point="org.eclipse.ui.commands">
+		<command
+			categoryId="jasko.tim.lisp.category1"
+			description="Puts or removes watch"
+			id="jasko.tim.lisp.editors.actions.WatchAction"
+			name="Watch"/>
+	</extension>
+	<extension point="org.eclipse.ui.bindings">
+		<key
+			commandId="jasko.tim.lisp.editors.actions.WatchAction"
+			contextId="jasko.tim.lisp.context1"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+T"/>
+	</extension>
+	<extension point="org.eclipse.ui.editorActions">
+		<editorContribution
+			targetID="jasko.tim.lisp.editors.LispEditor"
+			id="jasko.tim.lisp.menus">
+			<action
+				class="jasko.tim.lisp.editors.actions.WatchAction"
+				definitionId="jasko.tim.lisp.editors.actions.WatchAction"
+				id="jasko.tim.lisp.editors.actions.WatchAction"
+				label="Toggle Watch"
+				menubarPath="Lisp/grpMisc"
+				tooltip="Toggle Watch">
 			</action>
 		</editorContribution>
 	</extension>

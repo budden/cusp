@@ -1,6 +1,7 @@
 package jasko.tim.lisp.swank;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.editors.actions.*;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.util.*;
 
@@ -190,6 +191,10 @@ public class SBCLImplementation extends LispImplementation {
 			
 			ArrayList<String> commandLine = new ArrayList<String>();
 			commandLine.add(executable.getPath());
+//			commandLine.add("--eval");
+//			commandLine.add(LispUtil.formatPackage(BreakpointAction.macro));
+//			commandLine.add("--eval");
+//			commandLine.add(LispUtil.formatPackage(WatchAction.macro));
 			commandLine.add("--eval");
 			commandLine.add("\"(require 'asdf)\"");
 			if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
@@ -239,8 +244,12 @@ public class SBCLImplementation extends LispImplementation {
 				Process p = pb.start();
 			    BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			    String line;
-			    while ((line = is.readLine()) != null)
-					LispPlugin.getDefault().out(line);			
+			    while ((line = is.readLine()) != null){
+					LispPlugin.getDefault().out(line);
+					if( line.contains("[QUIT ") ){ //ended up in debugger
+						return false;
+					}
+			    }
 				
 			} catch (IOException e) {
 				

@@ -13,6 +13,7 @@ import java.util.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.swt.*;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
@@ -137,6 +138,10 @@ public class ReplView extends ViewPart implements SelectionListener {
         	new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
         /* private final CurrentExpressionHighlightingListener highlighter = 
         	new CurrentExpressionHighlightingListener(); */
+        
+        public IFile getIFile(){
+        	return null;
+        }
         
         public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
             super(comp2, ruler, i);
