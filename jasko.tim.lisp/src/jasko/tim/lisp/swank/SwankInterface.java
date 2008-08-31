@@ -3,6 +3,7 @@ package jasko.tim.lisp.swank;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.util.LispUtil;
+import jasko.tim.lisp.editors.actions.*;
 
 import java.io.*;
 import java.util.*;
@@ -264,6 +265,10 @@ public class SwankInterface {
 				+ ")";
 			sendEval(contribs, null);
 			//sendEval("(swank:fancy-inspector-init)", null);
+			
+			sendEval(BreakpointAction.macro,null);
+			sendEval(WatchAction.macro,null);
+			
 			
 			IPreferenceStore prefs = 
 				LispPlugin.getDefault().getPreferenceStore();

@@ -10,7 +10,6 @@ import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.builder.*;
-import jasko.tim.lisp.editors.actions.*;
 
 import java.util.Iterator;
 import java.util.HashMap;
@@ -371,6 +370,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
 		LispMarkers.updateTasks(getIFile(), getDocument());
 		LispMarkers.updateBreakpointMarkers(getIFile(), getDocument());
+		LispMarkers.updateWatchMarkers(getIFile(), getDocument());
 		processAutoBuild();
 	}
 
@@ -379,6 +379,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		super.doSave(null);
 		LispMarkers.updateTasks(getIFile(), getDocument());
 		LispMarkers.updateBreakpointMarkers(getIFile(), getDocument());
+		LispMarkers.updateWatchMarkers(getIFile(), getDocument());
 	}
 	
 	private void processAutoBuild() {

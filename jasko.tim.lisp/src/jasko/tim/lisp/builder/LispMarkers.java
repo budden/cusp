@@ -1,6 +1,6 @@
 package jasko.tim.lisp.builder;
 
-import jasko.tim.lisp.editors.actions.BreakpointAction;
+import jasko.tim.lisp.editors.actions.*;
 import jasko.tim.lisp.util.*;
 
 import java.util.HashMap;
@@ -16,6 +16,7 @@ public class LispMarkers {
 
 	private static final String LISP_MARKER = "jasko.tim.lisp.lispMarker";
 	private static final String LISP_BREAKPOINT_MARKER = "jasko.tim.lisp.lispMarkerBreakpoint";
+	private static final String LISP_WATCH_MARKER = "jasko.tim.lisp.lispMarkerWatch";
 	private static final String LISP_COMPILE_MARKER = "jasko.tim.lisp.lispMarkerCompile";
 	private static final String LISP_ERROR_MARKER = "jasko.tim.lisp.lispMarkerCompileError";
 	private static final String LISP_WARNING_MARKER = "jasko.tim.lisp.lispMarkerCompileWarning";
@@ -189,6 +190,7 @@ public class LispMarkers {
 		attr.put(IMarker.CHAR_END, new Integer(offset+length));
 		
 		attr.put(IMarker.MESSAGE, "break");
+		attr.put(IMarker.LINE_NUMBER, lineNum);
 		
 		addMarker(file,offset,length,lineNum,"break",
 				IMarker.SEVERITY_INFO,LISP_BREAKPOINT_MARKER);
@@ -232,6 +234,61 @@ public class LispMarkers {
 		            e.printStackTrace();
 		        }
 				addBreakpointMarker(file, range[0], range[1], lineNum);
+			}
+			offset += line.length() + len;
+		}
+	}
+	
+	private static void addWatchMarker(IFile file, int offset, int length, int lineNum){
+		Map<String, Object> attr = new HashMap<String, Object>();
+		attr.put(IMarker.CHAR_START, new Integer(offset));
+		attr.put(IMarker.CHAR_END, new Integer(offset+length));
+		
+		attr.put(IMarker.LINE_NUMBER, lineNum);
+		attr.put(IMarker.MESSAGE, "watch");
+		
+		addMarker(file,offset,length,lineNum,"watch",
+				IMarker.SEVERITY_INFO,LISP_WATCH_MARKER);
+	}
+
+	private static void deleteWatchMarkers(IFile file){
+		if(file != null){
+			try{
+				file.deleteMarkers(LISP_WATCH_MARKER, true, IResource.DEPTH_ZERO);
+			} catch (CoreException e1) {
+ 				e1.printStackTrace();
+ 			}				
+		}
+	}
+
+	public static void updateWatchMarkers(IFile file, IDocument doc){
+		if( file == null || doc == null ){
+			return;
+		}
+		deleteWatchMarkers(file);
+		String[] markersData = doc.get().split(WatchAction.splitregx);
+		int offset = 0;
+		int len = WatchAction.start.length();
+		for( String line : markersData ){
+			if( 0 != offset ){
+				int[] range = null;
+				try{
+					range = LispUtil.getCurrentExpressionRange(doc,offset - len + 2);
+		        } catch (BadLocationException e) {
+		            e.printStackTrace();
+		        }
+		        if( range == null ){
+		            range = new int[2];
+		            range[0] = offset - len;
+		            range[1] = len;
+		        }
+		        int lineNum = -1;
+		        try{
+			        lineNum = doc.getLineOfOffset(range[0] + 1);		        	
+		        } catch (BadLocationException e) {
+		            e.printStackTrace();
+		        }
+				addWatchMarker(file, range[0], range[1], lineNum);
 			}
 			offset += line.length() + len;
 		}

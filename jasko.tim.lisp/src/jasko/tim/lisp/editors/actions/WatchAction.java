@@ -7,17 +7,17 @@ import org.eclipse.jface.text.*;
 import org.eclipse.ui.IEditorPart;
 
 
-public class BreakpointAction extends LispAction {
+public class WatchAction extends LispAction {
     private ILispEditor editor;
-    public static String macro = "(defmacro cusp-break (x) `(progn (break) ,x))";
-    public static String start = "(cl-user::cusp-break ";
-    public static String splitregx = "\\(cl-user::cusp-break ";
+    public static String macro = "(defmacro cusp-watch (x) `(progn (format t \"~a -> ~a\" ',x ,x) ,x))";
+    public static String start = "(cl-user::cusp-watch ";
+    public static String splitregx = "\\(cl-user::cusp-watch ";
 
     private static String end = ")";
+
+    public WatchAction () {}
     
-    public BreakpointAction () {}
-    
-    public BreakpointAction (ILispEditor editor) {
+    public WatchAction (ILispEditor editor) {
         this.editor = editor;
     }
     
