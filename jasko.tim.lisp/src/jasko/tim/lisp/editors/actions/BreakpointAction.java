@@ -9,7 +9,10 @@ import org.eclipse.ui.IEditorPart;
 
 public class BreakpointAction extends LispAction {
     private ILispEditor editor;
-    private static String start = "(progn #|br|# (break) ";
+    public static String start = "(progn #|br|# (break) ";
+    public static String startregx = ".*\\(progn #\\|br\\|# \\(break\\) .*\\s*";
+    public static String splitregx = "\\(progn #\\|br\\|# \\(break\\)";
+
     private static String end = ")";
     
     public BreakpointAction () {}

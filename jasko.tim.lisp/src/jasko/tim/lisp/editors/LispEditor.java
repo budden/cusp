@@ -10,6 +10,7 @@ import jasko.tim.lisp.swank.LispParser;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.builder.*;
+import jasko.tim.lisp.editors.actions.*;
 
 import java.util.Iterator;
 import java.util.HashMap;
@@ -359,57 +360,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		super.createActions();
 	}
 
-
-	private void deleteTasks() {
-		IFile file = getIFile();
-		if( file == null ){
-			return;
-		}		
-		try {
-			file.deleteMarkers(IMarker.TASK, false, IResource.DEPTH_ZERO);
-		} catch (CoreException ce) {
-		}
-	}
-
-	
-	private void addTask(String message, int lineNumber) {
-		IFile file = getIFile();
-		if( file == null ){
-			return;
-		}
-		try {
-			IMarker marker = file.createMarker(IMarker.TASK);
-			marker.setAttribute(IMarker.MESSAGE, message);
-			if (lineNumber == -1) {
-				lineNumber = 1;
-			}
-			marker.setAttribute(IMarker.LINE_NUMBER, lineNumber);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-	}
-
-
-	private void updateTasks() {
-		IFile file = getIFile();
-		if( file == null ){
-			return;
-		}
-		deleteTasks();
-		String[] lines = getDocument().get().split("\n");
-		int numLines = 0;
-		for( String line : lines ){
-			if ( line.matches(".*;.*TODO:.*\\s*") ){
-				String[] strs = line.trim().split("TODO:");
-				for ( int i = 1; i < strs.length; ++i ) {
-					addTask("TODO:" + strs[i],numLines+1);
-				}
-			}
-			++numLines;	
-		}
-	}
-	
-	
 	public void doSave(IProgressMonitor monitor) {
 		super.doSave(monitor);
 
@@ -419,14 +369,16 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			LispBuilder.checkLisp(getIFile());
 		}
 
-		updateTasks();
+		LispMarkers.updateTasks(getIFile(), getDocument());
+		LispMarkers.updateBreakpointMarkers(getIFile(), getDocument());
 		processAutoBuild();
 	}
 
 	
 	public void doSaveNoCompile(){
 		super.doSave(null);
-		updateTasks();		
+		LispMarkers.updateTasks(getIFile(), getDocument());
+		LispMarkers.updateBreakpointMarkers(getIFile(), getDocument());
 	}
 	
 	private void processAutoBuild() {
