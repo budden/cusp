@@ -40,8 +40,8 @@ public class LispTextHoverControlCreator implements IInformationControlCreator {
 		public String updatePresentation(Display display, String hoverInfo, 
 				TextPresentation pres, int maxWidth, int maxHeight) {
 			if( hoverInfo.length() > 0 && hoverInfo.startsWith("(")){
-				LispNode stuff = LispParser.parse(hoverInfo);
-				pres.addStyleRange(new StyleRange(0, stuff.get(0).endOffset+1, 
+				LispNode stuff = LispParser.parse(hoverInfo,true);
+				pres.addStyleRange(new StyleRange(0, Math.min(stuff.endOffset+1,hoverInfo.length()), 
 						null, null, SWT.BOLD));				
 			}
 			return hoverInfo;
