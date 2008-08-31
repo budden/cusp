@@ -191,10 +191,10 @@ public class SBCLImplementation extends LispImplementation {
 			
 			ArrayList<String> commandLine = new ArrayList<String>();
 			commandLine.add(executable.getPath());
-//			commandLine.add("--eval");
-//			commandLine.add(LispUtil.formatPackage(BreakpointAction.macro));
-//			commandLine.add("--eval");
-//			commandLine.add(LispUtil.formatPackage(WatchAction.macro));
+			commandLine.add("--eval");
+			commandLine.add(LispUtil.cleanPackage(BreakpointAction.macro));
+			commandLine.add("--eval");
+			commandLine.add(LispUtil.cleanPackage(WatchAction.macro));
 			commandLine.add("--eval");
 			commandLine.add("\"(require 'asdf)\"");
 			if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
@@ -218,6 +218,7 @@ public class SBCLImplementation extends LispImplementation {
 	 		asdFile = translateLocalFilePath(asdFile);
 	 		String[] fpathparts = asdFile.split("/");
 	 		if( fpathparts.length <= 0 || !fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
+	 			LispPlugin.getDefault().out("=== Error - no project (.asd) file found.");	
 	 			return false;
 	 		}
  			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
@@ -241,12 +242,19 @@ public class SBCLImplementation extends LispImplementation {
 			pb.environment().put("SBCL_HOME", path.getPath());
 			try{
 				LispPlugin.getDefault().out("=== Start Create Exe Log:");
+				LispPlugin.getDefault().out("--- compilation command:");
+				for(String str : cmd){
+					LispPlugin.getDefault().out(str);
+				}
+				LispPlugin.getDefault().out("--- compilation log:");
 				Process p = pb.start();
 			    BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			    String line;
 			    while ((line = is.readLine()) != null){
 					LispPlugin.getDefault().out(line);
 					if( line.contains("[QUIT ") ){ //ended up in debugger
+						p.destroy();
+						LispPlugin.getDefault().out("=== Error.");				
 						return false;
 					}
 			    }
@@ -258,6 +266,7 @@ public class SBCLImplementation extends LispImplementation {
 			}
 		}
 		
+		LispPlugin.getDefault().out("=== Success.");	
 		return true;
 	}
 	
