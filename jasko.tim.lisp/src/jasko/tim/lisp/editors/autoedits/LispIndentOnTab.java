@@ -30,11 +30,17 @@ public class LispIndentOnTab implements IAutoEditStrategy {
 				if( topLvlRange != null ){
 					int offsets[] = 
 						IndentAction.doIndent(topLvlRange[0], topLvlRange[1], d,c.offset);
-					cmdEnd(c,offsets[2]);				
+					cmdEnd(c,offsets[2]);
+				} else { //now try one character before
+					topLvlRange = LispUtil.getTopLevelRange(d, c.offset-1);
+					if( topLvlRange != null ){
+						int offsets[] = 
+							IndentAction.doIndent(topLvlRange[0], topLvlRange[1], d,c.offset);
+						cmdEnd(c,offsets[2]);
+					}					
 				}
 			}
 		}
 		
 	}
-
 }
