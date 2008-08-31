@@ -51,6 +51,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 
 	protected SwankInterface swank;
 	private boolean sentEvalByKeyboard = false;
+	private Listener sashListener;
 	
 	protected Sash replComposite;
 	protected ReplHistory history;
@@ -403,7 +404,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  		sashData.bottom = new FormAttachment (percent, 5);
  		sash.setLayoutData (sashData);
  		// I have to handle this manually? Worst. Splitter. Ever.
- 		Listener sashListener = new Listener () {
+ 		sashListener = new Listener () {
  			public void handleEvent (Event e) {
  				Rectangle sashRect = sash.getBounds ();
  				if( sashRect.height == 0){ //sash is not displayed
@@ -413,28 +414,35 @@ public class ReplView extends ViewPart implements SelectionListener {
  				Rectangle shellRect = notButtons.getClientArea ();
  				
  				int top = shellRect.height - sashRect.height - limit;
- 				if( e.y == 0) { //just check that everything is visible
- 	 				if(sashRect.y <= limit){
- 	 					e.y = limit;
- 	 				} else {
- 	 					e.y = sashRect.y;
- 	 				}
- 	 				if(sashRect.y >= top){
- 	 					e.y = top;
- 	 				} else {
- 	 					e.y = sashRect.y; 	 					
- 	 				}
+ 				
+ 				if( e == null ){
+ 					e = new Event();
+ 					e.y = (shellRect.height*6)/10;
+ 					e.x = 0;
+ 				}
+ 				if( e.y == 0) {
+ 					if( limit <= top){
+ 						if( sashRect.y <= limit ){
+ 							e.y = limit;
+ 						} else if ( sashRect.y >= top ){
+ 							e.y = top;
+ 						} else {
+ 							e.y = sashRect.y;
+ 						}
+ 					} else {
+ 						e.y = limit;
+ 					} 					
  				} else {
- 	 				e.y = Math.max (Math.min (e.y, top), limit); 					
+ 	 				e.y = Math.max(Math.min(e.y, top), limit); 					
  				}
  				if (e.y != sashRect.y)  {
  					sashData.top = new FormAttachment (0, e.y);
  					sashData.bottom = new FormAttachment (0, e.y + 5);
  					notButtons.layout ();
- 				}
+ 				}		
  			}
- 		}; 
- 		sash.addListener (SWT.Selection, sashListener);
+ 		};
+ 		sash.addListener(SWT.Selection,sashListener);
  		
  		parent.addListener(SWT.RESIZE,sashListener);
  		parent.addListener(SWT.Resize,sashListener);
@@ -709,15 +717,15 @@ public class ReplView extends ViewPart implements SelectionListener {
 		pauseButton.setToolTipText("Interrupt execution");
 		
 		
-		clearButton = new Action("Clear Console") {
+		clearButton = new Action("Clear Repl and Reset Sash") {
 			public void run() {
 				history.clear();
+				sashListener.handleEvent(null);
 			}
 		};
 		clearButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.CLEAR));
-		clearButton.setToolTipText("Clear Console");
-		
+		clearButton.setToolTipText("Clear Repl and Reset Sash");
 		
 		stepButton = new Action("Step") {
 			public void run() {
