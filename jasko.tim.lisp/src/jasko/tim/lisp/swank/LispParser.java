@@ -143,7 +143,9 @@ public class LispParser {
   				do {
  					sbtmp.append(lit);
   					++i;
-  					lit = code.charAt(i);
+					if (i < length) {
+						lit = code.charAt(i);
+					}
   				} while (lit != '\n' && i<length);
  				ret.addComment(sbtmp.toString(),i0,i-1,
  						getLineNum(i0,eoffsets),getLineNum(i-1,eoffsets));
@@ -173,7 +175,7 @@ public class LispParser {
   						ret.addComment(sbtmp.toString(),i0,i-1,
   								getLineNum(i0,eoffsets),getLineNum(i-1,eoffsets));
 						
-					} else if (code.charAt(i+1) == '\\' && i < length-2) {
+					} else if (code.charAt(i+1) == '\\' && i < length-3) {
 						int offset = i;
 						sb.append(code.charAt(i));
 						sb.append(code.charAt(i+1));
