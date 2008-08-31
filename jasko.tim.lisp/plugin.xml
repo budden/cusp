@@ -934,11 +934,30 @@
 	
 	<!-- Content Assist -->
 	<extension point="org.eclipse.ui.commands">
+	      <scope
+               name="CuspEditorScope"
+               parent="org.eclipse.ui.textEditorScope"
+               description="scope for key bidings only seen by Cusp editors"
+               id="tim.jasko.lisp.editor.commands">
+         </scope>
 		<command
 			categoryId="jasko.tim.lisp.category1"
 			description="Shows the content-assist popup."
 			id="jasko.tim.lisp.editors.actions.ContentAssistAction"
 			name="Show Lisp Content Assist"/>
+         <command
+              name="More Information"
+               description=""
+               categoryId="org.eclipse.ui.category.edit"
+              id="jasko.tim.lisp.editors.actions.ContentAssistFocus">
+         </command>
+         <keyBinding
+               string="F2"
+               scope="tim.jasko.lisp.editor.commands"
+               command="jasko.tim.lisp.editors.actions.ContentAssistFocus"
+               configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+        </keyBinding>
+
 	</extension>
 	<extension point="org.eclipse.ui.bindings">
 		<key
@@ -961,6 +980,8 @@
 			</action>
 		</editorContribution>
 	</extension>
+	
+	
 	
 	<!-- Parameter Hints -->
 	<extension point="org.eclipse.ui.commands">
