@@ -1,6 +1,7 @@
 package jasko.tim.lisp.editors.autoedits;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.editors.LispPartitionScanner;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.util.LispUtil;
 
@@ -23,18 +24,35 @@ public class PairAutoEdit implements IAutoEditStrategy {
 			DocumentCommand c) {
 		try{
 			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-			if( ("(".equals(c.text) && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS) 
-					&& prefs.getBoolean(PreferenceConstants.PAIR_SMART_BRACKETS) 
-					&& d.getLength() > c.offset && d.getChar(c.offset) == '(')
-			  ||("[".equals(c.text) && d.getLength() > c.offset && d.getChar(c.offset) == '(' 
-				  && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACES) )){
-				String txt = "( " + LispUtil.getCurrentExpression(d, c.offset, 0) + ")";
-				c.text = txt;
-				c.length = txt.length()-3;
-				cmdEnd(c);
-				return;						
+			boolean pairBrackets = prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS);
+			String contentType = d.getContentType(c.offset);
+			if(contentType != LispPartitionScanner.LISP_STRING 
+					&& contentType != LispPartitionScanner.LISP_COMMENT
+					&& d.getLength() > c.offset){
+				boolean pairSmartBrackets = prefs.getBoolean(PreferenceConstants.PAIR_SMART_BRACKETS);
+				boolean pairBraces = prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACES);
+				if( (pairBrackets && pairSmartBrackets && "(".equals(c.text) )
+				  ||(pairBraces && "[".equals(c.text) )){
+					char nextc = d.getChar(c.offset);
+
+					if( !Character.isWhitespace(nextc) && nextc != ')' ){
+						String txt = "";
+						if( nextc == '(' ){
+							txt = LispUtil.getCurrentExpression(d, c.offset, 0);							
+						} else {
+							txt = LispUtil.getCurrentFullWord(d, c.offset);
+						}
+						if( txt != "" ){
+							txt = "( "+txt+")";
+							c.text = txt;
+							c.length = txt.length()-3;
+							cmdEnd(c);
+							return;						
+						}						
+					}
+				}				
 			}
-			if("(".equals(c.text) && prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS)){
+			if("(".equals(c.text) && pairBrackets){
 				c.text = "()";
 				cmdEnd(c);
 				return;

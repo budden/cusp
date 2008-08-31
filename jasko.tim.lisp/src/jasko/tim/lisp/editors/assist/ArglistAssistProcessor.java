@@ -170,8 +170,6 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 						LispPlugin.getDefault().getSwank().getCompletions(variable, 
 								LispUtil.getPackage(viewer.getDocument().get(),offset), TIMEOUT) :
 						LispPlugin.getDefault().getSwank().getCompletions(variable, TIMEOUT));
-				//System.out.println("*results received");
-				// Displaying a completion for something that is already complete is dumb.
 				if (results.length == 1) {
 					if (results[0].equals(variable)) {
 						return null;
