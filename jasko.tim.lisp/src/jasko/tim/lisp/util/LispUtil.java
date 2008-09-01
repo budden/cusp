@@ -121,9 +121,11 @@ public class LispUtil {
 
 		try{
 			if( !ignoreComments && offset < doc.getLength() 
-					&& doc.getPartition(offset)
-					     .getType().equals(LispPartitionScanner.LISP_COMMENT)) {
-				ITypedRegion partition = doc.getPartition(offset); 
+					&& (doc.getPartition(offset)
+					     .getType().equals(LispPartitionScanner.LISP_COMMENT)
+					     || doc.getPartition(offset)
+					     .getType().equals(LispPartitionScanner.LISP_STRING))) {
+				ITypedRegion partition = doc.getPartition(offset);
 				start = partition.getOffset();
 				int length = partition.getLength();
 				return new int[] {start, length};
