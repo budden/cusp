@@ -1,3 +1,21 @@
+2007-03-07  Zach Beane  <xach@gwi.net>
+
+	* Made 0.7.4 release.
+
+	* examples/png.lisp: Remove some work-in-progress cruft.
+
+2007-03-06  Zach Beane  <xach@gwi.net>
+
+	* Made 0.7.3 release.
+
+	* deflate-stream-interface.lisp (string-to-octets): Use
+	custom:*default-file-encoding* when converting a string to octets
+	on CLISP.
+
+	* zlib.lisp (zlib-write-string): Don't bypass zlib-write-sequence;
+	it's where the adler32 checksum is maintained. Thanks to Jason
+	S. Cornez for noticing the bug.
+
 2005-04-28  Zach Beane  <xach@xach.com>
 
 	* Made 0.7.2 release.

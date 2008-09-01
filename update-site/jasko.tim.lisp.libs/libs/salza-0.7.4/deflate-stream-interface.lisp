@@ -29,7 +29,7 @@
 ;;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;; 
-;;; $Id: deflate-stream-interface.lisp,v 1.10 2005/03/23 19:55:20 xach Exp $
+;;; $Id: deflate-stream-interface.lisp,v 1.11 2006/02/03 15:34:33 xach Exp $
 
 (in-package :salza-deflate)
 
@@ -74,7 +74,8 @@ next octet to DEFLATE-STREAM."
   #+(and allegro (not octet-characters))
   (excl:string-to-octets string :start start :end end :null-terminate nil)
   #+(and clisp (not octet-characters))
-  (ext:convert-string-to-bytes string charset:ascii :start start :end end)
+  (ext:convert-string-to-bytes string custom:*default-file-encoding*
+                               :start start :end end)
   #+(or octet-characters lispworks)
   (let* ((length (- end start))
          (result (make-array length :element-type 'octet)))

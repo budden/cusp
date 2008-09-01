@@ -1,6 +1,7 @@
 (defpackage :archive
-  (:use :cl  #+(and lispworks (not win32)) :sys)
-  (:export #:archive                    ; type
+  (:use :cl #+(and lispworks (not win32)) :sys)
+  (:export ;; types
+           #:archive #:tar-archive #:odc-cpio-archive #:svr4-cpio-archive
 
            ;; creating
            #:open-archive #:close-archive
@@ -8,6 +9,14 @@
            ;; entry slot readers
            #:name
            #:entry-stream
+
+           ;; entry tests
+           #:entry-directory-p
+           #:entry-regular-file-p
+           #:entry-symbolic-link-p
+           #:entry-character-device-p
+           #:entry-block-device-p
+           #:entry-fifo-p
 
            ;; reading archives
            #:read-entry-from-archive

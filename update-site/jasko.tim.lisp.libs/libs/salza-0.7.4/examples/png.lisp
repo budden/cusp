@@ -14,7 +14,7 @@
 ;;; (write-png png "example.png")
 ;;;
 ;;;
-;;; $Id: png.lisp,v 1.3 2005/03/19 03:39:46 xach Exp $
+;;; $Id: png.lisp,v 1.5 2007/03/07 16:08:33 xach Exp $
 
 (defpackage :png
   (:use :cl :salza :salza-deflate)
@@ -103,7 +103,10 @@ data size SIZE."
   (* scanline (rowstride png)))
 
 (defmethod write-png-header (png stream)
-  (write-sequence #(137 80 78 71 13 10 26 10) stream))
+  (let ((header (make-array 8
+                            :element-type '(unsigned-byte 8)
+                            :initial-contents '(137 80 78 71 13 10 26 10))))
+    (write-sequence header stream)))
 
 (defvar *color-types*
   '((:grayscale . 0)

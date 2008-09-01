@@ -9,14 +9,9 @@ writing archives at this point.
 * Improving extraction
 
 Extraction really only supports plain files.  Directories, at the very
-least, should be support.  Symbolic and hard links would be good.
+least, should be supported.  Symbolic and hard links would be good.
 Better restoration of metadata (keyword arguments to the EXTRACT-ENTRY
 call) would also be desirable.
-
-* Robustified generic functions
-
-You shouldn't be able to read entries from an archive that's only for
-writing.  And vice versa.
 
 * Make buffering conform to the POSIX standard
 

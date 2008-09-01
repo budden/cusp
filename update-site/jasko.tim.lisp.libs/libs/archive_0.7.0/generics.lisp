@@ -1,6 +1,28 @@
 (in-package :archive)
 
 
+(defgeneric (setf name) (value entry)
+  (:documentation "Sets the name of ENTRY to VALUE."))
+
+(defgeneric entry-regular-file-p (entry)
+  (:documentation "Returns T if ENTRY denotes a regular file."))
+
+(defgeneric entry-directory-p (entry)
+  (:documentation "Returns T if ENTRY denotes a directory."))
+
+(defgeneric entry-symbolic-link-p (entry)
+  (:documentation "Returns T if ENTRY denotes a symbolic link."))
+
+(defgeneric entry-character-device-p (entry)
+  (:documentation "Returns T if ENTRY denotes a character device."))
+
+(defgeneric entry-block-device-p (entry)
+  (:documentation "Returns T if ENTRY denotes a block device."))
+
+(defgeneric entry-fifo-p (entry)
+  (:documentation "Returns T if ENTRY denotes a fifo."))
+
+
 ;;; reading
 
 (defgeneric read-entry-from-archive (archive)
@@ -28,11 +50,13 @@ STREAM."))
 metadata and the name of FILENAME."))
 
 (defgeneric write-entry-to-archive (archive entry
-                                            &key write-file-data)
-  (:documentation "Write ENTRY and, if WRITE-FILE DATA is true,
-its associated data into ARCHIVE.  The associated data for ENTRY
-is expected to exist in the pathname returned by the expression
-(NAME ENTRY)."))
+                                            &key stream)
+  (:documentation "Write ENTRY to ARCHIVE.  Data associated with ENTRY
+is written to ARCHIVE according to the :STREAM argument.  If :STREAM is
+T, the expression (NAME ENTRY) is expected to refer to an existing file
+from which data may be read.  If :STREAM is a stream, then data is read
+from that strema and written to ARCHIVE.  If :STREAM is NIL, then no
+entry data is written."))
 
 (defgeneric write-entry-to-buffer (entry buffer &optional start)
   (:documentation "Write the information associated with ENTRY into BUFFER,
