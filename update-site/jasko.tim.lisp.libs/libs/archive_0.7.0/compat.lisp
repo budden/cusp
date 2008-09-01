@@ -3,10 +3,58 @@
 (in-package :archive)
 
 (defconstant +permissions-mask+ 
-  #+sbcl (logior sb-posix:s-irusr sb-posix:s-iwusr sb-posix:s-ixusr
-                 sb-posix:s-irgrp sb-posix:s-iwgrp sb-posix:s-ixgrp
-                 sb-posix:s-iroth sb-posix:s-iwoth sb-posix:s-ixoth)
-  #-sbcl 511)
+  #+use-sb-posix (logior sb-posix:s-irusr sb-posix:s-iwusr sb-posix:s-ixusr
+			 sb-posix:s-irgrp sb-posix:s-iwgrp sb-posix:s-ixgrp
+			 sb-posix:s-iroth sb-posix:s-iwoth sb-posix:s-ixoth)
+  #-use-sb-posix 511)
+
+;;; SYSTEM:GET-FILE-STAT is standard on Lispworks/Unix, but isn't
+;;; available on Windows.  We provide our own here.
+#+(and lispworks win32)
+(progn
+(fli:define-foreign-function (c-stat "_stat")
+    ((path :pointer)
+     (struct-buf :pointer))
+  :result-type :int)
+
+;;FIXME: I don't think all this info is correct
+;;       it might be better to define all the sub structures like dev_t
+(fli:define-c-struct _stat
+  (dev :unsigned-long)
+  (ino :short)
+  (mode :unsigned-short)
+  (nlink :short)
+  (uid :short)
+  (gid :short)
+  (rdev :int)
+  (size :long)
+  (atime :long); ??
+  (mtime :long); ??
+  (ctime :long); ??
+  (blksize :long)
+  (blocks :long)
+  (attr :long))
+
+(defstruct file-stat
+  inode device owner-id group-id size blocks mode last-access last-change
+  last-modify links device-type)
+
+(defun convert-to-lisp-struct (stat)
+  (fli:with-foreign-slots (dev ino mode nlink uid gid rdev size
+                               atime mtime ctime blksize blocks attr)
+      stat
+    (make-file-stat :inode ino :device dev :owner-id uid :group-id gid
+                    :size size :blocks blocks :mode mode
+                    :last-access atime :last-change ctime :last-modify mtime
+                    :links nlink :device-type rdev)))
+
+(defun get-file-stat (file)
+  (when (probe-file file)
+    (fli:with-dynamic-foreign-objects ()
+      (let ((stat (fli:allocate-dynamic-foreign-object :type '_stat)))
+        (c-stat (fli:convert-to-foreign-string (namestring file)) stat)
+        (convert-to-lisp-struct stat)))))
+) ; PROGN
 
 ;;; CMUCL returns multiple values from UNIX:UNIX-STAT.  We need to
 ;;; package these up into something to which we can repeatedly reference.
@@ -29,16 +77,27 @@
    (gen :initarg :gen :reader gen)))
 
 (defun stat (file)
-  (let ((file (merge-pathnames file)))
-    #+sbcl (sb-posix:stat file)
-    #+lispworks (get-file-stat file)
-    #+clisp (posix:file-stat file)
-    #+cmucl (multiple-value-bind (successp dev ino mode nlink uid gid
+  ;; Allow passing file descriptors, too.
+  (let ((file (if (integerp file) file (merge-pathnames file))))
+    #+sbcl
+    (if (integerp file)
+        (sb-posix:fstat file)
+        (sb-posix:stat file))
+    #+lispworks
+    (if (integerp file)
+        #+unix (get-file-stat file) #-unix (error "stat'ing file descriptions not supported on win32")
+        (get-file-stat file))
+    #+clisp
+    (if (integerp file)
+        #+unix (posix:file-stat file) #-unix (error "stat'ing file descriptions not supported on win32")
+        (posix:file-stat file))
+    #+cmucl
+    (multiple-value-bind (successp dev ino mode nlink uid gid
                                            rdev atime mtime ctime size
                                            blocks blksize flags gen)
-                (unix:unix-stat file)
-              (unless successp
-                (error "Could not get information on ~A" file))
+        (if (integerp file) (unix:unix-fstat file) (unix:unix-stat file))
+      (unless successp
+        (error "Could not get information on ~A" file))
               (make-instance 'stat
                              :dev dev :ino ino :mode mode :nlink nlink
                              :uid uid :gid gid :rdev rdev

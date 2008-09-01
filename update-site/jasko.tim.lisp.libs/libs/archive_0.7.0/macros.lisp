@@ -79,31 +79,6 @@
                           ,slot-definitions
                           (:default-initargs ,@default-initargs))))))))
 
-#|
-(defmacro with-open-archive ((archive-var pathname
-                                          &key (direction :input)
-                                          (if-exists nil)
-                                          (if-does-not-exist nil)
-                                          (archive-type 'tar-archive)) &body body)
-  (when (or (eq direction :io) (eq direction :probe))
-    (error "Cannot open archives in direction ~A" direction))
-  (let ((stream-var (gensym)))
-    `(let ((,archive-var nil))
-       (unwind-protect
-            (with-open-file (,stream-var ,pathname :direction ,direction
-                                         ,@(when if-exists
-                                            `(:if-exists ,if-exists))
-                                         ,@(when if-does-not-exist
-                                            `(:if-does-not-exist ,if-does-not-exist))
-                                         :element-type '(unsigned-byte 8))
-              (setf ,archive-var (open-archive ',archive-type
-                                               ,stream-var))
-              ,@body)
-         (when ,archive-var
-           (close-archive ,archive-var)
-           (setf ,archive-var nil))))))
-|#
-
 (defmacro with-open-archive ((archive-var pathname
                                           &key (direction :input)
                                           (if-exists nil)
@@ -128,8 +103,9 @@
                              :element-type '(unsigned-byte 8))
                        ,gpath))
              (setf ,archive-var (open-archive ',archive-type
-                                              ,stream-var))
-             (multiple-value-prog1 
+                                              ,stream-var
+                                              :direction ,direction))
+             (multiple-value-prog1
                  (progn ,@body)
                (setf ,gabort nil)))
          (when ,archive-var
@@ -144,10 +120,8 @@
 an ARCHIVE-ENTRY representing the entry.  RESULT is used as in DOTIMES."
   (let ((archive-var (gensym)))
     `(let ((,archive-var ,archive))
-       (do ((,entry (read-entry-from-archive ,archive-var)
-                    (read-entry-from-archive ,archive-var)))
-           ((null ,entry) ,result)
-         ,@body
-         (discard-entry ,archive-var ,entry)))))
-
-
+      (do ((,entry (read-entry-from-archive ,archive-var)
+                   (read-entry-from-archive ,archive-var)))
+          ((null ,entry) ,result)
+        ,@body
+        (discard-entry ,archive-var ,entry)))))

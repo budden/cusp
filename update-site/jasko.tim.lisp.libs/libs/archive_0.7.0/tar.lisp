@@ -53,12 +53,12 @@
 (defconstant +tar-regular-file+ (char-code #\0))
 ;;; backwards compatibility
 (defconstant +tar-regular-alternate-file+ 0)
-(defconstant +tar-hard-link-file+ (char-code #\1))
-(defconstant +tar-symbolic-file-file+ (char-code #\2))
-(defconstant +tar-character-special-file+ (char-code #\3))
-(defconstant +tar-block-special-file+ (char-code #\4))
+(defconstant +tar-hard-link+ (char-code #\1))
+(defconstant +tar-symbolic-link+ (char-code #\2))
+(defconstant +tar-character-device+ (char-code #\3))
+(defconstant +tar-block-device+ (char-code #\4))
 (defconstant +tar-directory-file+ (char-code #\5))
-(defconstant +tar-fifo-special-file+ (char-code #\6))
+(defconstant +tar-fifo-device+ (char-code #\6))
 (defconstant +tar-implementation-specific-file+ (char-code #\7))
 
 ;;; non-standard typeflags
@@ -110,7 +110,11 @@
 (defun read-number-from-buffer (buffer &key (start 0) end (radix 10))
   (declare (type (simple-array (unsigned-byte 8) (*)) buffer))
   (declare (type (integer 2 36) radix))
-  (let ((end (or (position 0 buffer :start start :end end)
+  (let ((end (or (position-if #'(lambda (b)
+                                  ;; For BSD tar, a number can end with
+                                  ;; a space or a null byte.
+                                  (or (= b +ascii-space+) (zerop b)))
+                              buffer :start start :end end)
                  end
                  (length buffer))))
     (unless (<= 0 start end (length buffer))
@@ -123,9 +127,6 @@
                    (* base (- byte +ascii-zero+)))
                   ((<= +ascii-a+ byte +ascii-z+)
                    (* base (+ 10 (- byte +ascii-a+))))
-                  ;; experimental
-                  ((= byte +ascii-space+)
-                   0)
                   (t (error "Invalid byte: ~A in ~A"
                             byte (subseq buffer start end))))))))
 
@@ -165,9 +166,33 @@
                  (concatenate '(vector (unsigned-byte 8))
                               prefix (%name entry))))))
 
+(defmethod (setf name) (value (entry tar-entry))
+  ;;; FIXME: need to handle `PREFIX' correctly too.
+  (setf (%name entry)
+        (funcall *string-to-bytevec-conversion-function* value))
+  value)
+
 (defmethod print-object ((entry tar-entry) stream)
   (print-unreadable-object (entry stream)
     (format stream "Tar-Entry ~A" (name entry))))
+
+(defmethod entry-regular-file-p ((entry tar-entry))
+  (eql (typeflag entry) +tar-regular-file+))
+
+(defmethod entry-directory-p ((entry tar-entry))
+  (eql (typeflag entry) +tar-directory-file+))
+
+(defmethod entry-symbolic-link-p ((entry tar-entry))
+  (eql (typeflag entry) +tar-symbolic-link+))
+
+(defmethod entry-character-device-p ((entry tar-entry))
+  (eql (typeflag entry) +tar-character-device+))
+
+(defmethod entry-block-device-p ((entry tar-entry))
+  (eql (typeflag entry) +tar-block-device+))
+
+(defmethod entry-fifo-p ((entry tar-entry))
+  (eql (typeflag entry) +tar-fifo-device+))
 
 ;;; archives
 
@@ -211,18 +236,20 @@
           finally (return-from null-block-p t))))
 
 (defparameter *modefuns-to-typeflags*
-  #+sbcl (list (cons #'sb-posix::s-isreg +tar-regular-file+)
-               (cons #'sb-posix::s-isdir +tar-directory-file+)
-               (cons #'sb-posix::s-ischr +tar-character-special-file+)
-               (cons #'sb-posix::s-isblk +tar-block-special-file+)
-               (cons #'sb-posix::s-isfifo +tar-fifo-special-file+)
-               (cons #'sb-posix::s-islnk +tar-symbolic-file-file+))
-  #-sbcl (list (cons 'isreg +tar-regular-file+)
-               (cons 'isdir +tar-directory-file+)
-               (cons 'ischarfile +tar-character-special-file+)
-               (cons 'isblockfile +tar-block-special-file+)
-               (cons 'isfifo +tar-fifo-special-file+)
-               (cons 'islink +tar-symbolic-file-file+)))
+  #+use-sb-posix
+  (list (cons #'sb-posix::s-isreg +tar-regular-file+)
+	(cons #'sb-posix::s-isdir +tar-directory-file+)
+	(cons #'sb-posix::s-ischr +tar-character-device+)
+	(cons #'sb-posix::s-isblk +tar-block-device+)
+	(cons #'sb-posix::s-isfifo +tar-fifo-device+)
+	(cons #'sb-posix::s-islnk +tar-symbolic-link+))
+  #-use-sb-posix
+  (list (cons 'isreg +tar-regular-file+)
+	(cons 'isdir +tar-directory-file+)
+	(cons 'ischarfile +tar-character-device+)
+	(cons 'isblockfile +tar-block-device+)
+	(cons 'isfifo +tar-fifo-device+)
+	(cons 'islink +tar-symbolic-link+)))
 
 (defun typeflag-for-mode (mode)
   (loop for (modefun . typeflag) in *modefuns-to-typeflags*
@@ -337,15 +364,18 @@
 (defmethod extract-entry ((archive tar-archive) (entry tar-entry))
   ;; FIXME: this is potentially bogus
   (let ((name (merge-pathnames (name entry) *default-pathname-defaults*)))
-    (unless (or (= (typeflag entry) +tar-regular-file+)
-                (= (typeflag entry) +tar-directory-file+))
-      (error "Don't know how to extract a type ~A tar entry yet" 
-             (typeflag entry)))
-    (ensure-directories-exist name)
-    (unless (= (typeflag entry) +tar-directory-file+)
-      (with-open-file (stream name :direction :output
-                              :element-type '(unsigned-byte 8))
-        (transfer-entry-data-to-stream archive entry stream)))))
+    (cond
+      ((= (typeflag entry) +tar-directory-file+)
+       (ensure-directories-exist name))
+      ((= (typeflag entry) +tar-regular-file+)
+       (ensure-directories-exist name)
+       (with-open-file (stream name :direction :output
+                               :if-exists :supersede
+                               :element-type '(unsigned-byte 8))
+         (transfer-entry-data-to-stream archive entry stream)))
+      (t
+       (error "Don't know how to extract a type ~A tar entry yet" 
+              (typeflag entry))))))
 
 (defmethod transfer-entry-data-to-stream ((archive tar-archive)
                                           (entry tar-entry)
@@ -356,36 +386,31 @@
   (discard-unused-entry-data archive entry #'round-up-to-tar-block))
 
 
+(defun transfer-stream-to-archive (archive stream)
+  (with-slots (file-buffer (archive-stream stream)) archive
+    (do ((bytes-read (read-sequence file-buffer stream)
+                     (read-sequence file-buffer stream))
+         (total-bytes 0 (+ total-bytes bytes-read))
+         (length (length file-buffer)))
+        ((< bytes-read length)
+         (let* ((rounded-length (round-up-to-tar-block bytes-read))
+                (total-bytes (+ total-bytes bytes-read))
+                (rounded-bytes (round-up-to-tar-block total-bytes )))
+           (fill file-buffer 0 :start bytes-read :end rounded-length)
+           (incf (bytes-output archive) (+ rounded-bytes +tar-header-length+))
+           (write-sequence file-buffer archive-stream
+                           :end rounded-length)
+           (values)))
+      (write-sequence file-buffer archive-stream))))
+
 ;;; writing entries in various guises
-(defmethod write-entry-to-archive ((archive tar-archive)
-                                   (archive-entry tar-entry)
-                                   &key write-file-data)
-  (declare (ignore write-file-data))    ; hack
+(defmethod write-entry-to-archive :before ((archive tar-archive)
+                                           (archive-entry tar-entry)
+                                           &key stream)
+  (declare (ignore stream))
   (unless (= (typeflag archive-entry) +tar-regular-file+)
     (error "Don't know how to write entries of type ~A yet"
-           (typeflag archive-entry)))
-  (with-slots (entry-buffer file-buffer
-                            (archive-stream stream)) archive
-    (write-entry-to-buffer archive-entry entry-buffer 0)
-    (write-sequence entry-buffer archive-stream)
-
-    (with-open-file (stream (name archive-entry) :direction :input
-                            :element-type '(unsigned-byte 8)
-                            :if-does-not-exist :error)
-      (do ((bytes-read (read-sequence file-buffer stream)
-                       (read-sequence file-buffer stream))
-           (total-bytes 0 (+ total-bytes bytes-read))
-           (length (length file-buffer)))
-          ((< bytes-read length)
-           (let* ((rounded-length (round-up-to-tar-block bytes-read))
-                  (total-bytes (+ total-bytes bytes-read))
-                  (rounded-bytes (round-up-to-tar-block total-bytes )))
-             (fill file-buffer 0 :start bytes-read :end rounded-length)
-             (incf (bytes-output archive) (+ rounded-bytes +tar-header-length+))
-             (write-sequence file-buffer archive-stream
-                             :end rounded-length)
-             (values)))
-        (write-sequence file-buffer archive-stream)))))
+           (typeflag archive-entry))))
 
 (defmethod finalize-archive ((archive tar-archive))
   (let ((null-block (make-array +tar-n-record-bytes+
@@ -407,5 +432,5 @@
   (with-open-archive (archive pathname :direction :output
                               :if-exists :supersede)
     (dolist (file filelist (finalize-archive archive))
-      (let ((entry (create-tar-entry-from-pathname file)))
+      (let ((entry (create-entry-from-pathname archive file)))
         (write-entry-to-archive archive entry)))))

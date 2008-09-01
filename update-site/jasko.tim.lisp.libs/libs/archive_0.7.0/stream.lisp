@@ -9,6 +9,10 @@
 (defun make-bounded-stream (stream size)
   (make-instance 'bounded-input-stream :stream stream :bytes size))
 
+#+nil
+(defmethod trivial-gray-streams:stream-element-type ((stream bounded-input stream))
+  '(unsigned-byte 8))
+
 (defmethod trivial-gray-streams:stream-read-byte ((stream bounded-input-stream))
   (if (zerop (n-bytes-remaining stream))
       :eof

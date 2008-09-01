@@ -31,7 +31,7 @@
 ;;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;; 
-;;; $Id: zlib.lisp,v 1.15 2005/04/05 19:53:27 xach Exp $
+;;; $Id: zlib.lisp,v 1.16 2007/03/06 19:07:37 xach Exp $
 
 
 (in-package :salza)
@@ -177,7 +177,8 @@ a function that raises a continuable ZLIB-BUFFER-FULL error is used."
 
 (defun zlib-write-string (string zlib-stream)
   "Write the octet representation of STRING to ZLIB-STREAM."
-  (deflate-write-string string (zlib-stream-deflate-stream zlib-stream)))
+  (zlib-write-sequence (deflate::string-to-octets string 0 (length string))
+                       zlib-stream))
 
 (defun finish-zlib-stream (zlib-stream)
   "Conclude output to the zlib-stream, writing the terminating code

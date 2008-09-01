@@ -1,3 +1,4 @@
+;;;; cpio.lisp -- support for reading cpio archives
 (in-package :archive)
 
 ;;; values for cpio's `mode' field
@@ -35,25 +36,37 @@
 
 (defmethod initialize-instance :after ((instance odc-cpio-archive) &rest initargs)
   (declare (ignore initargs))
-  (initialize-entry-buffer instance +odc-header-length+))
+  (initialize-entry-buffer instance +odc-cpio-header-length+))
 
 (defclass svr4-cpio-archive (cpio-archive) ())
 
 (defmethod initialize-instance :after ((instance svr4-cpio-archive) &rest initargs)
   (declare (ignore initargs))
-  (initialize-entry-buffer instance +svr4-header-length+))
+  (initialize-entry-buffer instance +svr4-cpio-header-length+))
 
-(defmethod name ((entry svr4-cpio-entry))
+(defmethod name ((entry cpio-entry))
   (funcall *bytevec-to-string-conversion-function* (%name entry)))
 
-(defmethod name ((entry odc-cpio-entry))
-  (funcall *bytevec-to-string-conversion-function* (%name entry)))
-
-(defmethod size ((entry svr4-cpio-entry))
+(defmethod size ((entry cpio-entry))
   (filesize entry))
 
-(defmethod size ((entry odc-cpio-entry))
-  (filesize entry))
+(defmethod entry-regular-file-p ((entry cpio-entry))
+  (isreg (mode entry)))
+
+(defmethod entry-directory-p ((entry cpio-entry))
+  (isdir (mode entry)))
+
+(defmethod entry-symbolic-link-p ((entry cpio-entry))
+  (islink (mode entry)))
+
+(defmethod entry-character-device-p ((entry cpio-entry))
+  (ischarfile (mode entry)))
+
+(defmethod entry-block-device-p ((entry cpio-entry))
+  (isblockfile (mode entry)))
+
+(defmethod entry-fifo-p ((entry cpio-entry))
+  (isfifo (mode entry)))
 
 (defmethod create-entry-from-pathname ((archive svr4-cpio-archive) pathname)
   (let ((namestring (namestring pathname))
@@ -89,7 +102,7 @@
 (defmethod read-entry-from-archive ((archive odc-cpio-archive))
   (let ((entry-block (read-entry-block archive)))
     (when (mismatch *odc-cpio-magic-vector* entry-block
-                    :start2 0 :end2 +odc-header-magic-length+)
+                    :start2 0 :end2 +odc-cpio-header-magic-length+)
       (error "Magic field for entry is invalid"))
     (with-extracted-fields (odc-cpio-header entry-block 0
                                            dev inode mode uid gid
@@ -119,7 +132,7 @@
 (defmethod read-entry-from-archive ((archive svr4-cpio-archive))
   (let ((entry-block (read-entry-block archive)))
     (when (mismatch *svr4-nocrc-cpio-magic-vector* entry-block
-                    :start2 0 :end2 +svr4-header-magic-length+)
+                    :start2 0 :end2 +svr4-cpio-header-magic-length+)
       (error "Magic field for entry is invalid"))
     (with-extracted-fields (svr4-cpio-header entry-block 0
                                             mode uid gid mtime
@@ -159,45 +172,48 @@
   (transfer-entry-data-to-stream* archive entry stream
                                   #'round-up-cpio-entry-data))
 
+
+;;; writing cpio archives
+
 ;;; these need a little work, as it may not be acceptable to simply blit
 ;;; the name into the buffer.  this method will likely have to take the
 ;;; archive as a parameter one day.
 (defmethod write-entry-to-buffer ((entry odc-cpio-entry) buffer
                                   &optional (start 0))
-  (fill buffer 0 :start start :end (+ start +odc-header-length+))
+  (fill buffer 0 :start start :end (+ start +odc-cpio-header-length+))
 
-  (odc-header-write-magic-to-buffer buffer start *odc-cpio-magic-vector*)
-  (odc-header-write-mode-to-buffer buffer start (mode entry))
-  (odc-header-write-uid-to-buffer buffer start (uid entry))
-  (odc-header-write-gid-to-buffer buffer start (gid entry))
-  (odc-header-write-nlink-to-buffer buffer start (nlink entry))
-  (odc-header-write-namesize-to-buffer buffer start (namesize entry))
-  (odc-header-write-filesize-to-buffer buffer start (filesize entry))
+  (odc-cpio-header-write-magic-to-buffer buffer start *odc-cpio-magic-vector*)
+  (odc-cpio-header-write-mode-to-buffer buffer start (mode entry))
+  (odc-cpio-header-write-uid-to-buffer buffer start (uid entry))
+  (odc-cpio-header-write-gid-to-buffer buffer start (gid entry))
+  (odc-cpio-header-write-nlink-to-buffer buffer start (nlink entry))
+  (odc-cpio-header-write-namesize-to-buffer buffer start (namesize entry))
+  (odc-cpio-header-write-filesize-to-buffer buffer start (filesize entry))
 
-  (replace buffer (%name entry) :start1 (+ start +odc-header-length+)))
+  (replace buffer (%name entry) :start1 (+ start +odc-cpio-header-length+)))
 
 (defmethod finalize-archive ((archive odc-cpio-archive))
   (let ((entry (make-instance 'odc-cpio-entry
                               :nlink 1
                               :name *cpio-trailer*)))
-    (write-entry-to-archive archive entry)))
+    (write-entry-to-archive archive entry :stream nil)))
 
 (defmethod write-entry-to-buffer ((entry svr4-cpio-entry) buffer
                                   &optional (start 0))
-  (fill buffer 0 :start start :end (+ start +svr4-header-length+))
+  (fill buffer 0 :start start :end (+ start +svr4-cpio-header-length+))
 
-  (svr4-header-write-magic-to-buffer buffer start *svr4-nocrc-cpio-magic-vector*)
-  (svr4-header-write-mode-to-buffer buffer start (mode entry))
-  (svr4-header-write-uid-to-buffer buffer start (uid entry))
-  (svr4-header-write-gid-to-buffer buffer start (gid entry))
-  (svr4-header-write-nlink-to-buffer buffer start (nlink entry))
-  (svr4-header-write-namesize-to-buffer buffer start (namesize entry))
-  (svr4-header-write-filesize-to-buffer buffer start (filesize entry))
+  (svr4-cpio-header-write-magic-to-buffer buffer start *svr4-nocrc-cpio-magic-vector*)
+  (svr4-cpio-header-write-mode-to-buffer buffer start (mode entry))
+  (svr4-cpio-header-write-uid-to-buffer buffer start (uid entry))
+  (svr4-cpio-header-write-gid-to-buffer buffer start (gid entry))
+  (svr4-cpio-header-write-nlink-to-buffer buffer start (nlink entry))
+  (svr4-cpio-header-write-namesize-to-buffer buffer start (namesize entry))
+  (svr4-cpio-header-write-filesize-to-buffer buffer start (filesize entry))
 
-  (replace buffer (%name entry) :start1 (+ start +svr4-header-length+)))
+  (replace buffer (%name entry) :start1 (+ start +svr4-cpio-header-length+)))
 
 (defmethod finalize-archive ((archive svr4-cpio-archive))
   (let ((entry (make-instance 'svr4-cpio-entry
                               :nlink 1
                               :name *cpio-trailer*)))
-    (write-entry-to-archive archive entry)))
+    (write-entry-to-archive archive entry :stream nil)))

@@ -6,6 +6,9 @@
   ((stream :initform nil)
    (data-discarded-p :accessor data-discarded-p :initform nil)))
 
+(defclass cpio-entry (archive-entry)
+  ())
+
 (define-octet-header odc-cpio-header
     (magic 6 :octnum)
   (dev 6 :octnum)
@@ -19,7 +22,7 @@
   (namesize 6 :octnum)
   (filesize 11 :octnum))
 
-(defclass odc-cpio-entry (archive-entry odc-cpio-header)
+(defclass odc-cpio-entry (cpio-entry odc-cpio-header)
   ((%name :initarg :name :reader %name)))
 
 (define-octet-header svr4-cpio-header
@@ -38,7 +41,7 @@
   (namesize 8 :hexnum)
   (crc 8 :hexnum))
 
-(defclass svr4-cpio-entry (archive-entry svr4-cpio-header)
+(defclass svr4-cpio-entry (cpio-entry svr4-cpio-header)
   ((%name :initarg :name :reader %name)))
 
 ;;; definitions taken from the FreeBSD 5.1 manpage
