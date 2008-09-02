@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
-<plugin>
+<plugin
+>
 
 			<!-- Lisp Perspective -->
 	<extension point="org.eclipse.ui.perspectives">
@@ -12,7 +13,34 @@
         name="Lisp">
 		</perspective>
 	</extension>
-	
+
+   <!-- Launcher -->	
+	<extension
+	      point="org.eclipse.debug.core.launchConfigurationTypes">
+	   <launchConfigurationType
+	         delegate="jasko.tim.lisp.swank.launcher.LispLaunchDelegate"
+	         id="jasko.tim.lisp.launchType"
+	         modes="run, debug"
+	         name="Lisp Executable">
+	   </launchConfigurationType>
+	</extension>
+ <extension
+       point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+    <launchConfigurationTypeImage
+          configTypeID="jasko.tim.lisp.launchType"
+          icon="icons/exec-lisp.gif"
+          id="jasko.tim.lisp.launchImage">
+    </launchConfigurationTypeImage>
+ </extension>
+ <extension
+       point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+    <launchConfigurationTabGroup
+          class="jasko.tim.lisp.swank.launcher.LispLaunchTabGroup"
+          id="jasko.tim.lisp.launchTabGroup"
+          type="jasko.tim.lisp.launchType">
+    </launchConfigurationTabGroup>
+ </extension>
+
 	
 
 	<!-- Builder for lisp files -->
@@ -23,9 +51,8 @@
 			<run class="jasko.tim.lisp.builder.LispBuilder"/>
 		</builder>
 	</extension>
- 
- 
- 
+	
+	
 	<!-- Lisp Project Nature -->
 	<extension point="org.eclipse.core.resources.natures"
 		id="lispNature"
@@ -1554,6 +1581,6 @@
 	          contentMergeViewerId="jasko.tim.lisp.views.LispContentViewerCreator">
      </contentTypeBinding>               
  </extension>
-
+ 
 
 </plugin>

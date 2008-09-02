@@ -25,7 +25,7 @@ import org.osgi.framework.BundleContext;
  */
 public class LispPlugin extends AbstractUIPlugin {
 	
-	private SwankInterface swank; 
+	private SwankInterface swank = null;
 	
 	//The shared instance.
 	private static LispPlugin plugin;
@@ -34,6 +34,8 @@ public class LispPlugin extends AbstractUIPlugin {
     private static String RELEASE_DATE = "0000.00.00";
     
     private static String CONSOLE_NAME = "jasko.tim.lisp.console";
+
+	public static final String ATTR_LISP_EXE = "jasko.tim.lisp" + ".ATTR_LISP_EXE";
 	
 	/**
 	 * The constructor.
@@ -50,7 +52,8 @@ public class LispPlugin extends AbstractUIPlugin {
 		cm =  new ColorManager(this);
 		
 		try {
-			swank = new SwankInterface();
+			startSwank(); //FIXME: do this with launcher rather on startup
+
 			Properties props = new Properties();
 			
 			InputStream in = LispPlugin.class.getResourceAsStream("/cusp.properties");
@@ -62,6 +65,15 @@ public class LispPlugin extends AbstractUIPlugin {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public boolean startSwank(){
+		if( swank == null || !swank.isConnected() ){
+			swank = new SwankInterface();			
+		} else { //disconnect if already running and connect again.
+			swank.reconnect();
+		}
+		return ( swank != null && swank.isConnected() );
 	}
 	
 	public SwankInterface getSwank() {

@@ -44,9 +44,9 @@ C:\sbcl\bin\sbcl.exe --load "C:/slime/swank-loader.lisp" --eval "(swank:create-s
 public class SwankInterface {
 	
 	public LispImplementation implementation;
-	 	
+
 	/** Port of the Swank server */
-	private static Integer port = 4004;
+	public static Integer port = 4004;
 	
 	private Socket echoSocket = null;
 	private Socket secondary = null;
@@ -55,19 +55,19 @@ public class SwankInterface {
 	private int messageNum = 1;
 	
 	/** Holds whether we are connected to Swank. */
-	private boolean connected = false;
-	private String currPackage = "COMMON-LISP-USER";
+	public boolean connected = false;
+	public String currPackage = "COMMON-LISP-USER";
 	private String lispVersion = "(NO CL IMPLEMENTATION)";
 	private String lastTestPackage = "nil";
-	
+
 	public String getCurrPackage() {
 		return currPackage;
 	}
-	
+
 	public String getlastTestPackage() {
 		return lastTestPackage;
 	}
-	
+
 	private boolean ranafterLispStart = false;
 	
 	public boolean ranAfterLispStart(){
