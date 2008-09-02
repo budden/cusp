@@ -46,6 +46,7 @@ public class LispImages {
 	public static final String BACKWARD_NAV = "backward-nav";
 	public static final String RUN_TESTS = "run-tests";
 	public static final String STEP = "step";
+	public static final String EXEC = "exec";
 
 	static {
 		ImageRegistry imageReg = LispPlugin.getDefault().getImageRegistry();
@@ -94,6 +95,7 @@ public class LispImages {
 		
 		imageReg.put(LispImages.STEP, loadImageDescriptor("step.gif"));
 		imageReg.put(LispImages.RUN_TESTS, loadImageDescriptor("run-tests.gif"));
+		imageReg.put(LispImages.EXEC, loadImageDescriptor("exec-lisp.gif"));
 		
 	}
 	
