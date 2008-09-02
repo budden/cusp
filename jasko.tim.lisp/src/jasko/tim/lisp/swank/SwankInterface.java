@@ -46,7 +46,7 @@ public class SwankInterface {
 	public LispImplementation implementation;
 
 	/** Port of the Swank server */
-	public static Integer port = 4004;
+	private static Integer port = 4004;
 	
 	private Socket echoSocket = null;
 	private Socket secondary = null;
@@ -55,8 +55,8 @@ public class SwankInterface {
 	private int messageNum = 1;
 	
 	/** Holds whether we are connected to Swank. */
-	public boolean connected = false;
-	public String currPackage = "COMMON-LISP-USER";
+	private boolean connected = false;
+	private String currPackage = "COMMON-LISP-USER";
 	private String lispVersion = "(NO CL IMPLEMENTATION)";
 	private String lastTestPackage = "nil";
 
