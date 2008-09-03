@@ -36,7 +36,7 @@ public class SBCLImplementation extends LispImplementation {
 	 * 
 	 * @return the executable SBCL file on the host computer
 	 */
-	static protected File findExecutable()
+	static public File findExecutable()
 	{
 		File implementafoltionFolder = findFolder();
 		if (implementafoltionFolder != null)
@@ -66,7 +66,7 @@ public class SBCLImplementation extends LispImplementation {
 	 * 
 	 * @return the SBCL directory on the host computer
 	 */
-	static protected File findFolder()
+	public static File findFolder()
 	{
 		String pluginDir = LispPlugin.getDefault().getPluginPath();
 		File sbclFolder = new File(pluginDir + "sbcl/");
@@ -140,6 +140,19 @@ public class SBCLImplementation extends LispImplementation {
 			return null;
 	}
 
+	static public SBCLImplementation findImplementation(String filepath)
+	{
+		File file = new File(filepath);
+		File executable = new File(file.getName());
+		File dir = new File(file.getPath());
+		if (executable != null && dir != null)
+		{
+			return new SBCLImplementation(executable, dir);
+		}
+		else
+			return null;
+	}
+	
 	File executable = null;
 	File path = null;
 	String loadPath = null;

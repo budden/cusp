@@ -20,7 +20,7 @@
 	   <launchConfigurationType
 	         delegate="jasko.tim.lisp.swank.launcher.LispLaunchDelegate"
 	         id="jasko.tim.lisp.launchType"
-	         modes="run, debug"
+	         modes="run"
 	         name="Lisp Executable">
 	   </launchConfigurationType>
 	</extension>
@@ -31,7 +31,7 @@
           icon="icons/exec-lisp.gif"
           id="jasko.tim.lisp.launchImage">
     </launchConfigurationTypeImage>
- </extension>
+ </extension> 
  <extension
        point="org.eclipse.debug.ui.launchConfigurationTabGroups">
     <launchConfigurationTabGroup
@@ -40,8 +40,23 @@
           type="jasko.tim.lisp.launchType">
     </launchConfigurationTabGroup>
  </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            label="(Re)start REPL"
+            icon="icons/exec-lisp.gif"
+            class="jasko.tim.lisp.swank.launcher.LispLaunchShortcut"
+            modes="run"
+            id="jasko.tim.lisp.launchShortcut">
+            <perspective id="jasko.tim.lisp.perspective.LispPerspectiveFactory"/>
+         <contextualLaunch>
+            <enablement>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
 
-	
+
 
 	<!-- Builder for lisp files -->
 	<extension point="org.eclipse.core.resources.builders"

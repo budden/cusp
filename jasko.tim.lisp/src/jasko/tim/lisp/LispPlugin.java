@@ -35,7 +35,10 @@ public class LispPlugin extends AbstractUIPlugin {
     
     private static String CONSOLE_NAME = "jasko.tim.lisp.console";
 
+    // strings to store configurations
 	public static final String ATTR_LISP_EXE = "jasko.tim.lisp" + ".ATTR_LISP_EXE";
+	public static final String ATTR_LISP_FLAVOR = "jasko.tim.lisp" + ".ATTR_LISP_FLAVOR";
+	public static final String ID_LAUNCH_CONFIGURATION_TYPE = "jasko.tim.lisp.launchType";	
 	
 	/**
 	 * The constructor.
@@ -70,6 +73,15 @@ public class LispPlugin extends AbstractUIPlugin {
 	public boolean startSwank(){
 		if( swank == null || !swank.isConnected() ){
 			swank = new SwankInterface();			
+		} else { //disconnect if already running and connect again.
+			swank.reconnect();
+		}
+		return ( swank != null && swank.isConnected() );
+	}
+	
+	public boolean startSwank(String flavor, String command){
+		if( swank == null || !swank.isConnected() ){
+			swank = new SwankInterface(flavor,command);			
 		} else { //disconnect if already running and connect again.
 			swank.reconnect();
 		}

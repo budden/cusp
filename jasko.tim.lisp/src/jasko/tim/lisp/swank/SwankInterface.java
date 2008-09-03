@@ -45,6 +45,9 @@ public class SwankInterface {
 	
 	public LispImplementation implementation;
 
+	private String lispFlavor = "";
+	private String lispCommand = "";
+	
 	/** Port of the Swank server */
 	private static Integer port = 4004;
 	
@@ -138,6 +141,19 @@ public class SwankInterface {
 	
 		initIndents();
 		connect();
+	}
+
+	public SwankInterface(String flavor, String command) {
+		debugListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		debugInfoListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		debugReturnListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		displayListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		readListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		disconnectListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+		indentationListeners = Collections.synchronizedList(new ArrayList<SwankRunnable>(1));
+	
+		initIndents();
+		connect(flavor,command);
 	}
 	
 	public Hashtable<String, String> specialIndents;
@@ -388,6 +404,82 @@ public class SwankInterface {
 		runAfterLispStart();
 		return connected;
 	}
+
+	// FIXME: right now implemented only for sbcl. In this case command is a filepath to sbcl
+	public boolean connect(String flavor, String command) {
+		connected = false;
+		currPackage = "COMMON-LISP-USER";
+		//IPreferenceStore store = LispPlugin.getDefault().getPreferenceStore();
+		
+		if( !flavor.equalsIgnoreCase("sbcl") ){
+			return false;
+		}
+		
+		lispFlavor = flavor;
+		lispCommand = command;
+		
+		synchronized(port) {
+			++port;
+			implementation = null;
+			
+			implementation = SBCLImplementation.findImplementation(command);
+
+			String pluginDir = LispPlugin.getDefault().getPluginPath();
+			String slimePath = pluginDir + "slime/swank-loader.lisp";
+			if (implementation != null) {
+				try {
+					lispEngine = implementation.start(slimePath, port);
+				} catch (IOException e3) {
+					e3.printStackTrace();
+					return false;
+				}
+			} else {
+				try {
+					ProcessBuilder pb = new ProcessBuilder(new String[] {
+							"sbcl", "--load", slimePath });
+					lispEngine = pb.start();
+				} catch (IOException e) {
+					return false;
+				}
+			}
+			
+			int retries = 1;
+			do {
+				if (connectStreams(slimePath)) {
+					try {
+						echoSocket = new Socket("localhost", port);
+						out = new DataOutputStream(echoSocket.getOutputStream());
+						listener = new ListenerThread(echoSocket.getInputStream());
+						listener.start();
+						break;
+					} catch (UnknownHostException e) {
+						return false;
+					} catch (IOException e) {
+						try {
+							int val = lispEngine.exitValue();
+							System.out.println("exit: " + val);
+
+							lispEngine = implementation.startHarder(slimePath, port);
+							--retries; // try to connect again
+						} catch (IOException e2) {
+							e.printStackTrace();
+							return false;
+						}
+					}
+				}
+			} while (retries >= 0);
+		} // synchronized
+		
+		//sendRaw("(:emacs-rex (swank:connection-info) nil t 1)");
+		if (echoSocket != null && echoSocket.isConnected()) {
+			connected = true;
+		} else {
+			connected = false;
+		}
+		runAfterLispStart();
+		return connected;
+	}
+	
 	
 	private boolean connectStreams(String slimePath) {
 		if (stdOut != null) { // never cross the streams
@@ -451,7 +543,11 @@ public class SwankInterface {
 	
 	public void reconnect() {
 		disconnect();
-		connect();
+		if( lispFlavor != "" ){
+			connect(lispFlavor,lispCommand);
+		} else {
+			connect();			
+		}
 	}
 	
 	public void disconnect() {
