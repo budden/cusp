@@ -203,6 +203,9 @@ EXCEPT is a list of symbol names which should be ignored."
     :stream-finish-output
     :fundamental-character-input-stream
     :stream-read-char
+    :stream-peek-char
+    :stream-read-line
+    :stream-file-position
     :stream-listen
     :stream-unread-char
     :stream-clear-input
@@ -369,8 +372,8 @@ value.
 Should return T on successfull compilation, NIL otherwise.
 ")
 
-(definterface swank-compile-file (filename load-p external-format)
-   "Compile FILENAME signalling COMPILE-CONDITIONs.
+(definterface swank-compile-file (pathname load-p external-format)
+   "Compile PATHNAME signalling COMPILE-CONDITIONs.
 If LOAD-P is true, load the file after compilation.
 EXTERNAL-FORMAT is a value returned by find-external-format or
 :default.
@@ -407,6 +410,11 @@ Should return T on successfull compilation, NIL otherwise.")
    (location :initarg :location
              :accessor location)))
 
+(definterface parse-emacs-filename (filename)
+  "Return a PATHNAME for FILENAME. A filename in Emacs may for example
+contain asterisks which should not be translated to wildcards."
+  (parse-namestring filename))
+
 (definterface find-external-format (coding-system)
   "Return a \"external file format designator\" for CODING-SYSTEM.
 CODING-SYSTEM is Emacs-style coding system name (a string),
@@ -415,11 +423,11 @@ e.g. \"latin-1-unix\"."
       :default
       nil))
 
-(definterface guess-external-format (filename)
-  "Detect the external format for the file with name FILENAME.
+(definterface guess-external-format (pathname)
+  "Detect the external format for the file with name pathname.
 Return nil if the file contains no special markers."
   ;; Look for a Emacs-style -*- coding: ... -*- or Local Variable: section.
-  (with-open-file (s filename :if-does-not-exist nil
+  (with-open-file (s pathname :if-does-not-exist nil
                      :external-format (or (find-external-format "latin-1-unix")
                                           :default))
     (if s 
@@ -453,16 +461,13 @@ Return nil if the file contains no special markers."
 
 ;;;; Streams
 
-(definterface make-fn-streams (input-fn output-fn)
-   "Return character input and output streams backended by functions.
-When input is needed, INPUT-FN is called with no arguments to
-return a string.
-When output is ready, OUTPUT-FN is called with the output as its
-argument.
+(definterface make-output-stream (write-string)
+  "Return a new character output stream.
+The stream calls WRITE-STRING when output is ready.")
 
-Output should be forced to OUTPUT-FN before calling INPUT-FN.
-
-The streams are returned as two values.")
+(definterface make-input-stream (read-string)
+  "Return a new character input stream.
+The stream calls READ-STRING when input is needed.")
 
 
 ;;;; Documentation
@@ -992,7 +997,7 @@ but that thread may hold it more than once."
   0)
 
 (definterface all-threads ()
-  "Return a list of all threads.")
+  "Return a fresh list of all threads.")
 
 (definterface thread-alive-p (thread)
   "Test if THREAD is termintated."

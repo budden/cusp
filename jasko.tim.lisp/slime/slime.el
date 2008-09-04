@@ -448,8 +448,10 @@ The string is periodically updated by an idle timer."))
 
 (defun slime-compute-modeline-package ()
   (when (memq major-mode slime-lisp-modes)
-    (when-let (package (slime-current-package))
-      (slime-pretty-package-name package))))
+    ;; WHEN-LET is defined later.
+    (let ((package (slime-current-package)))
+      (when package
+        (slime-pretty-package-name package)))))
 
 (defun slime-pretty-package-name (name)
   "Return a pretty version of a package name NAME."
@@ -474,10 +476,10 @@ The string is periodically updated by an idle timer."))
 
 (defun slime-compute-modeline-string (conn state pkg)
   (concat (when (or conn pkg)             "[")
+          (when pkg                       (format "PKG:%s" pkg))
+          (when (and (or conn state) pkg) ", ")
           (when conn                      (format "CON:%s" conn))
           (when state                     (format "{%s}" state))
-          (when (and (or conn state) pkg) ", ")
-          (when pkg                       (format "PKG:%s" pkg))
           (when (or conn pkg)             "]")))
 
 (defun slime-update-modeline-string ()
@@ -666,8 +668,8 @@ This list of flushed between commands."))
 
 (defun slime-setup-command-hooks ()
   "Setup a buffer-local `pre-command-hook' to call `slime-pre-command-hook'."
-  (add-local-hook 'pre-command-hook 'slime-pre-command-hook) 
-  (add-local-hook 'post-command-hook 'slime-post-command-hook))
+  (slime-add-local-hook 'pre-command-hook 'slime-pre-command-hook)
+  (slime-add-local-hook 'post-command-hook 'slime-post-command-hook))
 
 
 ;;;; Framework'ey bits
@@ -1042,13 +1044,12 @@ function was called."
 Restore the window configuration unless it was changed since we
 last activated the buffer."
   (interactive)
-  (let ((popup-buffer (current-buffer)))
-    (if (slime-popup-buffer-snapshot-unchanged-p)
-        (slime-popup-buffer-restore-snapshot)
-        (bury-buffer))
+  (let ((buffer (current-buffer)))
+    (when (slime-popup-buffer-snapshot-unchanged-p)
+      (slime-popup-buffer-restore-snapshot))
     (setq slime-popup-buffer-saved-emacs-snapshot nil)
-    (when kill-buffer-p
-      (kill-buffer popup-buffer))))
+    (cond (kill-buffer-p (kill-buffer buffer))
+          (t (with-current-buffer buffer (bury-buffer))))))
 
 (defun slime-popup-buffer-snapshot-unchanged-p ()
   (equalp (slime-current-emacs-snapshot-fingerprint)
@@ -1056,8 +1057,8 @@ last activated the buffer."
 
 (defun slime-popup-buffer-restore-snapshot ()
   (let ((snapshot slime-popup-buffer-saved-emacs-snapshot))
-    (assert snapshot) (slime-set-emacs-snapshot snapshot)))
-
+    (assert snapshot) 
+    (slime-set-emacs-snapshot snapshot)))
 
 ;;;;; Filename translation
 ;;;
@@ -2232,7 +2233,7 @@ or nil if nothing suitable can be found.")
          ((:ok value)
           (unless (member tag slime-stack-eval-tags)
             (error "Reply to canceled synchronous eval request tag=%S sexp=%S"
-                   tag slime-stack-eval-tags sexp))
+                   tag sexp))
           (throw tag (list #'identity value)))
          ((:abort)
           (throw tag (list #'error "Synchronous Lisp Evaluation aborted"))))
@@ -2330,7 +2331,7 @@ Debugged requests are ignored."
            (slime-write-string output target))
           ((:emacs-rex form package thread continuation)
            (when (and (slime-use-sigint-for-interrupt) (slime-busy-p))
-             (message "; pipelined request... %S" form))
+             (slime-display-oneliner "; pipelined request... %S" form))
            (let ((id (incf (slime-continuation-counter))))
              (push (cons id continuation) (slime-rex-continuations))
              (slime-send `(:emacs-rex ,form ,package ,thread ,id))))
@@ -2697,31 +2698,15 @@ See `slime-output-target-to-marker'."
           (insert-before-markers string)
           (set-marker marker (point)))))))
 
-(defvar slime-switch-to-output-buffer-search-all-frames t
-  "If t search for an already existing REPL window in all frames,
-and if found, select that window instead of creating a new one.
+(defun slime-switch-to-output-buffer ()
+  "Select the output buffer, when possible in an existing window.
 
-If you use multiple screens, you may want to set this to nil such
-that a window on a different screen won't be selected under the
-hood.")
-
-(defun slime-switch-to-output-buffer (&optional connection)
-  "Select the output buffer: If a REPL is already displayed, just
-set focus to that window. Otherwise, try to make a new window
-displaying the REPL."
+Hint: You can use `display-buffer-reuse-frames' and
+`special-display-buffer-names' to customize the frame in which
+the buffer should appear."
   (interactive)
-  (let ((slime-dispatching-connection (or connection
-                                           slime-dispatching-connection)))
-    (let* ((repl-buffer (slime-output-buffer))
-           (all-frames-p slime-switch-to-output-buffer-search-all-frames)
-           (repl-window (get-buffer-window repl-buffer all-frames-p)))
-      (if repl-window
-          (progn (select-frame-set-input-focus (window-frame repl-window))
-                 (select-window repl-window))
-        (set-buffer repl-buffer)
-        (unless (eq (current-buffer) (window-buffer))
-          (pop-to-buffer (current-buffer) t))))
-    (goto-char (point-max))))
+  (slime-pop-to-buffer (slime-output-buffer))
+  (goto-char (point-max)))
 
 
 ;;;; REPL
@@ -2874,7 +2859,8 @@ joined together."))
   (set (make-local-variable 'scroll-margin) 0)
   (when slime-repl-history-file
     (slime-repl-safe-load-history)
-    (add-local-hook 'kill-buffer-hook 'slime-repl-safe-save-merged-history))
+    (slime-add-local-hook 'kill-buffer-hook 
+                          'slime-repl-safe-save-merged-history))
   (add-hook 'kill-emacs-hook 'slime-repl-save-all-histories)
   (slime-setup-command-hooks)
   ;; At the REPL, we define beginning-of-defun and end-of-defun to be
@@ -4175,10 +4161,14 @@ Each newlines and following indentation is replaced by a single space."
       (slime-compiler-notes-mode)
       (when (null notes)
         (insert "[no notes]"))
-      (dolist (tree (slime-compiler-notes-to-tree notes))
-        (slime-tree-insert tree "")
-        (insert "\n"))
-      (goto-char (point-min)))))
+      (let ((collapsed-p))
+        (dolist (tree (slime-compiler-notes-to-tree notes))
+          (when (slime-tree.collapsed-p tree) (setf collapsed-p t))
+          (slime-tree-insert tree "")
+          (insert "\n"))
+        (unless collapsed-p
+          (shrink-window-if-larger-than-buffer))
+        (goto-char (point-min))))))
 
 (defun slime-alistify (list key test)
   "Partition the elements of LIST into an alist.
@@ -4963,9 +4953,8 @@ Return true if the configuration was saved."
     t))
 
 (defun slime-complete-delay-restoration ()
-  (make-local-hook 'pre-command-hook)
-  (add-hook 'pre-command-hook
-            'slime-complete-maybe-restore-window-configuration))
+  (slime-add-local-hook 'pre-command-hook
+                        'slime-complete-maybe-restore-window-configuration))
 
 (defun slime-complete-forget-window-configuration ()
   (setq slime-complete-saved-window-configuration nil)
@@ -6672,7 +6661,7 @@ Full list of commands:
   (slime-set-truncate-lines)
   ;; Make original slime-connection "sticky" for SLDB commands in this buffer
   (setq slime-buffer-connection (slime-connection))
-  (add-local-hook 'kill-buffer-hook 'sldb-delete-overlays))
+  (slime-add-local-hook 'kill-buffer-hook 'sldb-delete-overlays))
 
 (slime-define-keys sldb-mode-map
   ("h"    'describe-mode)
@@ -6790,7 +6779,9 @@ CONTS is a list of pending Emacs continuations."
       (insert "\n" (in-sldb-face section "Backtrace:") "\n")
       (setq sldb-backtrace-start-marker (point-marker))
       (save-excursion
-        (sldb-insert-frames (sldb-prune-initial-frames frames) t))
+        (if frames 
+            (sldb-insert-frames (sldb-prune-initial-frames frames) t)
+          (insert "[No backtrace]")))
       (run-hooks 'sldb-hook))
     (pop-to-buffer (current-buffer))
     (sldb-recenter-region (point-min) (point))
@@ -7145,10 +7136,7 @@ This is 0 if START and END at the same line."
   (sldb-delete-overlays)
   (let ((start (or start (point)))
 	(end (or end (save-excursion (ignore-errors (forward-sexp)) (point)))))
-    (push (make-overlay start (1+ start)) sldb-overlays)
-    (push (make-overlay (1- end) end) sldb-overlays))
-  (dolist (overlay sldb-overlays)
-    (overlay-put overlay 'face 'secondary-selection)))
+    (slime-flash-region start end)))
 
 (defun sldb-delete-overlays ()
   (mapc #'delete-overlay sldb-overlays)
@@ -7880,6 +7868,13 @@ If ARG is negative, move forwards."
                          (error "No part at point"))))
   (slime-eval-describe `(swank:pprint-inspector-part ,part)))
 
+(defun slime-inspector-show-source (part)
+  (interactive (list (or (get-text-property (point) 'slime-part-number)
+                         (error "No part at point"))))
+  (slime-eval-async 
+   `(swank:find-source-location-for-emacs '(:inspector ,part))
+   #'slime-show-source-location))
+  
 (defun slime-inspector-reinspect ()
   (interactive)
   (slime-eval-async `(swank:inspector-reinspect)
@@ -7953,7 +7948,8 @@ If ARG is negative, move forwards."
   ("\C-i" 'slime-inspector-next-inspectable-object)
   ([(shift tab)] 'slime-inspector-previous-inspectable-object) ; Emacs translates S-TAB
   ([backtab]     'slime-inspector-previous-inspectable-object) ; to BACKTAB on X.
-  ("\M-." 'slime-edit-definition))
+  ("\M-." 'slime-edit-definition)
+  ("." 'slime-inspector-show-source))
 
 
 ;;;; Buffer selector
@@ -8434,6 +8430,8 @@ is setup, unless the user already set one explicitly."
 (defvar slime-test-buffer-name "*Tests*"
   "The name of the buffer used to display test results.")
 
+(defvar slime-lisp-under-test nil
+  "The name of Lisp currently executing the tests.")
 
 ;; dynamically bound during a single test
 (defvar slime-current-test)
@@ -9245,6 +9243,31 @@ SWANK> " t))
                        visiblep
                        (not (not (get-buffer-window (current-buffer)))))))
 
+(def-slime-test inspector
+    (exp)
+    "Test basic inspector workingness."
+    '(((let ((h (make-hash-table)))
+         (loop for i below 10 do (setf (gethash i h) i))
+         h))
+      ((make-array 10))
+      ((make-list 10))
+      ('cons)
+      (#'cons))
+  (slime-inspect (prin1-to-string exp))
+  (assert (not (slime-inspector-visible-p)))
+  (slime-wait-condition "Inspector visible" #'slime-inspector-visible-p 5)
+  (with-current-buffer (window-buffer (selected-window))
+    (slime-inspector-quit))
+  (slime-wait-condition "Inspector closed" 
+                        (lambda () (not (slime-inspector-visible-p)))
+                        5)
+  (slime-sync-to-top-level 1))
+
+(defun slime-inspector-visible-p ()
+  (let ((buffer (window-buffer (selected-window))))
+    (string-match "\\*Slime Inspector\\*" 
+                  (buffer-name buffer))))
+
 (def-slime-test break 
     (times exp)
     "Test whether BREAK invokes SLDB."
@@ -9650,6 +9673,28 @@ will return \"\"."
                                 ;; Emacs 21 uses microsecs; Emacs 22 millisecs
                                 (if timeout (truncate (* timeout 1000000)))))))
 
+(defun slime-pop-to-buffer (buffer &optional other-window)
+  "Select buffer BUFFER in some window.
+This is like `pop-to-buffer' but also sets the input focus
+for (somewhat) better multiframe support."
+  (set-buffer buffer)
+  (let ((old-frame (selected-frame))
+        (window (display-buffer buffer other-window)))
+    (select-window window)
+    ;; select-window doesn't set the input focus
+    (when (and (not (featurep 'xemacs))
+               (>= emacs-major-version 22)
+               (not (eq old-frame (selected-frame))))
+      (select-frame-set-input-focus (window-frame window))))
+  buffer)
+
+(defun slime-add-local-hook (hook function &optional append)
+  (cond ((featurep 'xemacs) (add-local-hook hook function append))
+        ((< emacs-major-version 21)
+         (make-local-hook hook)
+         (add-hook hook function append t))
+        (t (add-hook hook function append t))))
+
 (slime-defun-if-undefined next-single-char-property-change
     (position prop &optional object limit)
   (let ((limit (typecase limit
@@ -9922,15 +9967,6 @@ If they are not, position point at the first syntax error found."
   `(save-selected-window
      (select-window ,window)
      ,@body))
-
-;;; Stuff only available in XEmacs
-(slime-defun-if-undefined add-local-hook (hook function &optional append)
-  (make-local-hook hook)
-  (add-hook hook function append t))
-
-(slime-defun-if-undefined remove-local-hook (hook function)
-  (if (local-variable-p hook (current-buffer))
-      (remove-hook hook function t)))
 
 
 ;;;; Finishing up

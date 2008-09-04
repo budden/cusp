@@ -1,3 +1,214 @@
+2008-08-31  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-backend.lisp (*gray-stream-symbols*): Remove
+	stream-file-position because it's called stream-position in CCL.
+	(make-fn-streams): Deleted.
+	Update callers accordingly.
+
+2008-08-30  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-sbcl.lisp (receive-if): Add #+/-linux to avoid yet more
+	WITH-TIMEOUT related problems.
+
+	* swank-gray.lisp (slime-input-stream): Remove the output stream
+	slot.  Most of the time we can just call force-output.
+
+	* slime.el [test](inspector): New test.
+
+	* swank.lisp (prepare-part): Also wrap action elements
+	in a list.  Reported by Ariel Badichi and Madhu.
+
+2008-08-30  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-pop-to-buffer): Drop the norecord argument,
+	since we can't support it easily in Emacs 21.
+	Reported by Christophe Rhodes.
+
+2008-08-30  Michael Weber  <michaelw+slime@foldr.org>
+
+	* swank-gray.lisp (make-input-stream): fixed typos
+
+2008-08-30  Michael Weber  <michaelw+slime@foldr.org>
+
+	* swank-backend.lisp (*gray-stream-symbols*): added symbols
+	stream-peek-char, stream-read-line, stream-file-position
+
+2008-08-30  Mark Evenson <evenson@panix.com>
+
+	* swank-abcl.lisp (make-output-stream, make-input-stream): provide
+	the (trivial) definitions for MAKE-OUTPUT-STREAM and
+	MAKE-INPUT-STREAM for ABCL.
+
+2008-08-27  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (sldb-setup): Insert "No backtrace" if the backtrace is
+	empty.
+
+2008-08-27  Anton Vodonosov <avodonosov@yandex.ru>
+
+	* swank-ecl.lisp: Add :load-toplevel and :execute to EVAL-WHENs to
+	fix loading.
+
+2008-08-27  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-cmucl.lisp (remove-sigio-handlers): Fix thinko.
+
+	* swank.lisp (decode-message): Don't ignore EOF.
+	(swank-debugger-hook): Remove the default-debugger restart.
+
+2008-08-25  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime.el (slime-compute-modeline-package): Used `when-let' before its definition.
+	(slime-compute-modeline-string): Display "PKG:" before "CON:".
+
+2008-08-22  Helmut Eller  <heller@common-lisp.net>
+
+	Some focus handling in multiframe setups.
+
+	* slime.el (slime-pop-to-buffer): New function.
+	(slime-switch-to-output-buffer): Use it.
+
+2008-08-22  Helmut Eller  <heller@common-lisp.net>
+
+	Use lazy lists in the inspector.
+
+	* swank.lisp (lcons): New data type.
+	(lcons*, lcons-car, lcons-cdr, llist-range): New functions.
+	(emacs-inspect array): Use lazy lists.
+	(istate>elisp): The istate.content is now be a lazy list.
+	(iline): New utility.
+	(prepare-range, prepare-part): Replaces inspector-content.
+
+2008-08-22  Helmut Eller  <heller@common-lisp.net>
+
+	Implement streams with a length limit.
+	Use them to truncate printer output in backtraces.
+
+	* swank-backend.lisp (make-output-stream, make-input-stream):
+	Split make-fn-streams up into two functions.
+
+	* swank.lisp (call/truncated-output-to-string): New function.
+	(backtrace, istate>elisp, to-line): Use it.
+	(frame-locals-for-emacs): Use to-line.
+
+2008-08-22  Helmut Eller  <heller@common-lisp.net>
+
+	In backtraces, escape newlines in strings as \n.
+
+	* swank.lisp (*backtrace-pprint-dispatch-table*): New.
+	(*backtrace-printer-bindings*): Use it.
+
+2008-08-22  Stas Boukarev <stassats@gmail.com>
+
+	* metering.lisp: Add deftypes for time-type and cons-type, which
+	are not defined in newer versions of CCL.
+
+2008-08-22  Stelian Ionescu <sionescu@common-lisp.net>
+
+	* swank-ecl.lisp: Add a few EVAL-WHENs to fix compilation.
+
+2008-08-22  Helmut Eller  <heller@common-lisp.net>
+
+	Collect most of the inspector state in a structure.
+	Truncate the printer output more aggressively.
+
+	* swank.lisp (inspector-state): New structure.
+	(*istate*): New variable holds the current state.
+	(inspect-object, inspector-content, inspector-nth-part)
+	(inspector-range, inspector-call-nth-action, describe-inspectee):
+	Use it.
+	(inspector-pop, inspector-next): Implemented forward/backward a
+	bit differently.
+	(emacs-inspect/printer-bindings, istate>elisp): New functions.
+	(to-line, truncate-string): New functions.
+
+2008-08-22  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	Compiling a file `let*.lisp' on SBCL via C-c C-k resulted in an
+	error, because it parsed the asterisk to a wild pathname. Fix
+	that.
+
+	* swank-backend.lisp (definterface parse-emacs-filename): New.
+	PARSE-NAMESTRING by default.
+
+	* swank-sbcl.lisp (defimplementation parse-emacs-filename): Use
+	SB-EXT:PARSE-NATIVE-NAMESTRING.
+
+	* swank.lisp (compile-file-for-emacs): Use PARSE-EMACS-FILENAME.
+	(compile-file-if-needed): Ditto.
+	(load-file): Ditto.
+	(swank-require): Ditto.
+
+2008-08-18  Helmut Eller  <heller@common-lisp.net>
+
+	* swank.lisp (install-fd-handler): Bind *emacs-connection* with
+	with-connection, for case when the signal hander is called out of
+	the blue.
+	(swank-debugger-hook): Don't assume that the hook argument is
+	#'swank-debugger-hook itself.
+
+	* test.sh (usage): Use cat rather not echo for here-documents.
+
+2008-08-17  Helmut Eller  <heller@common-lisp.net>
+
+	* slime.el (slime-inspector-show-source): New command.
+	(slime-inspector-mode-map): Bind it to ".".
+	(sldb-highlight-sexp): Use slime-flash-region rather than a
+	permanent overlay.
+	(slime-popup-buffer-quit): Must call bury-buffer without argument.
+
+	* swank.lisp (find-source-location-for-emacs): New function.
+
+	* slime.el (slime-add-local-hook): Renamed from add-local-hook.
+	(slime-switch-to-output-buffer): Drop the connection argument.  It
+	was never used.
+	(slime-switch-to-output-buffer-search-all-frames): Deleted. Use
+	display-buffer-reuse-frames instead.
+	(slime-switch-to-output-buffer): Use pop-to-buffer to select the
+	window and frame.
+
+2008-08-15  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime.el (slime-switch-to-output-buffer): Fix regression
+	discovered by Ariel Badichi. Programmatic invocation of this
+	function expect this function to also set-buffer to the REPL
+	buffer. Even though that's ugly, we do it for now, and declare it
+	to be a FIXME.
+	(slime-dispatch-event): Don't use `message' for the pipelined
+	request message, but `slime-display-oneliner' which will truncate
+	the form to be displayed.
+
+2008-08-17  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-cmucl.lisp (waitpid): Don't use unix::pid-t, it's only
+	defined for Linux.
+
+	* swank-sbcl.lisp (sb-thread::get-foreground): Don't override.
+	Let SBCL people fix this.
+
+2008-08-17  B.Scott Michel <scooter.phd@gmail.com>
+
+	* swank-loader.lisp (dump-image): Move this function to the end of
+	the file to stop SBCL from reporting two times the same false
+	alarm.
+
+2008-08-15  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime.el (slime-popup-buffer-quit): Fix regression; we have to
+	invoke `bury-buffer' without an argument to make it switch buffers
+	for us (for the case when the snapshot wasn't restored.)
+
+2008-08-15  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime.el (slime-list-compiler-notes): Only shrink if notes tree
+	isn't displayed as being collapsed.
+
+2008-08-15  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime.el (slime-popup-buffer-quit): If not kill, then at least
+	bury the buffer.
+	(slime-list-compiler-notes): Shrink the compiler-notes window.
+
 2008-08-14  Tobias C. Rittweiler  <tcr@freebits.de>
 
 	If another frame is already displaying a REPL, `C-c C-z' will now

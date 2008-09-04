@@ -1,3 +1,29 @@
+2008-08-27  Helmut Eller  <heller@common-lisp.net>
+
+	* swank-arglists.lisp (variable-desc-for-echo-area): Limit the
+	length to one line to avoid (some) problems with big or circular
+	values.  Reported by Stas Boukarev.
+
+2008-08-22  Stelian Ionescu <sionescu@common-lisp.net>
+
+	* swank-listener-hooks.lisp: Add missing IN-PACKAGE.
+
+2008-08-20  Tobias C. Rittweiler  <tcr@freebits.de>
+
+	* slime-fontifying-fu.el: New contrib; fontify with-foo and do-foo
+	like standard macros.
+
+	* slime-fancy.el: Add slime-fontifying-fu.
+
+2008-08-20  Luís Oliveira  <loliveira@common-lisp.net>
+
+	* contrib/slime-indentation.el: fix indentation of IF forms.
+
+2008-08-18  Ariel Badichi  <abadichi@bezeqint.net>
+
+	* slime-fuzzy.el: Rename `add-local-hook' to `slime-add-local-hook'.
+	* slime-presentations.el: Ditto.
+
 2008-08-12  Helmut Eller  <heller@common-lisp.net>
 
 	* slime-clipboard.el (slime-clipboard-insert-ref): Set
