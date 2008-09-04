@@ -173,6 +173,12 @@
     (:euc-jp "euc-jp" "euc-jp-unix")
     (:us-ascii "us-ascii" "us-ascii-unix")))
 
+;; C.f. R.M.Kreuter in <20536.1219412774@progn.net> on sbcl-general, 2008-08-22.
+(defvar *physical-pathname-host* (pathname-host (user-homedir-pathname)))
+
+(defimplementation parse-emacs-filename (filename)
+  (sb-ext:parse-native-namestring filename *physical-pathname-host*))
+
 (defimplementation find-external-format (coding-system)
   (car (rassoc-if (lambda (x) (member coding-system x :test #'equal))
                   *external-format-to-coding-system*)))
@@ -429,14 +435,14 @@ compiler state."
 
 (defvar *trap-load-time-warnings* nil)
 
-(defimplementation swank-compile-file (filename load-p external-format)
+(defimplementation swank-compile-file (pathname load-p external-format)
   (handler-case
       (let ((output-file (with-compilation-hooks ()
-                           (compile-file filename 
+                           (compile-file pathname 
                                          :external-format external-format))))
         (when output-file
           ;; Cache the latest source file for definition-finding.
-          (source-cache-get filename (file-write-date filename))
+          (source-cache-get pathname (file-write-date pathname))
           (when load-p
             (load output-file))))
     (sb-c:fatal-compiler-error () nil)))
@@ -1320,24 +1326,15 @@ stack."
              (setf (mailbox.queue mbox) (nconc (ldiff q tail) (cdr tail)))
              (return (car tail))))
          (when (eq timeout t) (return (values nil t)))
+         ;; FIXME: with-timeout doesn't work properly on Darwin
+         #+linux
          (handler-case (sb-ext:with-timeout 0.2
                          (sb-thread:condition-wait (mailbox.waitqueue mbox)
                                                    mutex))
-           (sb-ext:timeout ()))))))
-
-  #-non-broken-terminal-sessions
-  (progn
-    (defvar *native-wait-for-terminal* #'sb-thread::get-foreground)
-    (sb-ext:with-unlocked-packages (sb-thread) 
-      (defun sb-thread::get-foreground ()
-        (ignore-errors
-          (format *debug-io* ";; SWANK: sb-thread::get-foreground ...~%")
-          (finish-output *debug-io*))
-        (or (and (typep *debug-io* 'two-way-stream)
-                 (typep (two-way-stream-input-stream *debug-io*)
-                        'slime-input-stream))
-            (funcall *native-wait-for-terminal*)))))
-
+           (sb-ext:timeout ()))
+         #-linux  
+         (sb-thread:condition-wait (mailbox.waitqueue mbox)
+                                   mutex)))))
   )
 
 (defimplementation quit-lisp ()

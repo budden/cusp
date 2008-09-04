@@ -169,19 +169,19 @@ specific functions.")
     (fcntl fd unix:f-setown (unix:unix-getpid))
     (let ((old-flags (fcntl fd unix:f-getfl 0)))
       (fcntl fd unix:f-setfl (logior old-flags unix:fasync)))
+    (assert (not (assoc fd *sigio-handlers*)))
     (push (cons fd fn) *sigio-handlers*)))
 
 (defimplementation remove-sigio-handlers (socket)
   (let ((fd (socket-fd socket)))
-    (unless (assoc fd *sigio-handlers*)
+    (when (assoc fd *sigio-handlers*)
       (setf *sigio-handlers* (remove fd *sigio-handlers* :key #'car))
       (let ((old-flags (fcntl fd unix:f-getfl 0)))
         (fcntl fd unix:f-setfl (logandc2 old-flags unix:fasync)))
       (sys:invalidate-descriptor fd))
-    #+(or)
+    (assert (not (assoc fd *sigio-handlers*)))
     (when (null *sigio-handlers*)
-      (sys:default-interrupt :sigio))
-    ))
+      (sys:default-interrupt :sigio))))
 
 ;;;;; SERVE-EVENT
 
@@ -196,10 +196,11 @@ specific functions.")
 ;;;; Stream handling
 ;;; XXX: How come we don't use Gray streams in CMUCL too? -luke (15/May/2004)
 
-(defimplementation make-fn-streams (input-fn output-fn)
-  (let* ((output (make-slime-output-stream output-fn))
-         (input  (make-slime-input-stream input-fn output)))
-    (values input output)))
+(defimplementation make-output-stream (write-string)
+  (make-slime-output-stream write-string))
+
+(defimplementation make-input-stream (read-string)
+  (make-slime-input-stream read-string))
 
 (defstruct (slime-output-stream
              (:include lisp::lisp-stream
@@ -292,16 +293,12 @@ specific functions.")
                        (lisp::misc #'sis/misc))
              (:conc-name sis.)
              (:print-function %print-slime-output-stream)
-             (:constructor make-slime-input-stream (input-fn sos)))
+             (:constructor make-slime-input-stream (input-fn)))
   (input-fn nil :type function)
-  ;; We know our sibling output stream, so that we can force it before
-  ;; requesting input.
-  (sos      nil :type slime-output-stream)
   (buffer   ""  :type string)
   (index    0   :type kernel:index))
 
 (defun sis/in (stream eof-errorp eof-value)
-  (finish-output (sis.sos stream))
   (let ((index (sis.index stream))
 	(buffer (sis.buffer stream)))
     (when (= index (length buffer))
@@ -2288,8 +2285,7 @@ The `symbol-value' of each element is a type tag.")
   (alien:with-alien ((status c-call:int))
     (let ((code (alien:alien-funcall 
                  (alien:extern-alien 
-                  waitpid (alien:function unix::pid-t 
-                                          unix::pid-t
+                  waitpid (alien:function c-call:int c-call:int
                                           (* c-call:int) c-call:int))
                  pid (alien:addr status) 0)))
       (cond ((= code -1) (error "waitpid: ~A" (unix:get-unix-error-msg)))
