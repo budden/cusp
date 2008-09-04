@@ -15,13 +15,13 @@
 	</extension>
 
    <!-- Launcher -->	
-	<extension
-	      point="org.eclipse.debug.core.launchConfigurationTypes">
+	<extension point="org.eclipse.debug.core.launchConfigurationTypes">
 	   <launchConfigurationType
 	         delegate="jasko.tim.lisp.swank.launcher.LispLaunchDelegate"
 	         id="jasko.tim.lisp.launchType"
-	         modes="run"
-	         name="Lisp Executable">
+	         modes="run, debug, interactive"
+	         name="(Re)start Repl"
+	         public="true">
 	   </launchConfigurationType>
 	</extension>
  <extension
@@ -32,30 +32,38 @@
           id="jasko.tim.lisp.launchImage">
     </launchConfigurationTypeImage>
  </extension> 
- <extension
-       point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+ <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
     <launchConfigurationTabGroup
           class="jasko.tim.lisp.swank.launcher.LispLaunchTabGroup"
           id="jasko.tim.lisp.launchTabGroup"
           type="jasko.tim.lisp.launchType">
     </launchConfigurationTabGroup>
  </extension>
-   <extension
-         point="org.eclipse.debug.ui.launchShortcuts">
+   <extension point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             label="(Re)start REPL"
             icon="icons/exec-lisp.gif"
             class="jasko.tim.lisp.swank.launcher.LispLaunchShortcut"
-            modes="run"
+            modes="run, debug"
             id="jasko.tim.lisp.launchShortcut">
             <perspective id="jasko.tim.lisp.perspective.LispPerspectiveFactory"/>
+            <perspective id="org.eclipse.debug.ui.DebugPerspective"/>
+            <configurationType id="jasko.tim.lisp.launchType"/>
          <contextualLaunch>
             <enablement>
             </enablement>
          </contextualLaunch>
       </shortcut>
    </extension>
-
+<extension point="org.eclipse.debug.ui.launchGroups">
+  <launchGroup
+     id="jasko.tim.lisp.launchGroupID"
+     mode="run"
+     label="(Re)start REPL"
+     image="icons/exec-lisp.gif"
+     bannerImage="icons/exec-lisp.gif">
+  </launchGroup>
+ </extension>
 
 
 	<!-- Builder for lisp files -->

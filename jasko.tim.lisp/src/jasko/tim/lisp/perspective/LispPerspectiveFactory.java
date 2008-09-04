@@ -54,6 +54,7 @@ public class LispPerspectiveFactory implements IPerspectiveFactory {
 		
 		layout.addNewWizardShortcut(NewLispFileWizard.ID);
 		layout.addNewWizardShortcut(NewProjectWiz.ID);
+		layout.addActionSet("org.eclipse.debug.ui.launchActionSet"); 
 	}
 
 }
