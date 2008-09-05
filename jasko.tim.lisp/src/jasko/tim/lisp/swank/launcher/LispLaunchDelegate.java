@@ -27,7 +27,7 @@ public class LispLaunchDelegate extends LaunchConfigurationDelegate {
 
 	private void abort(String message, Throwable e) throws CoreException {
 		throw new CoreException(new Status(IStatus.ERROR, 
-				LispPlugin.getDefault().getDescriptor().getUniqueIdentifier(), 0, message, e));
+				LispPlugin.getDefault().getBundle().getSymbolicName(), 0, message, e));
 	}
 	
 /* TODO: should we launch swank on free port rather than on prespecified?

@@ -21,11 +21,15 @@ public class ContentAssistAction extends LispAction {
     }
     
     public void run() {
-    	ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-    	if( ArglistAssistProcessor.doArgs(editor.getDocument(),ts.getOffset())){
-            editor.showParameterHints();    		
-    	} else {
-            editor.showContentCompletions();    		
+    	try{
+	    	ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
+	    	if( ArglistAssistProcessor.doArgs(editor.getDocument(),ts.getOffset())){
+	            editor.showParameterHints();    		
+	    	} else {
+	            editor.showContentCompletions();    		
+	    	}
+    	} catch (Throwable e){
+    		e.printStackTrace();
     	}
     }
 }
