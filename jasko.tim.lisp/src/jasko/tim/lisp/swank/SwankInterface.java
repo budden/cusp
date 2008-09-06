@@ -1410,6 +1410,9 @@ public class SwankInterface {
 	public synchronized void sendReportProfile(SwankRunnable callBack) {
 		registerCallback(callBack);
 		emacsRex("(swank:profile-report)");
+		// FIXME: for some reason the report is shown only after something
+		// else is evaluated
+		emacsRex("(swank:listener-eval \"nil\")");
 	}
 	
 	public synchronized void sendProfileReset(SwankRunnable callBack) {
