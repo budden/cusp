@@ -737,6 +737,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 	/**
 	 * We overload this to enable our handy outline page
 	 */
+	@SuppressWarnings("unchecked")
 	public Object getAdapter(Class adapter) {
 		if (adapter.equals(IContentOutlinePage.class)) {
 			

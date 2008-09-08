@@ -6,8 +6,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.Wizard;
@@ -94,12 +92,6 @@ public class CreateExeWizard extends Wizard {
 			IProgressMonitor monitor)
 			throws CoreException {
 		implementation.createExe(exeFile, asdFile, topLvl, pkg);
-	}
-
-	private void throwCoreException(String message) throws CoreException {
-		IStatus status =
-			new Status(IStatus.ERROR, "jasko.tim.lisp", IStatus.OK, message, null);
-		throw new CoreException(status);
 	}
 
 }

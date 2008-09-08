@@ -1,5 +1,9 @@
 package jasko.tim.lisp.swank.launcher;
 
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.debug.ui.ILaunchShortcut;
+import org.eclipse.jface.viewers.ISelection;
+/*
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -8,13 +12,10 @@ import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
-import org.eclipse.debug.ui.ILaunchShortcut;
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.ui.IEditorPart;
 
 import jasko.tim.lisp.LispPlugin;
-
+*/
 public class LispLaunchShortcut implements ILaunchShortcut {
 
 	public void launch(ISelection selection, String mode) {

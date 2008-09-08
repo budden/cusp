@@ -18,10 +18,6 @@ public class LispHyperlinkDetector implements IHyperlinkDetector {
 	
 	private static final int TIMEOUT = 2000;
 
-	public LispHyperlinkDetector() {
-		int i = 3;
-	}
-	
 	public LispHyperlinkDetector(ILispEditor edt) {
 		editor = edt;
 	}
