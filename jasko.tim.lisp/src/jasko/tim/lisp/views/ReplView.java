@@ -176,7 +176,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 
     private void addUndoManager(final TextViewer textViewer) {
   	  // remembers 20 edit commands
-  	  final TextViewerUndoManager undoManager = new TextViewerUndoManager(20);
+  	  final TextViewerUndoManager undoManager = new TextViewerUndoManager(1000);
 
   	  // add listeners
   	  undoManager.connect(textViewer);
