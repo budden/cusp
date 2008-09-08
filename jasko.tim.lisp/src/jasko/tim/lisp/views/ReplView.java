@@ -136,13 +136,16 @@ public class ReplView extends ViewPart implements SelectionListener {
     private class ReplEditor extends SourceViewer implements ILispEditor {
         private final LispConfiguration config = 
         	new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
-        /* private final CurrentExpressionHighlightingListener highlighter = 
-        	new CurrentExpressionHighlightingListener(); */
+        /*
+		 * private final CurrentExpressionHighlightingListener highlighter = new
+		 * CurrentExpressionHighlightingListener();
+		 */
         
         public IFile getIFile(){
         	return null;
         }
-        
+ 
+    
         public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
             super(comp2, ruler, i);
             setEditable(true);
@@ -153,7 +156,6 @@ public class ReplView extends ViewPart implements SelectionListener {
             setDocument(doc, new AnnotationModel());
             showAnnotations(false);
             showAnnotationsOverview(false);
-            
             // highlighter.install(this);
         }
         
@@ -171,6 +173,48 @@ public class ReplView extends ViewPart implements SelectionListener {
         }
     
     }
+
+    private void addUndoManager(final TextViewer textViewer) {
+  	  // remembers 20 edit commands
+  	  final TextViewerUndoManager undoManager = new TextViewerUndoManager(20);
+
+  	  // add listeners
+  	  undoManager.connect(textViewer);
+  	  textViewer.setUndoManager(undoManager);
+
+  	  StyledText styledText = textViewer.getTextWidget();
+  	  styledText.addVerifyListener(new VerifyListener(){
+  	      public void verifyText(VerifyEvent e){
+  	       undoManager.endCompoundChange();
+  	      }
+  	   });
+  	  
+  	  styledText.addKeyListener(new KeyListener() {
+  	   public void keyPressed(KeyEvent e) {
+  	    if (isUndoKeyPress(e)) {
+  	     textViewer.doOperation(ITextOperationTarget.UNDO);
+  	    } else if (isRedoKeyPress(e)) {
+  	     textViewer.doOperation(ITextOperationTarget.REDO);
+  	    }
+  	   }
+
+  	   private boolean isUndoKeyPress(KeyEvent e) {
+  	    // CTRL + z
+  	    return ((e.stateMask & SWT.CONTROL) > 0)
+  	      && ((e.keyCode == 'z') || (e.keyCode == 'Z'));
+  	   }
+
+  	   private boolean isRedoKeyPress(KeyEvent e) {
+  	    // CTRL + y
+  	    return ((e.stateMask & SWT.CONTROL) > 0)
+  	      && ((e.keyCode == 'y') || (e.keyCode == 'Y'));
+  	   }
+
+  	   public void keyReleased(KeyEvent e) {
+  	    // do nothing
+  	   }
+  	  });
+  	 }
 
     private class HandlerDef {
     	private final Class<?> the_class;
@@ -248,8 +292,10 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		if (swank == null || !swank.isConnected()) {
 			// We weren't able to connect to Lisp. If you don't catch this,
-			// Eclipse shows the backtrace where the Repl should be, and then people
-			// email you asking what's going on. This is the much better solution.
+			// Eclipse shows the backtrace where the Repl should be, and then
+			// people
+			// email you asking what's going on. This is the much better
+			// solution.
 			Label lbl = new Label(parent, SWT.BORDER);
 			lbl.setText("Cusp was unable to connect to your lisp instance. Please try restarting Eclipse.");
 			
@@ -303,7 +349,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 		layout.marginHeight = 0;
 		layout.marginWidth = 0;
 		comp.setLayout(layout);
- 		//comp.setLayoutData(gd);
+ 		// comp.setLayoutData(gd);
  		
  		Font baseFont = JFaceResources.getTextFont();
  		FontData fd = baseFont.getFontData()[0];
@@ -323,9 +369,11 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		in.getControl().setLayoutData(gd);
  		in.getTextWidget().setFont(newFont);
- 		//in.appendVerifyKeyListener(new PrevCommandsShortcuts());
+ 		// in.appendVerifyKeyListener(new PrevCommandsShortcuts());
  		in.appendVerifyKeyListener(new CheckEvalListener());
         in.appendVerifyKeyListener(new SelectAllListener());
+        
+        addUndoManager(in);
         
  		IHandlerService keys = (IHandlerService) this.getSite().getService(IHandlerService.class);
  		IContextService keyctx = (IContextService) this.getSite().getService(IContextService.class);
@@ -354,26 +402,20 @@ public class ReplView extends ViewPart implements SelectionListener {
  			keys.activateHandler(handler_defs[i].getId(), new ActionHandler(hdef));
  		}
  		
- 		/*in.addTextListener(new ITextListener() {
-			public void textChanged(TextEvent event) {
-				try {
-				if (event != null) {
-					System.out.println("*" + event.getText() + ":" + event.getText().length());
-					if (event.getText().startsWith("\n") && LispUtil.doParensBalance(in.getDocument())) {
-						eval();
-					}
-				}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});*/
+ 		/*
+		 * in.addTextListener(new ITextListener() { public void
+		 * textChanged(TextEvent event) { try { if (event != null) {
+		 * System.out.println("*" + event.getText() + ":" +
+		 * event.getText().length()); if (event.getText().startsWith("\n") &&
+		 * LispUtil.doParensBalance(in.getDocument())) { eval(); } } } catch
+		 * (Exception e) { e.printStackTrace(); } } });
+		 */
 		
-		/*gd = new GridData();
-		gd.horizontalAlignment = GridData.FILL;
-		gd.heightHint = 50;
- 		gd.grabExcessHorizontalSpace = true;
- 		comp2.setLayoutData(gd);*/
+		/*
+		 * gd = new GridData(); gd.horizontalAlignment = GridData.FILL;
+		 * gd.heightHint = 50; gd.grabExcessHorizontalSpace = true;
+		 * comp2.setLayoutData(gd);
+		 */
  		
  		Composite buttonRow = new Composite(parent, SWT.NONE);
  		buttonRow.setLayout(new RowLayout(SWT.HORIZONTAL));
@@ -412,7 +454,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  		sashListener = new Listener () {
  			public void handleEvent (Event e) {
  				Rectangle sashRect = sash.getBounds ();
- 				if( sashRect.height == 0){ //sash is not displayed
+ 				if( sashRect.height == 0){ // sash is not displayed
  					return;
  				}
  				
@@ -471,8 +513,8 @@ public class ReplView extends ViewPart implements SelectionListener {
  			setPackageString(swank.getCurrPackage());
  			getSwank().sendEval("(format nil \"You are running ~a ~a via Cusp " + LispPlugin.getVersion() + "\" (lisp-implementation-type) (lisp-implementation-version))\n",
  					new ReturnHandler());
- 			//appendText("You are running " + swank.getLispVersion() + 
- 			//		" via Cusp " + LispPlugin.getVersion()+"\n"); 			
+ 			// appendText("You are running " + swank.getLispVersion() +
+ 			// " via Cusp " + LispPlugin.getVersion()+"\n");
  			setPackageString(swank.getCurrPackage());
  		}
 
@@ -481,25 +523,19 @@ public class ReplView extends ViewPart implements SelectionListener {
  		parentControl.layout(false);
  		
  		// reposition widgets on paint event
-		/*history.getTextWidget().addPaintObjectListener(new PaintObjectListener() {
-			public void paintObject(PaintObjectEvent event) {
-				StyleRange style = event.style;
-				int start = style.start;
-				
-				for (int i = 0; i < offsets.size(); i++) {
-					int offset = offsets.get(i);
-					if (start == offset) {
-						Point pt = controls.get(i).getSize();
-						Point loc = history.getTextWidget().getLocationAtOffset(offset);
-						System.out.println("*" + loc);
-						int x = loc.x + 5;
-						int y = loc.y + event.ascent - 2*pt.y/3;
-						controls.get(i).setLocation(x, y);
-						break;
-					}
-				}
-			}
-		});*/
+		/*
+		 * history.getTextWidget().addPaintObjectListener(new
+		 * PaintObjectListener() { public void paintObject(PaintObjectEvent
+		 * event) { StyleRange style = event.style; int start = style.start;
+		 * 
+		 * for (int i = 0; i < offsets.size(); i++) { int offset =
+		 * offsets.get(i); if (start == offset) { Point pt =
+		 * controls.get(i).getSize(); Point loc =
+		 * history.getTextWidget().getLocationAtOffset(offset);
+		 * System.out.println("*" + loc); int x = loc.x + 5; int y = loc.y +
+		 * event.ascent - 2*pt.y/3; controls.get(i).setLocation(x, y); break; } } }
+		 * });
+		 */
 		if ( LispPlugin.getDefault().getPreferenceStore()
 				.getBoolean(PreferenceConstants.CONSOLE_COMPILER_LOG)){
 			LispPlugin.getDefault().out("Lisp compiler log:");			
@@ -804,8 +840,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	
 	/**
-	 * This is a real class rather than an anonymous one so that it can be cloned properly.
-	 *  If it weren't, you'd sometimes get results printed twice on the repl
+	 * This is a real class rather than an anonymous one so that it can be
+	 * cloned properly. If it weren't, you'd sometimes get results printed twice
+	 * on the repl
 	 */
 	protected class DisplayRunnable extends SwankDisplayRunnable {
 		public ReplView rv;
@@ -817,7 +854,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			} else {
 				rv.appendInspectable(result.get(1).value, presentation);
 			}
-			//history.appendText(result.get(1).value);
+			// history.appendText(result.get(1).value);
 			scrollDown();
 		}
 		
@@ -904,16 +941,16 @@ public class ReplView extends ViewPart implements SelectionListener {
 				String res = r.get(0).value;
 				appendText(res + "\n");
 			}
-			//String res = .get(0).get(0).value;
+			// String res = .get(0).get(0).value;
 			
 			scrollDown();
 		}
 	}
 
 	/**
-	 * Checks the next repl command to be issued for a valid in-package form.
-	 * If one is found, the name specified in the form is checked against the list
-	 * of available packages.  If the specified package name is available, then
+	 * Checks the next repl command to be issued for a valid in-package form. If
+	 * one is found, the name specified in the form is checked against the list
+	 * of available packages. If the specified package name is available, then
 	 * the swank connection's current package is changed as requested.
 	 */
 	private void checkSwitchPackage (String replCmd) {
@@ -933,9 +970,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 
 	
 	/**
-	 * Switches the swank connection's current package to the given package name,
-	 * prints an appropriate commented message, and forces the repl to scroll to the
-	 * bottom.
+	 * Switches the swank connection's current package to the given package
+	 * name, prints an appropriate commented message, and forces the repl to
+	 * scroll to the bottom.
 	 */
 	public void switchPackage (String packageName) {
 		swank.setPackage(packageName);
@@ -956,8 +993,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 			popState();
 		}
 		
-		// When this was called from the TextChanged event, exceptions got thrown
-		//  and the control became unresponsive. So, we execute elsewhere.
+		// When this was called from the TextChanged event, exceptions got
+		// thrown
+		// and the control became unresponsive. So, we execute elsewhere.
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				try {
@@ -1029,7 +1067,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 					&& (event.keyCode == '\r' || event.keyCode == '\n')
 					&& !in.getDocument().get().matches("\\s*")
 					&& LispUtil.doParensBalance(in.getDocument())) {
-				//System.out.println("*" + event.text + ":" + event.text.length());
+				// System.out.println("*" + event.text + ":" +
+				// event.text.length());
 				sentEvalByKeyboard = true;
 				eval();
 				event.doit = false;
@@ -1071,9 +1110,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 	}
 	
-	//******************************
-	//      State handling
-	//******************************
+	// ******************************
+	// State handling
+	// ******************************
 	
 	protected void pushState(State s) {
 		if (states.size() > 1) {
@@ -1283,7 +1322,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 			
 			for (int i=0; i<backtrace.params.size(); ++i) {
 				LispNode trace = backtrace.get(i);
-				//appendText("\t[" + trace.car().value + "] " + trace.cadr().value + "\n");
+				// appendText("\t[" + trace.car().value + "] " +
+				// trace.cadr().value + "\n");
 
 				String txt = trace.car().value + "] " + trace.cadr().value;
 				String txtlow = txt.toLowerCase();
@@ -1292,7 +1332,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 					if( txtlow.contains("swank") ){
 						if( LispPlugin.getDefault().getPreferenceStore()
 								.getBoolean(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES)){
-							break; // I am not interested in swank frames						
+							break; // I am not interested in swank frames
 						}
 					}
 					
@@ -1320,7 +1360,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			
 			// scroll to top of the tree
 			debugTree.setSelection(firstItem);
-			//select most often used (by me?) option
+			// select most often used (by me?) option
 			debugTree.setSelection(quickOption);
 			
 			LispNode condExtras = desc.caadr();
@@ -1376,15 +1416,13 @@ public class ReplView extends ViewPart implements SelectionListener {
 		
 		public void chooseRestart(char c) {
 			switch (c) {
-			// a and c crash? sbcl under windows. I don't know about other distrs.
-/*			case 'a': 
-				swank.sendAbortDebug(null);
-				appendText("]> Abort debug\n");
-				break;
-			case 'c':
-				swank.sendContinueDebug(null);
-				appendText("]> Continue debug\n");
-				break; */
+			// a and c crash? sbcl under windows. I don't know about other
+			// distrs.
+/*
+ * case 'a': swank.sendAbortDebug(null); appendText("]> Abort debug\n"); break;
+ * case 'c': swank.sendContinueDebug(null); appendText("]> Continue debug\n");
+ * break;
+ */
 			case 's':
 				swank.sendStepDebug(null, thread);
 				appendInput("]> Step\n");
@@ -1417,13 +1455,15 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if (sel.getData("frame") != null) {
 				final Object frame = sel.getData("frame");
 				
-				// all stupidity of this procedure, to make tree behave civilized on Linux
-				// it would be much clearer and strightforward to just delete all old items and
+				// all stupidity of this procedure, to make tree behave
+				// civilized on Linux
+				// it would be much clearer and strightforward to just delete
+				// all old items and
 				// add create new ones, instead we need to reuse existing items
 				getSwank().sendGetFrameLocals(frame.toString(), thread, new SwankRunnable() {
 					public void run() {
 						int n0 = sel.getItemCount();
-						//sel.removeAll(); //this precludes displaying on Linux
+						// sel.removeAll(); //this precludes displaying on Linux
 						LispNode vars = result.getf(":return").getf(":ok");
 						if (vars.params.size() <= 0) {
 							if(n0 > 0){
@@ -1507,27 +1547,25 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 		
 		public void mouseDown(MouseEvent e) {
-			/*TreeItem item = debugTree.getItem(new Point(e.x, e.y));
-			if (item != null && item.getData("frame") != null) {
-				Object frame = item.getData("frame");
-				getSwank().sendGetFrameSourceLocation(frame.toString(), new SwankRunnable() {
-					public void run() {
-						LispNode res = result.getf(":return").getf(":ok");
-						if (!res.car().value.equals(":error")) {
-							String file = res.getf(":file").value;
-							int pos = res.getf(":position").asInt();
-							String snippet = res.getf(":snippet").value;
-							LispEditor.jumpToDefinition(file, pos, snippet);
-						}
-					}
-				});
-			}*/
+			/*
+			 * TreeItem item = debugTree.getItem(new Point(e.x, e.y)); if (item !=
+			 * null && item.getData("frame") != null) { Object frame =
+			 * item.getData("frame");
+			 * getSwank().sendGetFrameSourceLocation(frame.toString(), new
+			 * SwankRunnable() { public void run() { LispNode res =
+			 * result.getf(":return").getf(":ok"); if
+			 * (!res.car().value.equals(":error")) { String file =
+			 * res.getf(":file").value; int pos = res.getf(":position").asInt();
+			 * String snippet = res.getf(":snippet").value;
+			 * LispEditor.jumpToDefinition(file, pos, snippet); } } }); }
+			 */
 		}
 		
 		private boolean enterKeyInited = false;
 		
 		public void keyPressed(KeyEvent e) {
-			//System.out.printf("Key pressed: \n%c = \n%s\n", e.character, e.toString());
+			// System.out.printf("Key pressed: \n%c = \n%s\n", e.character,
+			// e.toString());
 			if (!(e.character == '\r' || e.character == '\n')){
 				Character c = new Character(e.character);
 				try {
@@ -1550,10 +1588,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 		}
 		
 		public void keyReleased(KeyEvent e) {
-			//System.out.printf("Key released: \n%c = \n%s\n", e.character, e.toString());
+			// System.out.printf("Key released: \n%c = \n%s\n", e.character,
+			// e.toString());
 			if (e.character == '\r' || e.character == '\n') {
 				// <Enter> on Linux sends keyEvent only on keyReleased. However
-				// we get into tree when we press <Enter> in REPL, and we release
+				// we get into tree when we press <Enter> in REPL, and we
+				// release
 				// <Enter> on tree. So we need to skip first <Enter> on release.
 				// But we also can send eval from REPL using Send button which
 				// does no create any <Enter> event.
