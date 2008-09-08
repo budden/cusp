@@ -2,7 +2,7 @@ package jasko.tim.lisp.editors;
 
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.hyperlink.IHyperlink;
-import jasko.tim.lisp.editors.actions.EditDefinitionAction;
+import jasko.tim.lisp.editors.actions.FindDefinitionAction;
 
 public class LispHyperlink implements IHyperlink {
 
@@ -32,7 +32,7 @@ public class LispHyperlink implements IHyperlink {
 	}
 
 	public void open() {
-		EditDefinitionAction eda = new EditDefinitionAction(editor);
+		FindDefinitionAction eda = new FindDefinitionAction(editor);
 		eda.run();
 	}
 

@@ -12,11 +12,11 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
-public class EditDefinitionAction extends LispAction {
+public class FindDefinitionAction extends LispAction {
 	
 	private Shell shell;
 	
-	public EditDefinitionAction(ILispEditor editor) {
+	public FindDefinitionAction(ILispEditor editor) {
 		super(editor);
 	}
 
