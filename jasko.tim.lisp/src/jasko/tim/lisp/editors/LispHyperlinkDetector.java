@@ -14,18 +14,16 @@ import org.eclipse.jface.text.hyperlink.IHyperlink;
 public class LispHyperlinkDetector implements IHyperlinkDetector {
 	String prev = ")"; // impossible value
 	boolean haveDefinition = false;
-	LispEditor editor;
+	ILispEditor editor;
 	
 	private static final int TIMEOUT = 2000;
 
 	public LispHyperlinkDetector() {
+		int i = 3;
 	}
 	
-	public LispHyperlinkDetector(LispEditor edt) {
+	public LispHyperlinkDetector(ILispEditor edt) {
 		editor = edt;
-	}
-	
-	public LispHyperlinkDetector(ITextViewer textViewer) {
 	}
 	
 	public IHyperlink[] detectHyperlinks(ITextViewer textViewer, IRegion region, 

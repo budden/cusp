@@ -39,8 +39,12 @@ public class LispReconcilingStrategy implements IReconcilingStrategy,
 		return editor;
 	}
 
-	public void setEditor(LispEditor editor) {
-		this.editor = editor;
+	public void setEditor(ILispEditor editor) {
+		if( editor instanceof LispEditor){
+			this.editor = (LispEditor)editor;			
+		} else {
+			this.editor = null;
+		}
 	}
 
 	/*

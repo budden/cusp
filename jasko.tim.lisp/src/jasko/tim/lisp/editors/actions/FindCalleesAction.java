@@ -1,6 +1,7 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.editors.LispEditor;
+//import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.views.XrefView;
@@ -13,7 +14,7 @@ public class FindCalleesAction extends LispAction {
 	public FindCalleesAction() {
 	}
 	
-	public FindCalleesAction(LispEditor editor) {
+	public FindCalleesAction(ILispEditor editor) {
 		super(editor);
 	}
 	
@@ -61,7 +62,7 @@ public class FindCalleesAction extends LispAction {
 				
 				if (optionNames.size() <= 0) {
 					XrefView.getXrefView().showResults("No calls from "+symbol+" were found.", null, null, null);
-					editor.showPopupInfo("No calls from this function were found");
+					editor.showMessage("No calls from this function were found");
 					return;
 				} else {
 					XrefView.getXrefView().showResults("Callees of "+symbol+":", optionNames, optionData, tips);

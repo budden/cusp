@@ -135,7 +135,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
     private class ReplEditor extends SourceViewer implements ILispEditor {
         private final LispConfiguration config = 
-        	new LispConfiguration(null, LispPlugin.getDefault().getColorManager());
+        	new LispConfiguration(this, LispPlugin.getDefault().getColorManager());
         /*
 		 * private final CurrentExpressionHighlightingListener highlighter = new
 		 * CurrentExpressionHighlightingListener();
@@ -145,7 +145,6 @@ public class ReplView extends ViewPart implements SelectionListener {
         	return null;
         }
  
-    
         public ReplEditor (Composite comp2, VerticalRuler ruler, int i) {
             super(comp2, ruler, i);
             setEditable(true);
@@ -172,10 +171,16 @@ public class ReplView extends ViewPart implements SelectionListener {
         	LispConfiguration.callUrl(url,ts.getOffset(),getDocument());
         }
     
+    	public void showMessage(String msg) {
+    		MessageBox mb = new MessageBox(getTextWidget().getShell(), SWT.OK);
+    	    mb.setText("Message from Repl");
+    	    mb.setMessage(msg);
+    	    mb.open(); 	
+    	}
     }
 
     private void addUndoManager(final TextViewer textViewer) {
-  	  // remembers 20 edit commands
+  	  // remembers 1000 edit commands
   	  final TextViewerUndoManager undoManager = new TextViewerUndoManager(1000);
 
   	  // add listeners
@@ -369,7 +374,6 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		in.getControl().setLayoutData(gd);
  		in.getTextWidget().setFont(newFont);
- 		// in.appendVerifyKeyListener(new PrevCommandsShortcuts());
  		in.appendVerifyKeyListener(new CheckEvalListener());
         in.appendVerifyKeyListener(new SelectAllListener());
         
@@ -393,6 +397,7 @@ public class ReplView extends ViewPart implements SelectionListener {
  			new HandlerDef(SelectCurrentExpressionAction.class, "jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction", true),
  			new HandlerDef(JumpForwardAction.class, "jasko.tim.lisp.editors.actions.JumpForwardAction", true),
  			new HandlerDef(JumpBackAction.class, "jasko.tim.lisp.editors.actions.JumpBackAction", true),
+ 			new HandlerDef(EditDefinitionAction.class, "jasko.tim.lisp.editors.actions.EditDefinitionAction", true),
  			new HandlerDef(CommentingAction.class, "jasko.tim.lisp.editors.actions.CommentingAction", true)
  		};
  		

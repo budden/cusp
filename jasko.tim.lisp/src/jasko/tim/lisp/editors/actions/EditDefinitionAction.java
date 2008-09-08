@@ -1,18 +1,22 @@
 package jasko.tim.lisp.editors.actions;
 
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.*;
 
 import java.util.*;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 
 public class EditDefinitionAction extends LispAction {
 	
-	public EditDefinitionAction() {
-	}
+	private Shell shell;
 	
-	public EditDefinitionAction(LispEditor editor) {
+	public EditDefinitionAction(ILispEditor editor) {
 		super(editor);
 	}
 
@@ -33,6 +37,12 @@ public class EditDefinitionAction extends LispAction {
 			this.symbol = symbol;
 		}
 		public void run() {
+			shell = null;
+			if( editor == null ){
+				shell = editor.getTextWidget().getShell();
+			} else {
+				shell = PlatformUI.getWorkbench().getDisplay().getActiveShell();
+			}
 			LispNode guts = result.getf(":return").getf(":ok");
 			ArrayList<String> names = new ArrayList<String>(guts.params.size());
 			ArrayList<LispNode> data = new ArrayList<LispNode>(guts.params.size());
@@ -51,12 +61,12 @@ public class EditDefinitionAction extends LispAction {
 			LispNode chosen;
 			
 			if (names.size() <= 0) {
-				editor.showPopupInfo("Unable to find definitions");
+				showMessage("Unable to find definitions");
 				return;
 			} else if (names.size() == 1) {
 				chosen = data.get(0);
 			} else {
-				ListDialog<LispNode> win = new ListDialog<LispNode>(editor.getSite().getShell(),
+				ListDialog<LispNode> win = new ListDialog<LispNode>(shell,
 						names, data, tips);
 				win.create();
 				win.setTitle("Definitions");
@@ -77,7 +87,7 @@ public class EditDefinitionAction extends LispAction {
 			LispNode location = chosen.get(1);
 			System.out.println(location);
 			if (location.get(0).value.equalsIgnoreCase(":error")) {
-				editor.showPopupInfo(location.getf(":error").value);
+				editor.showMessage(location.getf(":error").value);
 				return;
 			}
 			String path = location.getf(":file").value;
@@ -94,6 +104,16 @@ public class EditDefinitionAction extends LispAction {
 		}
 	}
 	
+	public void showMessage(String msg) {
+		if( editor == null ){
+			MessageBox mb = new MessageBox(shell, SWT.OK);
+		    mb.setText("Find definitions:");
+		    mb.setMessage(msg);
+		    mb.open();
+		} else {
+			editor.showMessage(msg);
+		}
+	}
 
 
 }

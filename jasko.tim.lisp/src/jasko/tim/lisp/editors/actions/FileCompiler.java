@@ -2,6 +2,7 @@ package jasko.tim.lisp.editors.actions;
 
 import jasko.tim.lisp.util.*;
 import jasko.tim.lisp.views.ReplView;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.builder.*;
 
@@ -12,8 +13,8 @@ import org.eclipse.ui.*;
 
 public class FileCompiler {
 	
-	public static void compileString(LispEditor editor, boolean switchToRepl) {
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+	public static void compileString(ILispEditor editor, boolean switchToRepl) {
+		IDocument doc = editor.getDocument();
 		
 		if (LispUtil.doParensBalance(doc)) {
 			
@@ -33,7 +34,7 @@ public class FileCompiler {
 				}
 			}
 		} else {
-			MessageBox mbox = new MessageBox(editor.getSite().getShell(),
+			MessageBox mbox = new MessageBox(editor.getTextWidget().getShell(),
 					SWT.CANCEL | SWT.ICON_ERROR | SWT.APPLICATION_MODAL);
 	       mbox.setText(")Mismatch(");
 	       mbox.setMessage("Your parentheses are not balanced");
@@ -42,8 +43,11 @@ public class FileCompiler {
 	}
 	
 	
-	public static void compileFile(LispEditor editor, boolean switchToRepl) {
-		editor.doSaveNoCompile();
+	public static void compileFile(ILispEditor editor, boolean switchToRepl) {
+		if(editor instanceof LispEditor)
+		{
+			((LispEditor)editor).doSaveNoCompile();
+		}
 		boolean cancompile = LispBuilder.checkLisp(editor.getIFile());
 
 		if(cancompile){
@@ -58,7 +62,7 @@ public class FileCompiler {
 				}
 			}
 		} else {
-			MessageBox mbox = new MessageBox(editor.getSite().getShell(),
+			MessageBox mbox = new MessageBox(editor.getTextWidget().getShell(),
 					SWT.CANCEL | SWT.ICON_ERROR | SWT.APPLICATION_MODAL);
 	       mbox.setText("Errors");
 	       mbox.setMessage("Your file has errors.");

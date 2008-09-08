@@ -1,7 +1,7 @@
 package jasko.tim.lisp.editors.actions;
 
 import jasko.tim.lisp.*;
-import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.swank.*;
 
 import org.eclipse.jface.dialogs.*;
@@ -12,7 +12,7 @@ public class UndefineFunctionAction extends LispAction {
 	public UndefineFunctionAction() {
 	}
 	
-	public UndefineFunctionAction(LispEditor editor) {
+	public UndefineFunctionAction(ILispEditor editor) {
 		super(editor);
 	}
 	
@@ -20,7 +20,7 @@ public class UndefineFunctionAction extends LispAction {
 		String symbol = getSymbol();
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
 		
-		InputDialog win = new InputDialog(editor.getSite().getShell(), "Undefine",
+		InputDialog win = new InputDialog(editor.getTextWidget().getShell(), "Undefine",
 				"Undefine the following symbol:", symbol, new IInputValidator() {
 			public String isValid(String newText) {
 				if (newText.equals("")) {

@@ -1,6 +1,6 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.swank.*;
 
 public class ProfileFunctionAction extends LispAction {
@@ -9,7 +9,7 @@ public class ProfileFunctionAction extends LispAction {
 	public ProfileFunctionAction() {
 	}
 	
-	public ProfileFunctionAction(LispEditor editor) {
+	public ProfileFunctionAction(ILispEditor editor) {
 		super(editor);
 	}
 
@@ -20,7 +20,7 @@ public class ProfileFunctionAction extends LispAction {
 		if (!symbol.equals("")) {
 			getSwank().sendToggleProfileFunction(symbol, getPackage(), new SwankRunnable() {
 				public void run() {
-					editor.showPopupInfo(result.getf(":return").getf(":ok").value);
+					editor.showMessage(result.getf(":return").getf(":ok").value);
 				}
 			});
 		}

@@ -747,5 +747,18 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			return super.getAdapter(adapter);
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see jasko.tim.lisp.editors.ILispEditor#getTextWidget()
+	 */
+	public void showMessage(String msg) {
+		showPopupInfo(msg);
+	}
 	
+	/* (non-Javadoc)
+	 * @see jasko.tim.lisp.editors.ILispEditor#getTextWidget()
+	 */
+	public StyledText getTextWidget() {
+		return this.getSourceViewer().getTextWidget();
+	}
 }
