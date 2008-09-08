@@ -137,6 +137,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 	}
 
 
+	@SuppressWarnings("unchecked")
 	protected IProject[] build(int kind, Map args, IProgressMonitor monitor)
 			throws CoreException {
 		if (kind == FULL_BUILD) {
