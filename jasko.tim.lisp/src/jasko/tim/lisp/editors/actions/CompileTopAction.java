@@ -1,6 +1,6 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.editors.LispEditor;
+import jasko.tim.lisp.editors.ILispEditor;
 
 
 public class CompileTopAction extends LispAction {
@@ -10,7 +10,7 @@ public class CompileTopAction extends LispAction {
 		quick = false;
 	}
 	
-	public CompileTopAction(LispEditor editor, boolean quick) {
+	public CompileTopAction(ILispEditor editor, boolean quick) {
 		super(editor);
 		this.quick = quick;
 	}

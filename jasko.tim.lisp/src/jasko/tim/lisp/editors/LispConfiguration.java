@@ -39,7 +39,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 	private ITextDoubleClickStrategy doubleClickStrategy;
 	protected ColorManager colorManager;
 	protected ContentAssistant ca;
-	protected LispEditor editor;
+	protected ILispEditor editor;
 
 	public ITextDoubleClickStrategy getDoubleClickStrategy(
 			ISourceViewer sourceViewer,
@@ -60,7 +60,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
         }
     };
     
-	public LispConfiguration(LispEditor editor, ColorManager colorManager) {
+	public LispConfiguration(ILispEditor editor, ColorManager colorManager) {
 		this.editor = editor;
 		this.colorManager = colorManager;
 		

@@ -1,6 +1,7 @@
 package jasko.tim.lisp.editors.assist;
 
 import jasko.tim.lisp.*;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.*;
 import jasko.tim.lisp.util.*;
@@ -18,8 +19,12 @@ public class LispTextHover implements ITextHover, ITextHoverExtension {
 	int prevOffset = 0;
 	LispEditor editor;
 	
-	public LispTextHover(LispEditor editor) {
-		this.editor = editor;
+	public LispTextHover(ILispEditor editor) {
+		if( editor instanceof LispEditor) {
+			this.editor = (LispEditor)editor;			
+		} else {
+			this.editor = null;
+		}
 	}
 	
 	public LispTextHover() {

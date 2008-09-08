@@ -1,6 +1,7 @@
 package jasko.tim.lisp.editors.actions;
 
 import jasko.tim.lisp.LispPlugin;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.SwankInterface;
 import jasko.tim.lisp.util.LispUtil;
@@ -11,12 +12,12 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.*;
 
 public abstract class LispAction extends Action implements IEditorActionDelegate {
-	protected LispEditor editor;
+	protected ILispEditor editor;
 	
 	public LispAction() {
 	}
 	
-	public LispAction(LispEditor editor) {
+	public LispAction(ILispEditor editor) {
 		this.editor = editor;
 	}
 
@@ -47,12 +48,12 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
 	}
 	
 	protected String getPackage(){
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		IDocument doc = editor.getDocument();
 		return LispUtil.getPackage(doc.get(), getOffset());
 	}
 	
 	protected String getSymbol() {
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		IDocument doc = editor.getDocument();
 		
 		String symbol = LispUtil.getCurrentFullWord(doc, getOffset());
 		symbol = symbol.replace("'", "");
@@ -62,20 +63,20 @@ public abstract class LispAction extends Action implements IEditorActionDelegate
 	}
 	
 	protected String getTopLevel() {
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		IDocument doc = editor.getDocument();
 		
 		return LispUtil.getTopLevelExpression(doc, getOffset());
 	}
     
     protected String getCurrentExpression () {
         ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
-        IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        IDocument doc = editor.getDocument();
         
         return LispUtil.getCurrentExpression(doc, ts.getOffset(), ts.getLength());
     }
 	
 	protected String getExpression() {
-		IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+		IDocument doc = editor.getDocument();
 		
 		return LispUtil.getCurrentFullExpression(doc, getOffset());
 	}

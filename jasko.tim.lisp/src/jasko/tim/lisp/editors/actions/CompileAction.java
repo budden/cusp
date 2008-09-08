@@ -1,7 +1,7 @@
 package jasko.tim.lisp.editors.actions;
 
+import jasko.tim.lisp.editors.ILispEditor;
 
-import jasko.tim.lisp.editors.LispEditor;
 
 
 
@@ -10,7 +10,7 @@ public class CompileAction extends LispAction {
 	public CompileAction() {
 	}
 	
-	public CompileAction(LispEditor editor) {
+	public CompileAction(ILispEditor editor) {
 		super(editor);
 	}
 	

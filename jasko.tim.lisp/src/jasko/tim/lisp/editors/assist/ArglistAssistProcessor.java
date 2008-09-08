@@ -3,6 +3,7 @@ package jasko.tim.lisp.editors.assist;
 import java.util.*;
 
 import jasko.tim.lisp.*;
+import jasko.tim.lisp.editors.ILispEditor;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
@@ -30,8 +31,12 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 	private String[] lastCompletionResultsInfo;
 
 	private static String NO_DOC_STRING = "No additional information is available";
-	public ArglistAssistProcessor(LispEditor editor) {
-		this.editor = editor;
+	public ArglistAssistProcessor(ILispEditor editor) {
+		if( editor instanceof LispEditor ){
+			this.editor = (LispEditor)editor;			
+		} else {
+			this.editor = null;
+		}
 	}
 
 	/**

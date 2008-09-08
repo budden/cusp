@@ -11,7 +11,7 @@ public class MacroExpandAction extends LispAction {
 		all = false;
 	}
 	
-	public MacroExpandAction(LispEditor editor, boolean all) {
+	public MacroExpandAction(ILispEditor editor, boolean all) {
 		super(editor);
 		this.all = all;
 	}
@@ -22,7 +22,7 @@ public class MacroExpandAction extends LispAction {
 		getSwank().sendMacroExpand(exp, new SwankRunnable() {
 			public void run() {
 				String expanded = result.getf(":return").getf(":ok").value;
-				editor.showPopupInfo(expanded);
+				editor.showMessage(expanded);
 			}
 		}, all, getPackage());
 		

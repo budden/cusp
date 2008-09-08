@@ -1,14 +1,13 @@
 package jasko.tim.lisp.editors.actions;
 
-import jasko.tim.lisp.editors.LispEditor;
-
+import jasko.tim.lisp.editors.ILispEditor;
 
 public class CompileSlowAction extends LispAction {
 	
 	public CompileSlowAction() {
 	}
 	
-	public CompileSlowAction(LispEditor editor) {
+	public CompileSlowAction(ILispEditor editor) {
 		super(editor);
 	}
 	
