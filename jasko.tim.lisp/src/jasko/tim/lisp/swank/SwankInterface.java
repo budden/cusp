@@ -561,12 +561,13 @@ public class SwankInterface {
 			}
 		}
 		
-		/*try {
+		try {
 			commandInterface.writeBytes(implementation.getQuitForm() + "\n");
 			commandInterface.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}*/
+		}
+		
 		try {
 			if (displayListener != null) {
 				displayListener.running = false;
