@@ -255,7 +255,7 @@ loaded ghost-trinity
 	  #P"D:/docums/code/eclipse/jasko.tim.lisp.libs/libs/lisp_webapp_example/")
 (hunchentoot:start-server :port 4242)
 point browser to http://localhost:4242
-
+again - doesn't stop, so need to restart sbcl (this is due to lack of thread support in sbcl+win32)
 
 ----- md5-1.8.5 works
 - compiles
