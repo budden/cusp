@@ -11,12 +11,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.*;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.widgets.*;
-import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.custom.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
+import org.eclipse.ui.dialogs.FilteredList;
 
 public class PackageDialog extends Dialog implements KeyListener {
 	ArrayList<String> loadedPkgs;
@@ -28,7 +29,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 	String title = "";
 	String groupTitle = "";
 
-	private List lstEnums;
+	private FilteredList lstEnums;
 	private Label lblSearch;
 	private Label lblLoaded;
 	private StyledText txtDoc;
@@ -36,7 +37,6 @@ public class PackageDialog extends Dialog implements KeyListener {
 	private String[] urls;
 	private String[] hlinktxt;
 	
-	private String search = "";
 	boolean loadDialog;
 	
 	//load package dialog
@@ -113,12 +113,10 @@ public class PackageDialog extends Dialog implements KeyListener {
 		gridData.grabExcessHorizontalSpace = true;
 		gridData.horizontalAlignment = GridData.FILL;
 		grpEnum.setLayoutData(gridData);
-	
-		lstEnums = new List(grpEnum, SWT.LEFT | SWT.BORDER 
-				| SWT.V_SCROLL | SWT.SINGLE);
-		for(String p: packages) {
-			lstEnums.add(p);
-		}
+		lstEnums = new FilteredList(grpEnum, SWT.LEFT | SWT.BORDER 
+				| SWT.V_SCROLL | SWT.SINGLE, new LabelProvider(), 
+				true, false, true);
+		lstEnums.setElements(packages.toArray());
 		if( packages.contains(currPackage) ){
 			lstEnums.setSelection(new String[] { currPackage });			
 		} else if ( packages.size() > 0 ){
@@ -286,14 +284,14 @@ public class PackageDialog extends Dialog implements KeyListener {
 	}
 	
 	protected void okPressed() {
-		String pkg = lstEnums.getSelection()[0];
+		String pkg = (String)lstEnums.getSelection()[0];
 		if( loadDialog && loadedPkgs.contains(pkg.toUpperCase()) ){
 			lblLoaded.setText("Package " + pkg 
 					+ " is loaded. Press Esc to cancel.");
 			lblLoaded.setVisible(true);
 			return;
 		} else {
-			result = lstEnums.getSelection()[0];
+			result = (String)lstEnums.getSelection()[0];
 			super.okPressed();			
 		}
 	}
@@ -356,13 +354,14 @@ public class PackageDialog extends Dialog implements KeyListener {
 	}
 	
 	public void keyPressed(KeyEvent e) {
+		String search = lstEnums.getFilter();
 		if (e.keyCode == SWT.ESC) {
 			if (search.equals("")) {
 				this.cancelPressed();
 				return;
 			} else {
-				search = "";
-				lblSearch.setText(search);
+				lstEnums.setFilter("");
+				lblSearch.setText("");
 				lblSearch.setVisible(false);
 				return;
 			}
@@ -370,21 +369,15 @@ public class PackageDialog extends Dialog implements KeyListener {
 			this.okPressed();
 			return;
 		} else if (e.character == SWT.BS) {
-			search = search.substring(0, search.length() - 1);
+			lstEnums.setFilter(search.substring(0, search.length() - 1));
 		} else if (isSearchable(e.character)) {
 			search += Character.toLowerCase(e.character);
+			lstEnums.setFilter(search);
 		} else {
 			return;
 		}
-		lblSearch.setText(search);
+		lblSearch.setText(lstEnums.getFilter());
 		lblSearch.setVisible(true);
-		for (String option: lstEnums.getItems()) {
-			if (option.toLowerCase().startsWith(search)) {
-				lstEnums.setSelection(new String[] { option });
-				return;
-			}
-		}
-		this.getShell().getDisplay().beep();
 	}
 
 	public void keyReleased(KeyEvent e) {

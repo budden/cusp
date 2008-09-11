@@ -72,7 +72,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
         super.initializeEditor();
         setEditorContextMenuId(EDITOR_CONTEXT);
         setRulerContextMenuId(RULER_CONTEXT);
-    }    
+    }
     
     public void addOutlinePosition(Position pos){
 		IDocument doc = getDocument();
