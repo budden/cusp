@@ -721,7 +721,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 								if (pd.open() == Dialog.OK) {
 									String pkg = pd.getPackage();
 									swank.sendLoadPackage(pd.getPackage());
-									appendText("Loaded package "+pkg);
+									appendText("Loaded package "+pkg+"\n");
 								}
 							}
 						});
