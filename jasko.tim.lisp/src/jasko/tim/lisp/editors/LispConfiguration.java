@@ -59,6 +59,16 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
             }
         }
     };
+
+    public void stopContentAssistant(){
+    	ca.enableAutoActivation(false);
+    }
+    
+    /* returns to state defined in AUTO_POPUP_COMPLETIONS) */
+    public void startContentAssistant(){
+    	ca.enableAutoActivation(LispPlugin.getDefault().getPreferenceStore()
+    			.getBoolean(PreferenceConstants.AUTO_POPUP_COMPLETIONS));
+    }
     
 	public LispConfiguration(ILispEditor editor, ColorManager colorManager) {
 		this.editor = editor;
