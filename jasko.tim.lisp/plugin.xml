@@ -291,15 +291,6 @@
 	        id="jasko.tim.lisp.views.ReplView"
 	        name="REPL" />
 		
-		<!-- Secondary REPL view -->
-		<view
-	        allowMultiple="true"
-	        category="jasko.tim.lisp"
-	        class="jasko.tim.lisp.views.SecondaryReplView"
-	        icon="icons/lisp-file.gif"
-	        id="jasko.tim.lisp.views.SecondaryReplView"
-	        name="Secondary REPL" />
-		
 		<!-- Apropos view -->
 		<view
 			name="Apropos"
