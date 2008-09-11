@@ -337,14 +337,19 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 	private class ArglistContext 
 	  implements IContextInformationValidator, IContextInformationPresenter {
 		private ITextViewer viewer;
-		IContextInformation info;
+		private IContextInformation info;
+		private int offset;
 
 		public void install(IContextInformation info, ITextViewer viewer, int offset) {
 			this.viewer = viewer;
 			this.info = info;
+			this.offset = offset;
 		}
 
 		public boolean isContextInformationValid(int offset) {
+			if( offset < this.offset ){
+				return false;
+			}
 			try {
 				char c = viewer.getDocument().getChar(offset-1);
 				if (c == '(' || c == ')') {
