@@ -38,6 +38,28 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+/*
+ * TODO: Notes on future Repl refactoring
+ * Goal - factor out repl.
+ * 
+ * Repl compound (ReplEditor in, and ReplHistory history), should be
+ * substitutable by any class (so create Interface) which
+ * implements the following functions (some of these eventually should be
+ * moved inside repl and handled there):
+ * 
+ * - void clearHistory() to use in places where history.clear() is now used
+ * - void clearRepl() to use in places where in is cleared
+ * - void appendText(String msg) to append msg to repl
+ * - void appendInspectable(String text, String id)
+ *    also should call swank.sendInspectInspectedPart(partNum, new InspectorRunnable()),
+ *    when inspectable is selected
+ * - void scrollDown()
+ * - ILispEditor getILispEditor() - to install LispConfiguration
+ * - void setFont(Font font)
+ * - String get() get string that was edited in Repl (to send for evaluation)
+ * - void selectAll()
+ */
+
 
 /**
  * @author Tim Jasko
@@ -771,7 +793,6 @@ public class ReplView extends ViewPart implements SelectionListener {
 		clearButton = new Action("Clear Repl and Reset Sash") {
 			public void run() {
 				history.clear();
-				sashListener.handleEvent(null);
 			}
 		};
 		clearButton.setImageDescriptor(
@@ -1466,9 +1487,9 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if (sel.getData("frame") != null) {
 				final Object frame = sel.getData("frame");
 				
-				// all stupidity of this procedure, to make tree behave
-				// civilized on Linux
-				// it would be much clearer and strightforward to just delete
+				// all stupidity of this procedure to make tree behave
+				// civilized on Linux 
+				// it would be much clearer and straightforward to just delete
 				// all old items and
 				// add create new ones, instead we need to reuse existing items
 				getSwank().sendGetFrameLocals(frame.toString(), thread, new SwankRunnable() {
