@@ -365,6 +365,8 @@ public class PackageDialog extends Dialog implements KeyListener {
 				lblSearch.setVisible(false);
 				return;
 			}
+		} else if (e.keyCode == SWT.ARROW_DOWN || e.keyCode == SWT.ARROW_UP){
+			lstEnums.setFocus();
 		} else if (e.keyCode == SWT.TRAVERSE_RETURN) {
 			this.okPressed();
 			return;
