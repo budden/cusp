@@ -14,7 +14,7 @@
 		</perspective>
 	</extension>
 
-   <!-- Launcher -->	
+   <!-- Launcher --
 	<extension point="org.eclipse.debug.core.launchConfigurationTypes">
 	   <launchConfigurationType
 	         delegate="jasko.tim.lisp.swank.launcher.LispLaunchDelegate"
@@ -64,6 +64,7 @@
      bannerImage="icons/exec-lisp.gif">
   </launchGroup>
  </extension>
+   -- End of Launcher -->
 
 
 	<!-- Builder for lisp files -->
