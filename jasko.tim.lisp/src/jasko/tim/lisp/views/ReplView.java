@@ -57,6 +57,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected Sash replComposite;
 	protected ReplHistory history;
 	protected ReplEditor in;
+	protected LispConfiguration inconfig;
 	
 	protected Composite parentControl;
 	protected Composite mainView;
@@ -66,6 +67,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	protected Button btn;
 	protected Label replPackage;
+	private boolean inReadMode;
 	
 	private boolean replInited = false;
 	
@@ -370,7 +372,10 @@ public class ReplView extends ViewPart implements SelectionListener {
  		Composite comp2 = new Composite(notButtons, SWT.BORDER);
  		comp2.setLayout(layout);
  		
- 		in = new ReplEditor(comp2, new VerticalRuler(10), SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
+ 		in = new ReplEditor(comp2, new VerticalRuler(10),
+ 				SWT.V_SCROLL | SWT.MULTI | SWT.LEFT | SWT.BORDER);
+ 		inconfig = in.config;
+ 		inReadMode = false;
  		
  		in.getControl().setLayoutData(gd);
  		in.getTextWidget().setFont(newFont);
@@ -897,6 +902,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				pushReadState(result.get(1).value, result.get(2).value);
 				appendText(swank.fetchDisplayText() + "\n");
 				scrollDown();
+				inReadMode = false;
 			}
 		});
 		
@@ -1064,7 +1070,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	protected class CheckEvalListener implements VerifyKeyListener {
 		public void verifyKey(VerifyEvent event) {
 			boolean ctrl = true;
-			if( LispPlugin.getDefault().getPreferenceStore()
+			if( !inReadMode && LispPlugin.getDefault().getPreferenceStore()
 				.getBoolean(PreferenceConstants.USE_CTRL_ENTER) ){
 				ctrl = event.stateMask == SWT.CONTROL; 
 			}
@@ -1179,6 +1185,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 	}
 	
 	protected void pushReadState(String s1, String s2) {
+		inReadMode = true;
+		inconfig.stopContentAssistant();
 		ReplView.switchToRepl();
 		pushState(new ReadState(s1, s2));
 	}
@@ -1231,6 +1239,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			swank.sendReadString(cleanCommand, null, stringNum1, stringNum2);
 			appendInput(">> " + command);
 			scrollDown();
+			inconfig.startContentAssistant();
 			return true;
 		}
 
@@ -1240,10 +1249,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	}
 	
-	
-	
-	
-	
+
 
 	protected class DebugState implements State, 
 		MouseListener, KeyListener, TreeListener, SelectionListener {
