@@ -249,6 +249,10 @@ public class SwankInterface {
 		return lispVersion;
 	}
 	
+	public void setLispVersion(String version) {
+		lispVersion = version;
+	}
+	
 
 	public boolean managePackages = false;
 	public boolean useUnitTest = false;
@@ -352,6 +356,14 @@ public class SwankInterface {
 			
 			sendEval(startupCode, sr);
 			//sendEval("(swank:fancy-inspector-init)", null);
+			
+			sendGetConnectionInfo(new SwankRunnable() {
+				public void run() {
+					LispNode impl = getReturn().getf(":lisp-implementation");
+					setLispVersion(impl.getf(":name").value + " "
+						+ impl.getf(":version").value);
+				}
+			});
 		}
 		ranafterLispStart = true;
 	}
@@ -1352,6 +1364,13 @@ public class SwankInterface {
 		sendEvalAndGrab("(asdf:operate 'asdf:load-op :"+pkg+")",3000);
 	}		
 	
+	
+	public synchronized void sendGetConnectionInfo(SwankRunnable callBack) {
+		registerCallback(callBack);
+		String msg = "(swank:connection-info)";
+		
+		emacsRex(msg);
+	}
 	
 	public synchronized void sendGetAvailablePackages(SwankRunnable callBack) {
 		registerCallback(callBack);
