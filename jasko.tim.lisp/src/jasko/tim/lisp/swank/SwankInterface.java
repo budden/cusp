@@ -261,64 +261,112 @@ public class SwankInterface {
 		}
 	}
 
-	public void runAfterLispStart() {
-		if( isConnected() ){
-			
-			sendEval("(format nil \"~a ~a \" (lisp-implementation-type) (lisp-implementation-version))\n", 
-					new SwankRunnable() {
-				public void run() {
-					lispVersion = getReturn().value;
-					lispVersion = lispVersion.replace('"',' ').trim();
-				}
-			});
-			
-			String contribs = "(progn (swank:swank-require :swank-fuzzy)"
-				+ "(swank:swank-require :swank-asdf)"
-				+ "(swank:swank-require :swank-presentations)"
-				+ "(swank:swank-require :swank-fancy-inspector)"
-				+ "(swank:swank-require :swank-presentations)"
-				+ "(swank:swank-require :swank-arglists)"
-				+ ")";
-			sendEval(contribs, null);
-			//sendEval("(swank:fancy-inspector-init)", null);
-			
-			sendEval(BreakpointAction.macro,null);
-			sendEval(WatchAction.macro,null);
-			
-			
+	/*
 			IPreferenceStore prefs = 
 				LispPlugin.getDefault().getPreferenceStore();
 			managePackages = 
 				prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
 			useUnitTest = 
 				prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST);
+			String strini = prefs.getString(PreferenceConstants.LISP_INI);
 			
-			
+			String startupCode = "(progn (swank:swank-require :swank-fuzzy)"
+				+ "(swank:swank-require :swank-asdf)"
+				+ "(swank:swank-require :swank-presentations)"
+				+ "(swank:swank-require :swank-fancy-inspector)"
+				+ "(swank:swank-require :swank-presentations)"
+				+ "(swank:swank-require :swank-arglists)"
+				+ BreakpointAction.macro + WatchAction.macro; 
 			if ( useUnitTest ){
-				sendEvalAndGrab("(load \"" + LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/lisp-unit.lisp" + "\")", 3000);				
+				startupCode += "(load \"" + LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/lisp-unit.lisp" + "\")";				
 			}
-
-			if( managePackages){
-				
+			if ( managePackages ){				
 				String code = LispPlugin.getDefault().getLibsPathRegisterCode();
 				if( !code.equals("")){
 					String asdfext = LispPlugin.getDefault().getPluginPath() 
 						+ "lisp-extensions/asdf-extensions.lisp";
 					System.out.printf("asdf path: %s\n", asdfext);
-					sendEvalAndGrab("(load \"" + asdfext + "\")", 3000);
-					System.out.println(sendEvalAndGrab(code, 1000));					
+					//System.out.println(sendEvalAndGrab(code, 1000));					
+					startupCode += "(load \"" + asdfext + "\")";
 				}
 			}
-			
-			String str = prefs.getString(PreferenceConstants.LISP_INI);
-			if( str != "")	{
-				str = str.replaceAll("\\\\", "/");
-				sendEvalAndGrab("(when (probe-file \""+str+"\") (load \""+str+"\"))\n", 3000);
+			if( strini != "")	{
+				strini = strini.replaceAll("\\\\", "/");
+				startupCode = "(when (probe-file \""+strini+"\") (load \""+strini+"\"))";
 			}
+			startupCode += "(format nil \"You are running ~a ~a via Cusp " 
+ 					+ LispPlugin.getVersion() 
+ 					+ "\" (lisp-implementation-type) (lisp-implementation-version)))\n";
+			
+			sendEval(startupCode, null);
+			//sendEval("(swank:fancy-inspector-init)", null);
+	 */
+	
+	public void runAfterLispStart() {
+		if( isConnected() ){
+			IPreferenceStore prefs = 
+				LispPlugin.getDefault().getPreferenceStore();
+			managePackages = 
+				prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
+			useUnitTest = 
+				prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST);
+			String strIni = prefs.getString(PreferenceConstants.LISP_INI);
+			SwankRunnable sr = null;
+			
+			String startupCode = "(progn (swank:swank-require :swank-fuzzy)\n"
+				+ "(swank:swank-require :swank-asdf)\n"
+				+ "(swank:swank-require :swank-presentations)\n"
+				+ "(swank:swank-require :swank-fancy-inspector)\n"
+				+ "(swank:swank-require :swank-arglists)\n"
+				+ "(swank:swank-require :swank-presentations)\n"
+				+ BreakpointAction.macro +"\n"+ WatchAction.macro+"\n";
+			
+			if ( useUnitTest ){
+				startupCode += "(load \"" + LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/lisp-unit.lisp" + "\")\n";
+			}
+			if( managePackages){				
+				final String code = LispPlugin.getDefault().getLibsPathRegisterCode();
+				if( !code.equals("")){
+					String asdfext = LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/asdf-extensions.lisp";
+					System.out.printf("asdf path: %s\n", asdfext);
+					startupCode += "(load \"" + asdfext + "\")\n";
+					sr = new SwankRunnable(){
+						public void run() {
+							emacsRex(code, "COMMON-LISP-USER");
+						}
+					};
+				}
+			}
+			if( strIni != ""){
+				strIni = strIni.replaceAll("\\\\", "/");
+				startupCode += "(when (probe-file \""+strIni+"\") (load \""+strIni+"\"))\n";
+			}
+			
+			startupCode += "(format nil \"You are running ~a ~a via Cusp " 
+ 					+ LispPlugin.getVersion() 
+ 					+ "\" (lisp-implementation-type) (lisp-implementation-version))"
+				+ ")";
+			
+			sendEval(startupCode, sr);
+			//sendEval("(swank:fancy-inspector-init)", null);
 		}
 		ranafterLispStart = true;
 	}
+
+	/*
+	public synchronized void sendRunTests(String pkg, SwankRunnable callBack){
+		registerCallback(callBack);
+		lastTestPackage = pkg;
+		String msg = "(lisp-unit:run-all-tests "+pkg+")";
+//		msg = "(let ((*standard-output* str))"+msg+")";
+//		msg = "(with-output-to-string (str) "+msg+"str)";
+		msg = "(swank:eval-and-grab-output \""+msg+"\")";
+		
+		emacsRex(msg,"COMMON-LISP-USER");
+	}*/
 	
 	/** 
 	 * Connects to the swank server.
@@ -1794,7 +1842,7 @@ public class SwankInterface {
 									lines += 1;
 							}
 							System.out.print("]");
-							System.out.println(curr);
+							System.out.print(curr);
 							runFilters(curr);
 							if(curr.toLowerCase().contains(implementation.fatalErrorString())){
 								disconnect();

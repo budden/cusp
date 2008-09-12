@@ -99,12 +99,16 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	/* updates current package displayed */
 	protected void setPackageString(String pkg){
-		if(swank != null){
+		if(swank != null ){
 	 		IStatusLineManager slm = 
  	 			getViewSite().getActionBars().getStatusLineManager();
  	 		slm.setMessage("CL: " + swank.getLispVersion() + 
  	 				" | Cusp: " + LispPlugin.getVersion() +
  	 				" | Current package: " + pkg);
+/*			
+			LispPlugin.getDefault().updateStatusLine("CL: " + swank.getLispVersion() + 
+ 	 				" | Cusp: " + LispPlugin.getVersion() +
+ 	 				" | Current package: " + pkg); */
  	 		if( replPackage != null ){
  	 			replPackage.setText("Current package: "+pkg);
  	 		}
@@ -156,6 +160,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 	public void callUrl(String url) {
 		in.callUrl(url);		
 	}
+	
+	
 	
     private class ReplEditor extends SourceViewer implements ILispEditor {
         private final LispConfiguration config = 
@@ -543,7 +549,9 @@ public class ReplView extends ViewPart implements SelectionListener {
  		
  		if (swank != null ) {
  			setPackageString(swank.getCurrPackage());
- 			getSwank().sendEval("(format nil \"You are running ~a ~a via Cusp " + LispPlugin.getVersion() + "\" (lisp-implementation-type) (lisp-implementation-version))\n",
+ 			getSwank().sendEval("(format nil \"You are running ~a ~a via Cusp " 
+ 					+ LispPlugin.getVersion() 
+ 					+ "\" (lisp-implementation-type) (lisp-implementation-version))\n",
  					new ReturnHandler());
  			// appendText("You are running " + swank.getLispVersion() +
  			// " via Cusp " + LispPlugin.getVersion()+"\n");
@@ -747,16 +755,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 					swank.reconnect();
 					appendText("done.\n");
 					scrollDown();
-		 			appendText("You are running " + swank.getLispVersion() + 
-		 					" via Cusp " + LispPlugin.getVersion()+"\n");
 		 			setPackageString(swank.getCurrPackage());
-					
 					resetState();
 					
 					this.setImageDescriptor(
 							LispImages.getImageDescriptor(
 									LispImages.RECONNECT));
-					swank.runAfterLispStart();
 					loadPackageButton.setEnabled(swank.managePackages);
 					
 				}
@@ -892,6 +896,35 @@ public class ReplView extends ViewPart implements SelectionListener {
 		public SwankRunnable clone() {
 			DisplayRunnable re = new DisplayRunnable();
 			re.presentation = this.presentation;
+			re.result = this.result;
+			re.rv = this.rv;
+			
+			return re;
+		}
+	}
+	
+	
+	/**
+	 * This is a real class rather than an anonymous one so that it can be
+	 * cloned properly. If it weren't, you'd sometimes get results printed twice
+	 * on the repl
+	 */
+	public class WelcomeRunnable extends SwankDisplayRunnable {
+		public ReplView rv;
+		
+		public void run() {
+			System.out.println("WelcomeRunnable: "+result.toString());
+			rv.appendText(result.get(1).value);
+			
+			// history.appendText(result.get(1).value);
+			scrollDown();
+			if( swank != null ){
+				setPackageString(swank.getPackage());				
+			}
+		}
+		
+		public SwankRunnable clone() {
+			WelcomeRunnable re = new WelcomeRunnable();
 			re.result = this.result;
 			re.rv = this.rv;
 			
