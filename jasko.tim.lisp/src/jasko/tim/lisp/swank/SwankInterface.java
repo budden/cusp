@@ -251,6 +251,9 @@ public class SwankInterface {
 	
 	public void setLispVersion(String version) {
 		lispVersion = version;
+		LispPlugin.getDefault().updateReplStatusLine("CL:"+lispVersion
+				+"| Cusp: "+LispPlugin.getVersion()
+				+"| Current package: " + getPackage());
 	}
 	
 

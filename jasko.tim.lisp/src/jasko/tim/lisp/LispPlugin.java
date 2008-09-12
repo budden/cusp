@@ -9,6 +9,7 @@ import java.util.Properties;
 
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
+import jasko.tim.lisp.views.ReplView;
 
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IViewPart;
@@ -55,19 +56,22 @@ public class LispPlugin extends AbstractUIPlugin {
 		plugin = this;
 	}
 
-	public void updateStatusLine(String msg){
+	/**
+	 * @param msg prints message to Repl's status bar (if repl is available)
+	 */
+	public void updateReplStatusLine(String msg){
 	    IWorkbench workbench= PlatformUI.getWorkbench();
 	    IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
 	    IWorkbenchPage activePage = window.getActivePage();
 	    IStatusLineManager statusLineManager = null;
 		  if (activePage != null) {
-		   IWorkbenchPart activePart = activePage.getActivePart();
-		   if (activePart instanceof IViewPart){
+		   IWorkbenchPart replPart = activePage.findView(ReplView.ID);
+		   if (replPart instanceof IViewPart){
 			   statusLineManager = 
-					((IViewPart)activePart).getViewSite().getActionBars().getStatusLineManager();			   
-		   } else if (activePart instanceof IEditorPart) {
+					((IViewPart)replPart).getViewSite().getActionBars().getStatusLineManager();			   
+		   } else if (replPart instanceof IEditorPart) {
 			    statusLineManager = 
-					((IEditorPart)activePart).getEditorSite().getActionBars().getStatusLineManager();			   
+					((IEditorPart)replPart).getEditorSite().getActionBars().getStatusLineManager();			   
 		   }
 		  }
 		  if(statusLineManager != null){
