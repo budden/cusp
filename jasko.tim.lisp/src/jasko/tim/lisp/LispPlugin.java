@@ -10,6 +10,13 @@ import java.util.Properties;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.swank.*;
 
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
@@ -19,6 +26,7 @@ import org.eclipse.ui.plugin.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.osgi.framework.BundleContext;
+import org.eclipse.jface.action.IStatusLineManager;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -47,6 +55,26 @@ public class LispPlugin extends AbstractUIPlugin {
 		plugin = this;
 	}
 
+	public void updateStatusLine(String msg){
+	    IWorkbench workbench= PlatformUI.getWorkbench();
+	    IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
+	    IWorkbenchPage activePage = window.getActivePage();
+	    IStatusLineManager statusLineManager = null;
+		  if (activePage != null) {
+		   IWorkbenchPart activePart = activePage.getActivePart();
+		   if (activePart instanceof IViewPart){
+			   statusLineManager = 
+					((IViewPart)activePart).getViewSite().getActionBars().getStatusLineManager();			   
+		   } else if (activePart instanceof IEditorPart) {
+			    statusLineManager = 
+					((IEditorPart)activePart).getEditorSite().getActionBars().getStatusLineManager();			   
+		   }
+		  }
+		  if(statusLineManager != null){
+			  statusLineManager.setMessage(msg);
+		  }
+	}
+	
 	/**
 	 * This method is called upon plug-in activation
 	 */
@@ -167,7 +195,8 @@ public class LispPlugin extends AbstractUIPlugin {
 		String code = "";
 		ArrayList<File> subdirs = getLibsPath();
 		if(subdirs.size() > 0){
-			code = "(mapcar #'com.gigamonkeys.asdf-extensions:register-source-directory '(\n";
+		//	code = "(mapcar #'com.gigamonkeys.asdf-extensions:register-source-directory '(\n";
+			code = "(com.gigamonkeys.asdf-extensions:register-source-directories '(\n";
 			for (int i = 0; i < subdirs.size(); i++) {
 				File child = subdirs.get(i);
 				String name = child.getAbsolutePath().replace("\\", "/");

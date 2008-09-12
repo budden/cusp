@@ -1,6 +1,6 @@
 (defpackage :com.gigamonkeys.asdf-extensions 
   (:use :cl)
-  (:export :register-source-directory :get-installed-packages))
+  (:export :register-source-directory :register-source-directories :get-installed-packages))
 
 (in-package :com.gigamonkeys.asdf-extensions)
 
@@ -64,8 +64,13 @@ component. Returns its argument if name and type are both nil or
           (walk-directory dir #'found-p))))))|#
 
 (defun register-source-directory (dir)
-  (push (pathname-as-directory dir) asdf:*central-registry*)
-  (push (pathname-as-directory dir) *top-level-directories*))
+    (push (pathname-as-directory dir) asdf:*central-registry*)
+    (push (pathname-as-directory dir) *top-level-directories*)
+    (format nil "~a" dir) )
+
+(defun register-source-directories (dirs)
+   (mapcar #'com.gigamonkeys.asdf-extensions:register-source-directory dirs)
+   *top-level-directories*)
 
 ;(push 'sysdef-crawl-directories *system-definition-search-functions* )
 
