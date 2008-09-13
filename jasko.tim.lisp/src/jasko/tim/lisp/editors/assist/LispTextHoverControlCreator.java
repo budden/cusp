@@ -1,9 +1,9 @@
 package jasko.tim.lisp.editors.assist;
 
+
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 
-import org.eclipse.jface.text.*;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.widgets.Display;
@@ -13,8 +13,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.jface.text.DefaultInformationControl;
 import org.eclipse.jface.text.IInformationControl;
 import org.eclipse.jface.text.IInformationControlCreator;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.commands.*;
+import org.eclipse.jface.text.TextPresentation;
 
 /**
  * This class was subclassed in order to enable us to format the text displayed in 
@@ -26,11 +25,8 @@ import org.eclipse.ui.commands.*;
 public class LispTextHoverControlCreator implements IInformationControlCreator {
 
     public IInformationControl createInformationControl(Shell parent){
-    	ICommand fCommand = PlatformUI.getWorkbench().getCommandSupport()
-        .getCommandManager().getCommand("jasko.tim.lisp.editors.actions.ContentAssistFocus");
-    	if (fCommand != null && !fCommand.isDefined()){
-            fCommand.getKeySequenceBindings();
-        }
+    	
+    	
         return new DefaultInformationControl(parent, SWT.NONE,
         		new InfoPresenter(), "Press 'F2' for focus.");
     }
