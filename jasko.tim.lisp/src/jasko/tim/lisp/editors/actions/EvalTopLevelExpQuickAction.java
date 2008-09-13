@@ -1,22 +1,29 @@
-
+/**
+ * 
+ */
 package jasko.tim.lisp.editors.actions;
 
-import org.eclipse.ui.PlatformUI;
-
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.editors.*;
+import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.views.ReplView;
 
-public class EvalTopLevelExpAction extends LispAction {
+import org.eclipse.ui.PlatformUI;
+
+/**
+ * @author sk
+ *
+ */
+public class EvalTopLevelExpQuickAction extends LispAction {
 	
-	public EvalTopLevelExpAction() {
+	public EvalTopLevelExpQuickAction(){
 	}
 	
-	public EvalTopLevelExpAction(LispEditor editor) {
+	public EvalTopLevelExpQuickAction(LispEditor editor) {
 		super(editor);
 	}
 
+	//FIXME: duplicate code with EvalTopLevelExpAction
 	public static void runStr(String exp){
         if (exp.length() == 0) return;
 
@@ -27,7 +34,7 @@ public class EvalTopLevelExpAction extends LispAction {
     				.getActivePage().findView(ReplView.ID);
     			String cleanCmd = exp.replace("\r", "");
     			repl.EvalStateHandle(exp+"\n", cleanCmd);
-    			//ReplView.switchToRepl();
+    			ReplView.switchToRepl();
     		} catch ( Exception e ){
     			getSwank().sendEval(exp, null);
     		}        	
@@ -38,5 +45,6 @@ public class EvalTopLevelExpAction extends LispAction {
 	
 	public void run() {
 		runStr(getTopLevel());
-	}
+	}	
+
 }

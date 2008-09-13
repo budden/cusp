@@ -687,6 +687,48 @@
 	   </viewerContribution> 
 	</extension>
 	
+  <!-- Eval Top Level Quick -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the top level s-expression and switch to Repl"
+      id="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+      name="Eval Top-level Expression"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+E"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"
+        definitionId="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+        id="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"
+        label="&amp;Evaluate Top Level + Switch"
+        menubarPath="Lisp/grpCompile"
+        tooltip="Evaluate top-level action + switch.">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction" 
+           label="Eval Top-level Expression + Switch"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+
 	<!-- Eval Current Expression -->
 	<extension point="org.eclipse.ui.commands">
 		<command
@@ -700,7 +742,7 @@
 			commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
 			contextId="jasko.tim.lisp.context1"
 			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Shift+Alt+E"/>
+			sequence="Alt+R"/>
 		<key
 			commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
 			contextId="jasko.tim.lisp.context1"
@@ -734,6 +776,48 @@
 	   </viewerContribution> 
 	</extension>
 
+  <!-- Eval Current Expression Quick -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the current s-expression."
+      id="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+      name="Evaluate Current Expression + Switch"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+R"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+        definitionId="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+        id="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+        label="Evaluate Current Expression + Switch"
+        menubarPath="Lisp/grpCompile"
+        tooltip="Evaluate current expression + switch">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.EvalCurrentExpQuickAction" 
+           label="Eval Current Expression + switch"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+  
 	<!-- Indent -->
 	<extension point="org.eclipse.ui.commands">
 		<command

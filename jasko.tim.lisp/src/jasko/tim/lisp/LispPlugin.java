@@ -59,6 +59,34 @@ public class LispPlugin extends AbstractUIPlugin {
 	/**
 	 * @param msg prints message to Repl's status bar (if repl is available)
 	 */
+	public void welcomeMessage(String lispVersion, String pkg){
+	    IWorkbench workbench= PlatformUI.getWorkbench();
+	    IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
+	    IWorkbenchPage activePage = window.getActivePage();
+	    IStatusLineManager statusLineManager = null;
+		  if (activePage != null) {
+		   IWorkbenchPart replPart = activePage.findView(ReplView.ID);
+		   if (replPart instanceof ReplView){
+			   statusLineManager = 
+					((IViewPart)replPart).getViewSite().getActionBars().getStatusLineManager();
+			   statusLineManager.setMessage(makeStatusMsg(lispVersion,pkg));
+			   ((ReplView)replPart).appendText("You are running "+lispVersion
+					   +" via Cusp " 
+	 				   + LispPlugin.getVersion());
+		   }
+		  }
+	}
+	
+	static public String makeStatusMsg(String lispVersion, String pkg){
+		   String statusMsg = "CL:"+lispVersion
+			+"| Cusp: "+getVersion()
+			+"| Current package: " + pkg;
+		   return statusMsg;
+	}
+	
+	/**
+	 * @param msg prints message to Repl's status bar (if repl is available)
+	 */
 	public void updateReplStatusLine(String msg){
 	    IWorkbench workbench= PlatformUI.getWorkbench();
 	    IWorkbenchWindow window= workbench.getActiveWorkbenchWindow();
@@ -66,19 +94,14 @@ public class LispPlugin extends AbstractUIPlugin {
 	    IStatusLineManager statusLineManager = null;
 		  if (activePage != null) {
 		   IWorkbenchPart replPart = activePage.findView(ReplView.ID);
-		   if (replPart instanceof IViewPart){
+		   if (replPart instanceof ReplView){
 			   statusLineManager = 
-					((IViewPart)replPart).getViewSite().getActionBars().getStatusLineManager();			   
-		   } else if (replPart instanceof IEditorPart) {
-			    statusLineManager = 
-					((IEditorPart)replPart).getEditorSite().getActionBars().getStatusLineManager();			   
+					((IViewPart)replPart).getViewSite().getActionBars().getStatusLineManager();
+			   statusLineManager.setMessage(msg);
 		   }
 		  }
-		  if(statusLineManager != null){
-			  statusLineManager.setMessage(msg);
-		  }
 	}
-	
+
 	/**
 	 * This method is called upon plug-in activation
 	 */
