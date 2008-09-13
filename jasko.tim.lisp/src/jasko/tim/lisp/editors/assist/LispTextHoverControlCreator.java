@@ -28,7 +28,7 @@ public class LispTextHoverControlCreator implements IInformationControlCreator {
     	
     	
         return new DefaultInformationControl(parent, SWT.NONE,
-        		new InfoPresenter(), "Press 'F2' for focus.");
+        		new InfoPresenter()/*, "Press 'F2' for focus."*/);
     }
 
 	public class InfoPresenter 
