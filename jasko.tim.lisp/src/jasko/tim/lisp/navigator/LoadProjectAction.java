@@ -49,7 +49,7 @@ public class LoadProjectAction implements IActionDelegate {
 					}
 					if (asdFile != null) {
 						LispMarkers.deletePackageErrorMarkers(project);
-						LispPlugin.getDefault().getSwank().compileAndLoadAsd(file);
+						LispPlugin.getDefault().getSwank().compileAndLoadAsd(file,false);
 					} else {
 						MessageBox mbox = new MessageBox(this.getWorkbench().getDisplay().getActiveShell(),
 								SWT.CANCEL | SWT.ICON_ERROR | SWT.APPLICATION_MODAL);

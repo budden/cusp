@@ -1301,7 +1301,7 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
-	public void compileAndLoadAsd(IFile file){
+	public void compileAndLoadAsd(IFile file, boolean switchToPackage){
 		if( file == null ){
 			return;
 		}
@@ -1315,7 +1315,7 @@ public class SwankInterface {
 		String name = fname.substring(0,fname.length() - ".asd".length());
 		if( fext != null && fext.equalsIgnoreCase("asd") ){
 			registerLibPath(path);
-			registerCallback(new LispBuilder.CompileListener(true,fullpath));
+			registerCallback(new LispBuilder.CompileListener(true,fullpath,switchToPackage));
 			String msg = "(swank:operate-on-system-for-emacs \"" + name + "\" \"LOAD-OP\")";
  			emacsRex(msg);
 		}

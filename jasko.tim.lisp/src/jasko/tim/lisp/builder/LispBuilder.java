@@ -218,6 +218,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
  		boolean compiledByAsd = false;
  		String asdFile = "";
  		boolean removeCompileMarkers = true;
+ 		boolean switchToPackage = false; //only when compiledByAsd
   		
  		public CompileListener(IFile file, boolean removeCompileMarkers) {
  			this.file = file;
@@ -228,13 +229,15 @@ public class LispBuilder extends IncrementalProjectBuilder {
  			this.removeCompileMarkers = removeCompileMarkers;
   		}
   		
- 		public CompileListener(boolean compByAsd, String asdfile) {
+ 		public CompileListener(boolean compByAsd, String asdfile, boolean switchToPackage) {
  			this.file = null;
  			offset = 0;
  			length = 0;
  			compiledByAsd = true;
  			asdFile = asdfile;
+ 			this.switchToPackage = switchToPackage;
   		}
+ 		
  		public CompileListener(IFile file, int offset, int length) {
  			this.file = file;
  			this.offset = offset;
@@ -256,7 +259,13 @@ public class LispBuilder extends IncrementalProjectBuilder {
   			LispNode guts = res.getf(":return").getf(":ok").getf(":swank-compilation-unit");
   			if ( guts.isEmpty() || guts.value.equalsIgnoreCase("nil") ){
   				if( compiledByAsd ){
-  	  				repl.appendText("Loaded package " + asdFile + "\n");
+  					if( repl != null ){
+  	  	  				repl.appendText("Loaded package " + asdFile + "\n");
+  	  	  				File asdf = new File(asdFile);
+  	  	  				String pkg = asdf.getName();
+  	  	  				pkg = pkg.substring(0,pkg.length() - ".asd".length());
+  	  	  				repl.switchPackage(pkg);
+  					}
   				}
   			} else {
   				int nerrors = 0;
@@ -322,7 +331,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
  					if( nwarnings > 0 ){
 						torepl += "warnings";
  					}
- 	  				repl.appendText(torepl);
+ 					if(repl != null){
+ 	 	  				repl.appendText(torepl); 						
+ 					}
 				}
 			}
 			

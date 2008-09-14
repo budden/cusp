@@ -12,7 +12,6 @@ package jasko.tim.lisp.wizards;
 
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.builder.LispNature;
-import jasko.tim.lisp.swank.SwankRunnable;
 import jasko.tim.lisp.views.*;
 
 import org.eclipse.jface.viewers.*;
@@ -183,9 +182,9 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		monitor.worked(1);
 		
 		// Make the tests file
+		final IFile tests = newProject.getFile("tests.lisp");
 		if( useLispUnit ){
 			contents = Templater.getTemplate("tests.lisp", pkg, useLispUnit, makeExample);
-			final IFile tests = newProject.getFile("tests.lisp");
 			if (!tests.exists()) {
 				tests.create(contents, true, monitor);
 			}
@@ -200,24 +199,8 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		newProject.open(monitor);
 		
 
-		// Load asd file.
-		String asdfile = asd.getLocation().toString();
-		LispPlugin.getDefault().getSwank().compileAndLoadAsd(asd);
-/*		LispPlugin.getDefault().getSwank().sendLoadASDF(asdfile, 
-				new SwankRunnable() {
-					public void run() {
-						ReplView rv = ReplView.getInstance();
-						if (rv != null) {
-							rv.switchPackage(pkg);
-						}
-					}
-				}); */
-		ReplView rv = ReplView.getInstance();
-		if (rv != null) {
-			rv.switchPackage(pkg);
-		}
+		LispPlugin.getDefault().getSwank().compileAndLoadAsd(asd,true);
 
-		
 		monitor.setTaskName("Opening files for editing...");
 		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
@@ -227,6 +210,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 					IDE.openEditor(page, asd, true);
 					IDE.openEditor(page, defpackage, true);
 					IDE.openEditor(page, main, true);
+					IDE.openEditor(page, tests, true);
 					
 					
 				} catch (PartInitException e) {
@@ -238,8 +222,11 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		
 		monitor.worked(2);
-		monitor.done();
-		
+		monitor.done();/*
+		ReplView rv = ReplView.getInstance();
+		if (rv != null) {
+			rv.switchPackage(pkg);
+		}*/
 	} // void doFinish(...)
 	
 	private String makePackageName(String projectName) {
