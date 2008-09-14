@@ -74,7 +74,6 @@ public class LispMarkers {
 					m.delete();
 				}
 			}
-			markers = file.findMarkers(LISP_COMPILE_MARKER, true, IResource.DEPTH_ZERO);
 		} catch (CoreException e1) {
 			e1.printStackTrace();
 		}
