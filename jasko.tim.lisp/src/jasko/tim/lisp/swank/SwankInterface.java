@@ -4,11 +4,13 @@ import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.util.LispUtil;
 import jasko.tim.lisp.editors.actions.*;
+import jasko.tim.lisp.builder.LispBuilder;
 
 import java.io.*;
 import java.util.*;
 import java.net.*;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
 
@@ -268,47 +270,15 @@ public class SwankInterface {
 		}
 	}
 
-	/*
-			IPreferenceStore prefs = 
-				LispPlugin.getDefault().getPreferenceStore();
-			managePackages = 
-				prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES);
-			useUnitTest = 
-				prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST);
-			String strini = prefs.getString(PreferenceConstants.LISP_INI);
-			
-			String startupCode = "(progn (swank:swank-require :swank-fuzzy)"
-				+ "(swank:swank-require :swank-asdf)"
-				+ "(swank:swank-require :swank-presentations)"
-				+ "(swank:swank-require :swank-fancy-inspector)"
-				+ "(swank:swank-require :swank-presentations)"
-				+ "(swank:swank-require :swank-arglists)"
-				+ BreakpointAction.macro + WatchAction.macro; 
-			if ( useUnitTest ){
-				startupCode += "(load \"" + LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/lisp-unit.lisp" + "\")";				
-			}
-			if ( managePackages ){				
-				String code = LispPlugin.getDefault().getLibsPathRegisterCode();
-				if( !code.equals("")){
-					String asdfext = LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/asdf-extensions.lisp";
-					System.out.printf("asdf path: %s\n", asdfext);
-					//System.out.println(sendEvalAndGrab(code, 1000));					
-					startupCode += "(load \"" + asdfext + "\")";
-				}
-			}
-			if( strini != "")	{
-				strini = strini.replaceAll("\\\\", "/");
-				startupCode = "(when (probe-file \""+strini+"\") (load \""+strini+"\"))";
-			}
-			startupCode += "(format nil \"You are running ~a ~a via Cusp " 
- 					+ LispPlugin.getVersion() 
- 					+ "\" (lisp-implementation-type) (lisp-implementation-version)))\n";
-			
-			sendEval(startupCode, null);
-			//sendEval("(swank:fancy-inspector-init)", null);
-	 */
+	public synchronized void registerLibPath(String path){
+		String code = path.replace("\\", "/");
+		if (!code.endsWith("/")) {
+			code += "/";
+		}
+		code = "(com.gigamonkeys.asdf-extensions:register-source-directory \""+
+		  code + "\")";
+		sendEvalAndGrab(code,1000);
+	}
 	
 	public void runAfterLispStart() {
 		if( isConnected() ){
@@ -329,6 +299,10 @@ public class SwankInterface {
 				+ "(swank:swank-require :swank-presentations)\n"
 				+ BreakpointAction.macro +"\n"+ WatchAction.macro+"\n";
 			
+			String asdfext = LispPlugin.getDefault().getPluginPath() 
+				+ "lisp-extensions/asdf-extensions.lisp";
+			startupCode += "(load \"" + asdfext + "\")\n";
+			
 			if ( useUnitTest ){
 				startupCode += "(load \"" + LispPlugin.getDefault().getPluginPath() 
 						+ "lisp-extensions/lisp-unit.lisp" + "\")\n";
@@ -336,10 +310,7 @@ public class SwankInterface {
 			if( managePackages){				
 				final String code = LispPlugin.getDefault().getLibsPathRegisterCode();
 				if( !code.equals("")){
-					String asdfext = LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/asdf-extensions.lisp";
 					System.out.printf("asdf path: %s\n", asdfext);
-					startupCode += "(load \"" + asdfext + "\")\n";
 					sr = new SwankRunnable(){
 						public void run() {
 							emacsRex(code, "COMMON-LISP-USER");
@@ -371,18 +342,6 @@ public class SwankInterface {
 		ranafterLispStart = true;
 	}
 
-	/*
-	public synchronized void sendRunTests(String pkg, SwankRunnable callBack){
-		registerCallback(callBack);
-		lastTestPackage = pkg;
-		String msg = "(lisp-unit:run-all-tests "+pkg+")";
-//		msg = "(let ((*standard-output* str))"+msg+")";
-//		msg = "(with-output-to-string (str) "+msg+"str)";
-		msg = "(swank:eval-and-grab-output \""+msg+"\")";
-		
-		emacsRex(msg,"COMMON-LISP-USER");
-	}*/
-	
 	/** 
 	 * Connects to the swank server.
 	 * 
@@ -1342,7 +1301,29 @@ public class SwankInterface {
 		emacsRex(msg);
 	}
 	
-	public synchronized void sendLoadASDF(String fileFullPath, SwankRunnable callBack) {
+	public void compileAndLoadAsd(IFile file){
+		if( file == null ){
+			return;
+		}
+		String fext = file.getFileExtension();
+		if( fext == null || !fext.equalsIgnoreCase("asd")){
+			return;
+		}
+		String fullpath = file.getLocation().toString();
+		String fname = file.getName();
+		String path = fullpath.substring(0, fullpath.length() - fname.length());
+		String name = fname.substring(0,fname.length() - ".asd".length());
+		if( fext != null && fext.equalsIgnoreCase("asd") ){
+			registerLibPath(path);
+			registerCallback(new LispBuilder.CompileListener(true,fullpath));
+			String msg = "(swank:operate-on-system-for-emacs \"" + name + "\" \"LOAD-OP\")";
+ 			emacsRex(msg);
+		}
+		
+	}
+	
+
+	public synchronized void sendLoadASDFtoRemove(String fileFullPath, SwankRunnable callBack) {
  		fileFullPath = fileFullPath.replace('\\', '/');
  		fileFullPath = implementation.translateLocalFilePath(fileFullPath);
  		String[] fpathparts = fileFullPath.split("/");
@@ -1359,8 +1340,22 @@ public class SwankInterface {
  			String msg = "(cl:progn (cl:load \"" + fileFullPath + 
  				"\") (asdf:oos 'asdf:load-op \"" + asdName + "\"))";
  			
+ 			emacsRex(msg);	
+ 		}
+ 		// old version of code:
+ 		/*
+ 		fileFullPath = fileFullPath.replace('\\', '/');
+ 		fileFullPath = implementation.translateLocalFilePath(fileFullPath);
+ 		String[] fpathparts = fileFullPath.split("/");
+ 		if( fpathparts.length > 0 && fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
+ 			String tmp = sendEvalAndGrab("(load \"" + fileFullPath + "\")",2000);
+ 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
+ 			registerCallback(new CompileRunnable(callBack));
+ 			String msg = "(swank:operate-on-system-for-emacs \"" + asdName + "\" \"LOAD-OP\")";
  			emacsRex(msg);			
  		}
+		*/
+ 		 
  	}
 		
 	public synchronized void sendLoadPackage(String pkg) {

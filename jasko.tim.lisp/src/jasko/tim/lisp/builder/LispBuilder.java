@@ -206,7 +206,6 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 	
-	
 	/**
 	 * This class updates compile markers in source code.
 	 * @author sk
@@ -253,12 +252,11 @@ public class LispBuilder extends IncrementalProjectBuilder {
  			
 			LispNode res = result;
   			LispNode guts = res.getf(":return").getf(":ok").getf(":swank-compilation-unit");
-  			if ( guts.isEmpty() ){
+  			if ( guts.isEmpty() || guts.value.equalsIgnoreCase("nil") ){
   				if( compiledByAsd ){
   	  				repl.appendText("Loaded package " + asdFile + "\n");
   				}
-  			}
-  			else{
+  			} else {
   				int nerrors = 0;
   				int nwarnings = 0;
  				IWorkspaceRoot wk = ResourcesPlugin.getWorkspace().getRoot();
@@ -290,38 +288,39 @@ public class LispBuilder extends IncrementalProjectBuilder {
 						++nwarnings;
 					}
 					
- 					if ( file == null && !fileName.equals("")){
- 						IResource resource = wk.findMember(new Path(fileName.replace(wk.getLocation().toString(), "")));
- 						if ( resource != null && resource instanceof IFile ) {
- 							IFile fl = (IFile)resource;
- 							if ( !files.contains(fileName) ){
+ 					if ( file == null && !fileName.equals("") ){
+						IFile fl = wk.getFileForLocation(new Path(fileName));
+ 						if ( fl != null ) {
+ 							if ( compiledByAsd && !files.contains(fileName) ){
  								files.add(fileName);
  								LispMarkers.deleteCompileMarkers(fl);
  							}
  							LispMarkers.addCompileMarker(fl, offset, 1, msg, isError);
   						}
- 					} else if ( file.getLocation().toPortableString().equals(fileName)
+ 					} else if ( file != null && (file.getLocation().toPortableString().equals(fileName)
  							|| file.getName().equals(buffer)
- 							|| file.getLocation().toPortableString().equals(buffer)) {
+ 							|| file.getLocation().toPortableString().equals(buffer))) {
  						LispMarkers.addCompileMarker(file, offset, 1, msg, isError);
   					} else { //cannot resolve error location
  					//	System.out.printf("CompileListener: Filename {%s} is not equal buffer {%s} or filename from compiler notes {%s}\n", 
  					//			file.getLocation().toString(), fileName, buffer);
   					}
- 					if( compiledByAsd ){
- 	 					String torepl = "Package" + asdFile + " is loaded with ";
- 	 					if( nerrors > 0){
- 	 						torepl = torepl + "errors ";
- 	 						if( nwarnings > 0){
- 	 							torepl = torepl + " and ";
- 	 						}
- 	 					}
- 	 					if( nwarnings > 0 ){
- 	 						torepl = torepl + "warnings";
- 	 					}
- 	 	  				repl.appendText(torepl);
+				}
+				if( compiledByAsd ){
+ 					String torepl = "Package " + asdFile + " is loaded with ";
+ 					if( nerrors > 0){
+ 						torepl += "errors ";
+ 						//FIXME: some errors and warnings are duplicates - one with file location
+ 						// and another without - I don't know why
+ 						// so showing how many errors and warnings lisp reported might be confusing
+ 						if( nwarnings > 0){
+ 							torepl = torepl + " and ";
+ 						} 
  					}
-					
+ 					if( nwarnings > 0 ){
+						torepl += "wanrings";
+ 					}
+ 	  				repl.appendText(torepl);
 				}
 			}
 			

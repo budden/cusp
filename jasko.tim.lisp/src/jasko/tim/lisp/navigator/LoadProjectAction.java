@@ -1,7 +1,6 @@
 package jasko.tim.lisp.navigator;
 
 import jasko.tim.lisp.LispPlugin;
-import jasko.tim.lisp.builder.LispBuilder;
 import jasko.tim.lisp.builder.LispMarkers;
 
 import org.eclipse.core.resources.*;
@@ -33,21 +32,24 @@ public class LoadProjectAction implements IActionDelegate {
 			if (obj instanceof IResource) {
 				IResource item = (IResource) obj;
 				IProject project = item.getProject();
+				IFile file = null;
 				String asdFile = null;
 				try {
 					if (item instanceof IFile && item.getFileExtension().equalsIgnoreCase("asd")) {
+						file = (IFile)item;
 						asdFile = item.getLocation().toString();
 					} else {
 						for (IResource member: project.members()) {
 							if (member instanceof IFile && member.getFileExtension().equalsIgnoreCase("asd")) {
+								file = (IFile)member;
 								asdFile = member.getLocation().toString();
+								break; //FIXME: assumes that project contains single asd - probably not bad assumption
 							}
 						}
 					}
 					if (asdFile != null) {
 						LispMarkers.deletePackageErrorMarkers(project);
-						LispPlugin.getDefault().getSwank().sendLoadASDF(asdFile, 
-								new LispBuilder.CompileListener(true,asdFile));
+						LispPlugin.getDefault().getSwank().compileAndLoadAsd(file);
 					} else {
 						MessageBox mbox = new MessageBox(this.getWorkbench().getDisplay().getActiveShell(),
 								SWT.CANCEL | SWT.ICON_ERROR | SWT.APPLICATION_MODAL);
