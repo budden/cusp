@@ -1,6 +1,15 @@
 package jasko.tim.lisp.preferences;
 
 import org.eclipse.jface.preference.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;
 import jasko.tim.lisp.LispPlugin;
@@ -19,12 +28,13 @@ import jasko.tim.lisp.LispPlugin;
  * be accessed directly via the preference store.
  */
 
-public class ImplementationsPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
+public class ImplementationsPreferencePage extends FieldEditorPreferencePage
+	implements IWorkbenchPreferencePage {
 
+    private Composite libManagerIndent;
+	
 	public ImplementationsPreferencePage() {
 		super(GRID);
-		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
-		setDescription("Add/remove installed Lisp implementations.");
 	}
 	
 	
@@ -35,47 +45,85 @@ public class ImplementationsPreferencePage extends FieldEditorPreferencePage imp
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
-		addField(
-				new BooleanFieldEditor(
+		Composite parent = getFieldEditorParent();
+		
+		addField(new BooleanFieldEditor(
 					PreferenceConstants.USE_SITEWIDE_LISP,
 					"Use a lisp &sitewide installation (executable is on the path)",
-					getFieldEditorParent()));
+					parent));
 
 		addField(new FileFieldEditor(PreferenceConstants.LISP_EXE, 
-				"&Lisp Executable:", getFieldEditorParent()));
+				"&Lisp Executable:", parent));
 
 		addField(new FileFieldEditor(PreferenceConstants.LISP_INI, 
-				"&Initialization File:", getFieldEditorParent()));
+				"&Initialization File:", parent));
 
 
+		RadioGroupFieldEditor compilations = new RadioGroupFieldEditor(PreferenceConstants.BUILD_TYPE, "How to handle compilation:", 1, 
+				new String[][] {
+				  { "Compile on Save (recommented)", PreferenceConstants.USE_AUTO_BUILD },
+				  { "Eclipse Autobuild (not recommended)", 
+					  PreferenceConstants.USE_ECLIPSE_BUILD },
+				  { "Slime Style Build", PreferenceConstants.USE_SLIME_BUILD } 
+				},parent);
+		compilations.getRadioBoxControl(parent)
+			.setToolTipText("- Comile on save: compiles only expressions changed by recent edits.\n" +
+					"- Eclipse Autobuild: recompiles whole file on save.\n" +
+					"- Slime Style Build: manually select which expressions to compile.");
+		
+		addField(compilations);
+
+		addField(new BooleanFieldEditor(PreferenceConstants.MANAGE_PACKAGES, 
+				"Use Cusp to manage libraries (requires Lisp restart)", parent){
+            private boolean installedListener = false;
+            protected Button getChangeControl (Composite parent) {
+                // not sure how else to get a listener installed on the actual checkbox...
+                final Button b = super.getChangeControl(parent);
+                if (!installedListener) b.addSelectionListener(new SelectionAdapter () {
+                    public void widgetSelected (SelectionEvent e) {
+                        for (Control c : libManagerIndent.getChildren()) {
+                            c.setEnabled(b.getSelection());
+                        }
+                    }
+                });
+                return b;
+            }        	
+		});
+
+		libManagerIndent = new Composite(parent, SWT.NONE);
+		libManagerIndent.setLayout(new GridLayout(2, false));
 		StringFieldEditor strf = new StringFieldEditor(PreferenceConstants.SYSTEMS_PATH, 
-				"Path to system definitions:", getFieldEditorParent());
-		String strfTipString = "Top levels. Package manager will search subdirectories.\n Separate directories by ;\n Requires Lisp restart";
-		strf.getLabelControl(getFieldEditorParent()).setToolTipText(strfTipString);
-		strf.getTextControl(getFieldEditorParent()).setToolTipText(strfTipString);		
+				"Path to libraries:", libManagerIndent);
+		String strfTipString = "Top levels. Cusp's library manager will search subdirectories.\n" +
+				"Separate directories by ;\nNote: Requires Lisp restart";
+		strf.getLabelControl(libManagerIndent).setToolTipText(strfTipString);
+		strf.getTextControl(libManagerIndent).setToolTipText(strfTipString);		
 		addField(strf);
 		
-		addField(new RadioGroupFieldEditor(PreferenceConstants.BUILD_TYPE, "How to handle compilation:", 1, 
-				new String[][] {
-				  { "Compile on Save", PreferenceConstants.USE_AUTO_BUILD },
-				  { "Use Eclipse Autobuild Feature", PreferenceConstants.USE_ECLIPSE_BUILD },
-				  { "Use only Slime Style Build", PreferenceConstants.USE_SLIME_BUILD } 
-				}, getFieldEditorParent()));
-		
-		addField(new BooleanFieldEditor(PreferenceConstants.MANAGE_PACKAGES, 
-				"Use Cusp to Manage Packages (requires Lisp restart)", getFieldEditorParent()));
+        addField(strf);
+        
+        for (Control c : libManagerIndent.getChildren()) {
+            GridData gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 1, 1);
+            gd.horizontalIndent = 25;
+            c.setLayoutData(gd);
+        }
+        new Label(parent,SWT.NONE);
 
+		
 		addField(new BooleanFieldEditor(PreferenceConstants.USE_UNIT_TEST, 
-				"Use LispUnit integrated with Cusp (requires Lisp restart)", getFieldEditorParent()));
+				"Use LispUnit integrated with Cusp (requires Lisp restart)", 
+				parent));
 
 		addField(new BooleanFieldEditor(PreferenceConstants.CONSOLE_COMPILER_LOG, 
-				"Write compiler log to Console", getFieldEditorParent()));
+				"Write compiler log to Console", parent));
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
 	 */
 	public void init(IWorkbench workbench) {
+		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
+		setDescription("Setup local Lisp implementation.");
 	}
 
 

@@ -24,7 +24,8 @@ public class PairAutoEdit implements IAutoEditStrategy {
 			DocumentCommand c) {
 		try{
 			IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
-			boolean pairBrackets = prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS);
+			boolean pairBrackets = prefs.getBoolean(PreferenceConstants.PAIR_SMART_BRACKETS);
+			//prefs.getBoolean(PreferenceConstants.PAIR_EDIT_BRACKETS);
 			String contentType = d.getContentType(c.offset);
 			if(contentType != LispPartitionScanner.LISP_STRING 
 					&& contentType != LispPartitionScanner.LISP_COMMENT

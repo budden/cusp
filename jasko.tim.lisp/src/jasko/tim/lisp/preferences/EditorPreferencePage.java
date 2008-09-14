@@ -1,6 +1,15 @@
 package jasko.tim.lisp.preferences;
 
 import org.eclipse.jface.preference.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;
 import jasko.tim.lisp.LispPlugin;
@@ -23,10 +32,10 @@ public class EditorPreferencePage
 	extends FieldEditorPreferencePage
 	implements IWorkbenchPreferencePage {
 
+    private Composite autoPopupIndent;
+	
 	public EditorPreferencePage() {
 		super(GRID);
-		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
-		setDescription("The editing environment (colors, autocomplete, etc.).");
 	}
 	
 	/**
@@ -36,77 +45,102 @@ public class EditorPreferencePage
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
-        addField(new BooleanFieldEditor(
+		Composite parent = getFieldEditorParent();
+		
+        /*addField(new BooleanFieldEditor(
                 PreferenceConstants.PAIR_EDIT_BRACKETS,
                 "Automatically close '('",
-                getFieldEditorParent()));
+                getFieldEditorParent())); */
     
         addField(new BooleanFieldEditor(
                 PreferenceConstants.PAIR_SMART_BRACKETS,
-                "If automatically close '('.\nIf next is complete sexp, put closing ')' after it",
-                getFieldEditorParent()));
+                "Automatically close '(', enclosing next sexp in '()'",
+                parent));
     
         addField(new BooleanFieldEditor(
                 PreferenceConstants.PAIR_EDIT_BRACES,
-                "If complete sexp starts at next position, pressing '[' encloses it in '()'",
-                getFieldEditorParent()));
+                "'[' encloses next sexp it in '()'",
+                parent));
     
         addField(new BooleanFieldEditor(
                 PreferenceConstants.PAIR_EDIT_QUOTES,
-                "Automatically close '\"'",
-                getFieldEditorParent()));
+                "Automatically close double quotes",
+                parent));
     
         addField(new BooleanFieldEditor(
                 PreferenceConstants.PAIR_EDIT_COMMENTS,
                 "Automatically close '#|'",
-                getFieldEditorParent()));
+                parent));
     
         addField(new BooleanFieldEditor(
                     PreferenceConstants.AUTO_POPUP_COMPLETIONS,
-                    "Automatically show content completions and parameter hints",
-                    getFieldEditorParent()));
-        
+                    "Automatically show popup with content completions or parameter hints",
+                    parent){
+            private boolean installedListener = false;
+            protected Button getChangeControl (Composite parent) {
+                // not sure how else to get a listener installed on the actual checkbox...
+                final Button b = super.getChangeControl(parent);
+                if (!installedListener) b.addSelectionListener(new SelectionAdapter () {
+                    public void widgetSelected (SelectionEvent e) {
+                        for (Control c : autoPopupIndent.getChildren()) {
+                            c.setEnabled(b.getSelection());
+                        }
+                    }
+                });
+                return b;
+            }        	
+        });
+
+        autoPopupIndent = new Composite(parent, SWT.NONE);
+        autoPopupIndent.setLayout(new GridLayout(2, false));
         addField(new StringFieldEditor(
                 PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY,
-                "Delay before completions are shown and quick doc updated \n(requires Eclipse restart):",
-                getFieldEditorParent()));
-        //TODO: actually should listen for change in this variable and perform operation similar to
-        // LispConfiguration.java: 		ca.setAutoActivationDelay(ps.getInt(PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY));
-
+                "Delay before popup is shown (ms):",
+                autoPopupIndent));
+        
+        for (Control c : autoPopupIndent.getChildren()) {
+            GridData gd = new GridData(GridData.BEGINNING, GridData.CENTER, false, false, 1, 1);
+            gd.horizontalIndent = 25;
+            c.setLayoutData(gd);
+        }
+        new Label(parent,SWT.NONE);
         
         addField(new StringFieldEditor(
                 PreferenceConstants.MAX_HINT_LINES,
                 "Maximum number of lines in documentation hints:",
-                getFieldEditorParent()));
+                parent));
 
         addField(new BooleanFieldEditor(
                 PreferenceConstants.ARGLIST_BELOW,
-                "Show documentation hints below cursor. (Requires restart)",
-                getFieldEditorParent()));
+                "Show documentation hints below cursor.",
+                parent));
         
         addField(new BooleanFieldEditor(
                 PreferenceConstants.AUTO_INSERT_COMPLETIONS,
-                "Automatically insert single content completion option",
-                getFieldEditorParent()));
+                "Automatically insert single content completion",
+                parent));
 
 		addField(new StringFieldEditor(PreferenceConstants.AUTO_COMPLETIONS_NLIMIT, 
-				"Max size of completion list. 0 or empty if no limit:", getFieldEditorParent()) );
+				"Max size of completion list (0 for no limit):",
+				parent));
 
         addField(new BooleanFieldEditor(
                 PreferenceConstants.AUTO_FUZZY_COMPLETIONS,
                 "Use fuzzy mode for autocompletions",
-                getFieldEditorParent()));
+                parent));
 
         addField(new BooleanFieldEditor(
                 PreferenceConstants.DOCS_IN_COMPLETIONS,
                 "Show quick documentation with auto completions list",
-                getFieldEditorParent()));
+                parent));
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
 	 */
 	public void init(IWorkbench workbench) {
+		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
+		setDescription("The editing environment (colors, autocomplete, etc.).");
 	}
 	
 }

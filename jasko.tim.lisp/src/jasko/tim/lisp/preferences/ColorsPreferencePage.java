@@ -94,7 +94,10 @@ public class ColorsPreferencePage extends FieldEditorPreferencePage implements I
 	public void init(IWorkbench workbench) {
 		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
 		setDescription("Set colors and styles for Lisp code formatting.\n" +
-		"To see changes - close and reopen a lisp editor.");
+		"To see changes - close and reopen a lisp editor.\n" +
+		"For lisp expression highlighting see prefernce page:\n" +
+		"Preferences->General->Editors->Text Editors->Annotations\n" +
+		"(Current Lisp Expression and Outer Lisp Expression)");
 	}
 	
 }

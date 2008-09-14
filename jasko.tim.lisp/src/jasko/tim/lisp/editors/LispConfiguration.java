@@ -51,11 +51,20 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 
 	private final IPropertyChangeListener prefsListener = new IPropertyChangeListener () {
         public void propertyChange (PropertyChangeEvent event) {
+        	IPreferenceStore ps = LispPlugin.getDefault().getPreferenceStore();
             String prop = event.getProperty();
             if (prop.equals(PreferenceConstants.AUTO_POPUP_COMPLETIONS)) {
                 ca.enableAutoActivation((Boolean)event.getNewValue());
             } else if (prop.equals(PreferenceConstants.AUTO_INSERT_COMPLETIONS)) {
                 ca.enableAutoInsert((Boolean)event.getNewValue());
+            } else if (prop.equals(PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY)){
+            	ca.setAutoActivationDelay(ps.getInt(PreferenceConstants.AUTO_POPUP_COMPLETIONS_DELAY));
+            } else if (prop.equals(PreferenceConstants.ARGLIST_BELOW)){
+        		if( ps.getBoolean(PreferenceConstants.ARGLIST_BELOW)){
+        			ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_BELOW);
+        		} else {
+        			ca.setContextInformationPopupOrientation(ContentAssistant.CONTEXT_INFO_ABOVE);			
+        		}
             }
         }
     };
