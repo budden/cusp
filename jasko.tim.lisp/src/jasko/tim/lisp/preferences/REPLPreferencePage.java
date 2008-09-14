@@ -17,8 +17,6 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
     
     public REPLPreferencePage () {
         super(GRID);
-        setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
-        setDescription("REPL Interaction and Formatting Options");
     }
 
     public void createFieldEditors() {
@@ -30,23 +28,32 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
 //        final ArrayList<FieldEditor> replInspectableStyleEditors = new ArrayList<FieldEditor>();
         final Composite parent = getFieldEditorParent();
         
-
         addField(new BooleanFieldEditor(PreferenceConstants.USE_CTRL_ENTER,
-        		"Expression in Repl is sent for eval when Ctrl+Enter is pressed.\nUse it when autobalancing () is on.", 
+        		"Eval on Ctrl+Enter. Use it when 'Automatically close (' is on.", 
         		parent));
 
         addField(new BooleanFieldEditor(PreferenceConstants.SHOW_EVAL_IN_REPL,
         		"Show expression evaluated from file in REPL", parent));
 
         addField(new BooleanFieldEditor(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES,
-        		"Hide swank frames in backtraces, when debugger is active", 
+        		"Clean up backtraces in debugger: don't show swank frames.", 
         		parent));
 
         addField(new StringFieldEditor(
                 PreferenceConstants.REPL_FONT_SIZE,
                 "REPL font size (Requires restart):",
-                getFieldEditorParent()));
+                parent));
 
+        addField(new org.eclipse.jface.preference.ColorFieldEditor(
+                PreferenceConstants.REPL_INPUT_FG_COLOR,
+                "Foreground text color for user input in REPL history: ",
+                parent));
+
+        addField(new org.eclipse.jface.preference.ColorFieldEditor(
+                PreferenceConstants.REPL_INPUT_BG_COLOR,
+                "Background text color for user input in REPL history: ",
+                parent));        
+        
         addField(new BooleanFieldEditor(
                     PreferenceConstants.DECORATE_REPL_INSPECTABLES,
                     "Apply custom style to inspectable objects in the REPL",
@@ -66,16 +73,6 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
             }
         });
 
-        addField(new org.eclipse.jface.preference.ColorFieldEditor(
-                PreferenceConstants.REPL_INPUT_FG_COLOR,
-                "Foreground text color for user input in REPL history: ",
-                getFieldEditorParent()));
-
-        addField(new org.eclipse.jface.preference.ColorFieldEditor(
-                PreferenceConstants.REPL_INPUT_BG_COLOR,
-                "Background text color for user input in REPL history: ",
-                getFieldEditorParent()));        
-        
         indent = new Composite(parent, 0);
         indent.setLayout(new GridLayout(2, false));
         addField(new BooleanFieldEditor(
@@ -104,6 +101,8 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
      * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
      */
     public void init(IWorkbench workbench) {
+        setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
+        setDescription("REPL Interaction and Formatting Options");
     }
     
 }
