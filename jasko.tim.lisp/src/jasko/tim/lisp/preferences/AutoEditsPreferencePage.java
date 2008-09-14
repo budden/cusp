@@ -84,7 +84,22 @@ public class AutoEditsPreferencePage extends PreferencePage implements
 		data = new GridData();
 		data.horizontalSpan = 2;
 		removeButton.setLayoutData(data);
-	
+
+		Label helpLbl = new Label(entryTable, SWT.BORDER);
+		helpLbl.setText("AutoEdits allows automatic substituion as you type.\n" +
+				"They consist of two parts: trigger and substitution.\n" +
+				"In an AutoEdit specification these parts are seperated by ';'.\n" +
+				"Position of the caret after substitution is specified by '|'.\n" +
+				"\n" +
+				"Example: 'let ;let ((|))'. When you type 'let ' you'll get\n" +
+				"'let (())' with caret placed inside inner brackers.\n" +
+				"\n" +
+				"Note: AutoEdits work only in lisp code and are not triggered\n" +
+				"in comments or strings.");
+		data = new GridData(GridData.FILL_BOTH);
+		helpLbl.setLayoutData(data);
+		
+		
 		return entryTable;
 	}
 
