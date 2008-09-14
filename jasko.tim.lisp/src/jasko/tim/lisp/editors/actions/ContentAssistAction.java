@@ -24,9 +24,9 @@ public class ContentAssistAction extends LispAction {
     	try{
 	    	ITextSelection ts = (ITextSelection) editor.getSelectionProvider().getSelection();
 	    	if( ArglistAssistProcessor.doArgs(editor.getDocument(),ts.getOffset())){
-	            editor.showParameterHints();    		
+	            editor.showParameterHints();
 	    	} else {
-	            editor.showContentCompletions();    		
+	            editor.showContentCompletions();
 	    	}
     	} catch (Throwable e){
     		e.printStackTrace();
