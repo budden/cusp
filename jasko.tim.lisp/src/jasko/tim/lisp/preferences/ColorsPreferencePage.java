@@ -23,8 +23,6 @@ public class ColorsPreferencePage extends FieldEditorPreferencePage implements I
 
 	public ColorsPreferencePage() {
 		super(GRID);
-		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
-		setDescription("Set colors and styles for Lisp code formatting");
 	}
 	
 	/**
@@ -94,6 +92,9 @@ public class ColorsPreferencePage extends FieldEditorPreferencePage implements I
 	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
 	 */
 	public void init(IWorkbench workbench) {
+		setPreferenceStore(LispPlugin.getDefault().getPreferenceStore());
+		setDescription("Set colors and styles for Lisp code formatting.\n" +
+		"To see changes - close and reopen a lisp editor.");
 	}
 	
 }
