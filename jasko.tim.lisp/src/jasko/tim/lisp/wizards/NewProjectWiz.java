@@ -202,7 +202,8 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 
 		// Load asd file.
 		String asdfile = asd.getLocation().toString();
-		LispPlugin.getDefault().getSwank().sendLoadASDF(asdfile, 
+		LispPlugin.getDefault().getSwank().compileAndLoadAsd(asd);
+/*		LispPlugin.getDefault().getSwank().sendLoadASDF(asdfile, 
 				new SwankRunnable() {
 					public void run() {
 						ReplView rv = ReplView.getInstance();
@@ -210,7 +211,11 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 							rv.switchPackage(pkg);
 						}
 					}
-				});
+				}); */
+		ReplView rv = ReplView.getInstance();
+		if (rv != null) {
+			rv.switchPackage(pkg);
+		}
 
 		
 		monitor.setTaskName("Opening files for editing...");
