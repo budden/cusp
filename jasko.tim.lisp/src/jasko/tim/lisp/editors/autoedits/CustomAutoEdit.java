@@ -2,12 +2,16 @@ package jasko.tim.lisp.editors.autoedits;
 
 import java.util.HashMap;
 
+import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.editors.LispPartitionScanner;
+import jasko.tim.lisp.preferences.PreferenceConstants;
 import jasko.tim.lisp.preferences.PreferenceInitializer;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 
 /* autoedit snippets, like (let) (progn) etc */
 public class CustomAutoEdit implements IAutoEditStrategy {
@@ -144,6 +148,15 @@ public class CustomAutoEdit implements IAutoEditStrategy {
 	
 	public CustomAutoEdit(){
 		initAutoEditTree();
+		//FIXME: also need to properly dispose listener
+		LispPlugin.getDefault().getPreferenceStore()
+		 .addPropertyChangeListener(new IPropertyChangeListener(){
+			public void propertyChange(PropertyChangeEvent event) {
+				if(event.getProperty().equals(PreferenceConstants.CUSTOM_AUTO_EDITS)){
+					initAutoEditTree();
+				}
+			}
+		 });
 	}
 	
 	private void cmdEnd(IDocument d, DocumentCommand c, AutoEditData data){
