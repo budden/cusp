@@ -115,8 +115,7 @@ public class LispConfiguration extends TextSourceViewerConfiguration {
 		}
     }
     
-    public String showParameterHints () {
-    	
+    public String showParameterHints () {  	
             return ca.showContextInformation();    		
     }
     
