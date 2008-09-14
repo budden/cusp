@@ -105,10 +105,6 @@ public class ReplView extends ViewPart implements SelectionListener {
  	 		slm.setMessage("CL: " + swank.getLispVersion() + 
  	 				" | Cusp: " + LispPlugin.getVersion() +
  	 				" | Current package: " + pkg);
-/*			
-			LispPlugin.getDefault().updateStatusLine("CL: " + swank.getLispVersion() + 
- 	 				" | Cusp: " + LispPlugin.getVersion() +
- 	 				" | Current package: " + pkg); */
  	 		if( replPackage != null ){
  	 			replPackage.setText("Current package: "+pkg);
  	 		}
@@ -821,23 +817,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 				LispImages.getImageDescriptor(LispImages.STEP));
 		stepButton.setToolTipText("Step");
 
-		runTestsButton = new Action("Run Tests") {
-			public void run() {
-				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				if( swank != null && swank.useUnitTest ){
-					PackageDialog pd = 
-						new PackageDialog(ReplView.this.getSite().getShell(),
-								swank.getPackagesWithTests(1000), 
-								swank.getlastTestPackage(),true);
-					if (pd.open() == Dialog.OK) {
-						swank.sendRunTests(pd.getPackage(), new TestsRunnable());
-					}					
-				} else {
-					ArrayList<String> strings = new ArrayList<String>(2);
-					strings.add("Cannot run tests,");
-				}
-			}
-		};
+		runTestsButton = new TestAction(getSite().getShell()); 
 		runTestsButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.RUN_TESTS));
 		runTestsButton.setToolTipText("Run tests");
