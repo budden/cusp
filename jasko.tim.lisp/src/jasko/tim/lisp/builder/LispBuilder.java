@@ -178,7 +178,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 			try{
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
 				swank.sendCompileFile(file.getLocation().toString(), 
-						new CompileListener(file));
+						new CompileListener(file,true));
 				System.out.printf("Compiling %s\n", file.getLocation().toString());
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -217,13 +217,15 @@ public class LispBuilder extends IncrementalProjectBuilder {
  		int length;
  		boolean compiledByAsd = false;
  		String asdFile = "";
+ 		boolean removeCompileMarkers = true;
   		
- 		public CompileListener(IFile file) {
+ 		public CompileListener(IFile file, boolean removeCompileMarkers) {
  			this.file = file;
  			offset = 0;
  			length = 0;
  			compiledByAsd = false;
  			asdFile = "";
+ 			this.removeCompileMarkers = removeCompileMarkers;
   		}
   		
  		public CompileListener(boolean compByAsd, String asdfile) {
@@ -241,7 +243,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
   		
   		public void run() {
  			ArrayList<String> files = new ArrayList<String>();
- 			if ( file != null && length == 0){
+ 			if ( file != null && length == 0 && removeCompileMarkers ){
  				LispMarkers.deleteCompileMarkers(file);
   			} else if ( file != null && length > 0) {
   				LispMarkers.deleteCompileMarkers(file,offset,length);
@@ -318,7 +320,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
  						} 
  					}
  					if( nwarnings > 0 ){
-						torepl += "wanrings";
+						torepl += "warnings";
  					}
  	  				repl.appendText(torepl);
 				}
@@ -580,6 +582,28 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		}
 	}
 
+	public static boolean checkLisp(IFile resource, int offset, int length) {
+		if( !(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")
+						|| resource.getName().endsWith(".cl"))) {
+			return false;
+		} else {
+			
+			try {
+				IFile file = (IFile) resource;
+				LispMarkers.deleteCompileMarkers(file, offset, length);								
+				System.out.println("*builder*");
+				boolean paren = checkParenBalancing(file);
+				LispNode code = LispParser.parse(file);
+				boolean pack = checkPackageDependence(code,file);
+				boolean commas = checkCommas(code,file);
+				checkMultipleDefuncs(code,file);
+				return (paren && pack && commas);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+	}
 	
 	public static boolean checkLisp(IFile resource) {
 		if( !(resource.getName().endsWith(".lisp") || resource.getName().endsWith(".el")

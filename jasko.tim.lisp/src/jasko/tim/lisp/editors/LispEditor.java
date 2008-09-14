@@ -405,7 +405,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 
 	private void compileOnSave() {
 		IDocument doc = getDocument();
-		if( LispBuilder.checkLisp(getIFile()) ){
+		if( true /*LispBuilder.checkLisp(getIFile()) */){
 			SwankInterface swank = LispPlugin.getDefault().getSwank(); 
 			ArrayList<TopLevelItem> newForms = 
 				LispUtil.getTopLevelItems(LispParser.parse(doc.get() + "\n)"),
@@ -423,7 +423,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 				pos = null;
 			}
 			if( pos == null || pos.length == 0 ){ //compile whole file
-				LispBuilder.compileFile(getIFile(),false);
+				if(LispBuilder.checkLisp(getIFile())){
+					LispBuilder.compileFile(getIFile(),false);					
+				}
 			} else { 
 				compileForms(getFormsToCompile(pos, newForms, toDefine));
 			}
@@ -461,7 +463,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					// should compile rest of the file
 					try{
 						sexp = doc.get(offset,n-offset);
-						LispBuilder.compileFilePart(getIFile(), sexp, offset);
+						if(LispBuilder.checkLisp(getIFile())){
+							LispBuilder.compileFilePart(getIFile(), sexp, offset);
+						}
 						doc.removePositionCategory(CHANGED_POS_FOR_COMPILE);
 						doc.addPositionCategory(CHANGED_POS_FOR_COMPILE);
 					} catch ( Exception e ){
@@ -469,7 +473,9 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					}
 					break;
 				} else if ( sexp != null && sexp != "" ){
-					LispBuilder.compileFilePart(getIFile(), sexp, offset);									
+					if(LispBuilder.checkLisp(getIFile(), offset, sexp.length())){
+						LispBuilder.compileFilePart(getIFile(), sexp, offset);						
+					}
 				}
 			}
 		}
@@ -647,7 +653,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		boolean undefineTests = LispPlugin.getDefault().getSwank().useUnitTest; 
 		for( String itm: toUndefine){
 			String[] item = itm.split(",");
-			LispBuilder.CompileListener cl = new LispBuilder.CompileListener(this.getIFile());
+			LispBuilder.CompileListener cl = new LispBuilder.CompileListener(this.getIFile(),false);
 			if( item[0].equalsIgnoreCase("defun") ){
 				LispPlugin.getDefault().getSwank().sendUndefine(item[1], item[2], cl);
 			} else if ( undefineTests && item[0].equalsIgnoreCase("define-test") ){
