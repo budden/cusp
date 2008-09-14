@@ -395,15 +395,16 @@
 				id="Lisp"
 				label="L&amp;isp">
 				<separator name="grpDoc"/>
-				<separator name="grpMacro"/>
-				<separator name="grpAssist"/>
-				<separator name="grpMisc"/>
+        <separator name="grpEditNavigation"/>
+				<separator name="grpCode"/>
+				<separator name="grpDebug"/>
+        <separator name="grpEval"/>
 				<separator name="grpCompile"/>
 			</menu>
 		</editorContribution>
 	</extension>
 	
-	<!-- Profiling Menu -->
+	<!-- Profiling Menu -
 	<extension point="org.eclipse.ui.editorActions">
 		<editorContribution
 			targetID="jasko.tim.lisp.editors.LispEditor"
@@ -415,7 +416,7 @@
 			</menu>
 		</editorContribution>
 	</extension>
-
+ -->
 	<!-- The Lisp editing context -->
 	<extension point="org.eclipse.ui.contexts">
 		<context
@@ -424,67 +425,924 @@
 			parentId="org.eclipse.ui.textEditorScope"/>
 	</extension>
 
-	<!-- The REPL editing context -->
-	<!-- I couldn't figure out how to register the new repl key binding scope, since the repl component is a SourceViewer,
-		not a TextEditor (like LispEditor is).  So, the next/previous actions for the repl are "stuck" in the eclipse
-		default "in windows" context.  I'll bet some people will choose "While editing text" or "While editing lisp",
-		so this is worth fixing. -->
-	<!--
-	<extension point="org.eclipse.ui.contexts">
-		<context
-			id="jasko.tim.lisp.replcontext"
-			name="REPL Interaction"
-			parentId="org.eclipse.ui.contexts.window"/>
-	</extension>
-	-->
-
-	<!-- history dialog/last/next previous REPL command history -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Opens REPL history dialog."
-			id="jasko.tim.lisp.actions.OpenHistoryDialogAction"
-			name="Open REPL History"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.OpenHistoryDialogAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+Alt+H"/>
-	</extension>
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Recalls the previous REPL command from history."
-			id="jasko.tim.lisp.actions.PreviousREPLCommandAction"
-			name="Previous REPL Command"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.PreviousREPLCommandAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+P"/>
-	</extension>
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Recalls the next REPL command from history."
-			id="jasko.tim.lisp.actions.NextREPLCommandAction"
-			name="Next REPL Command"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.NextREPLCommandAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+N"/>
-	</extension>
-
 	<!-- Key bindings and all the cruft associated with them -->
 	
-	<!-- Compile File -->
+	<!-- ===== grpDoc ======
+HypeSpec Alt+H
+Lispdoc Alt+L
+Show content assist Ctrl+Space	 
+	-->
+  <!-- Content Assist -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Shows the content-assist popup."
+      id="jasko.tim.lisp.editors.actions.ContentAssistAction"
+      name="Show Lisp Content Assist"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.ContentAssistAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Ctrl+Space"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.ContentAssistAction"
+        definitionId="jasko.tim.lisp.editors.actions.ContentAssistAction"
+        id="jasko.tim.lisp.editors.actions.ContentAssistAction"
+        label="Show Content Assist"
+        menubarPath="Lisp/grpDoc"
+        tooltip="Show content assist popup">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- LispDoc Lookup-->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Looks up the symbol in LispDoc."
+      id="jasko.tim.lisp.actions.LispDocAction"
+      name="LispDoc lookup"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.LispDocAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+L"/>
+    <key
+      commandId="jasko.tim.lisp.actions.LispDocAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Ctrl+D L"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.LispDocAction"
+        definitionId="jasko.tim.lisp.actions.LispDocAction"
+        id="jasko.tim.lisp.editors.actions.LispDocAction"
+        label="&amp;Lispdoc"
+        menubarPath="Lisp/grpDoc"
+        tooltip="Look up function in LispDoc.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- HyperSpec Lookup-->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Looks up the symbol in HyperSpec."
+      id="jasko.tim.lisp.actions.HyperSpecAction"
+      name="HyperSpec lookup"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.HyperSpecAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+H"/>
+    <key
+      commandId="jasko.tim.lisp.actions.HyperSpecAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Ctrl+D H"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.HyperSpecAction"
+        definitionId="jasko.tim.lisp.actions.HyperSpecAction"
+        id="jasko.tim.lisp.editors.actions.HyperSpecAction"
+        label="&amp;HyperSpec"
+        menubarPath="Lisp/grpDoc"
+        tooltip="Look up function in HyperSpec">
+      </action>
+    </editorContribution>
+  </extension>
+  
+<!-- ============ grpCode ============
+Find Definition Alt+. (or Ctrl+Click)
+Find Callees Alt+Shift+.
+Find Callers Alt+Shift+,
+Undefine Function Alt+U
+Macroexpand-all Alt+Shift+M
+Macroexpand-1 Alt+M
+Disassemble Alt+D
+-->
+
+  <!-- Undefine function -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Undefines the function."
+      id="jasko.tim.lisp.actions.UndefineFunctionAction"
+      name="Undefine Function"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.UndefineFunctionAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+U"/>
+    <key
+      commandId="jasko.tim.lisp.actions.UndefineFunctionAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Ctrl+U"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.UndefineFunctionAction"
+        definitionId="jasko.tim.lisp.actions.UndefineFunctionAction"
+        id="jasko.tim.lisp.editors.actions.UndefineFunctionAction"
+        label="&amp;Undefine Function"
+        menubarPath="Lisp/grpCode"
+        tooltip="Undefine function.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Find Callers -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Finds the places where this function is called."
+      id="jasko.tim.lisp.actions.FindCallersAction"
+      name="Find Callers"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.FindCallersAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+,"/>
+    <key
+      commandId="jasko.tim.lisp.actions.FindCallersAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Shift+,"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.FindCallersAction"
+        definitionId="jasko.tim.lisp.actions.FindCallersAction"
+        id="jasko.tim.lisp.actions.FindCallersAction"
+        label="Find &amp;Callers"
+        menubarPath="Lisp/grpCode"
+        tooltip="Find Callers.">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.FindCallersAction" 
+           label="Find Callers"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.FindCallersAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+  
+  <!-- Find Callees -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Finds the functions this function calls."
+      id="jasko.tim.lisp.actions.FindCalleesAction"
+      name="Find Callees"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.FindCalleesAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+."/>
+    <key
+      commandId="jasko.tim.lisp.actions.FindCalleesAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Shift+."/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.FindCalleesAction"
+        definitionId="jasko.tim.lisp.actions.FindCalleesAction"
+        id="jasko.tim.lisp.actions.FindCalleesAction"
+        label="Find &amp;Callees"
+        menubarPath="Lisp/grpCode"
+        tooltip="Find Callees.">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.FindCalleesAction" 
+           label="Find Callees"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.FindCalleesAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+  
+  <!-- Find Definition -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the top level s-expression."
+      id="jasko.tim.lisp.actions.FindDefinitionAction"
+      name="Find Definition"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.FindDefinitionAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+."/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.FindDefinitionAction"
+        definitionId="jasko.tim.lisp.actions.FindDefinitionAction"
+        id="jasko.tim.lisp.editors.actions.FindDefinitionAction"
+        label="&amp;Find Definition"
+        menubarPath="Lisp/grpCode"
+        tooltip="Go to the symbol's definition.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Dissassemble -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Disassembles the current function."
+      id="jasko.tim.lisp.actions.DisassembleAction"
+      name="Disassemble"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.DisassembleAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+D"/>
+    <key
+      commandId="jasko.tim.lisp.actions.DisassembleAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Alt+D"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.DisassembleAction"
+        definitionId="jasko.tim.lisp.actions.DisassembleAction"
+        id="jasko.tim.lisp.editors.actions.DisassembleAction"
+        label="&amp;Disassemble"
+        menubarPath="Lisp/grpCode"
+        tooltip="Disassembles the current function.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Macro-expand -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Macro-expands the current expression."
+      id="jasko.tim.lisp.actions.MacroExpandAction"
+      name="Macro-expand-1"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+M"/>
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Enter"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.MacroExpandAction"
+        definitionId="jasko.tim.lisp.actions.MacroExpandAction"
+        id="jasko.tim.lisp.editors.actions.MacroExpandAction"
+        label="&amp;Macroexpand-1"
+        menubarPath="Lisp/grpCode"
+        tooltip="Performs a single macro-expansion on the current expression.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Macro-expands the current expression."
+      id="jasko.tim.lisp.actions.MacroExpandAllAction"
+      name="Macro-expand all"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+M"/>
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Esc M"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
+        definitionId="jasko.tim.lisp.actions.MacroExpandAllAction"
+        id="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
+        label="&amp;Macroexpand-all"
+        menubarPath="Lisp/grpCode"
+        tooltip="Performs a full macro-expansion on the current expression.">
+      </action>
+    </editorContribution>
+  </extension>
+
+
+<!-- ============ grpEditNavigation ============
+Expand Selection Alt+Enter
+Toggle comment Alt+; (how is done i slime?)
+Indent Ctrl+Tab (have better Tab version, but keep Ctrl+Tab for those who don't know about tab)
+Jump Back Ctrl+Alt+Left (paredit: Ctrl+Alt+b)
+Jump Forward Ctrl+Alt+Right (paredit: Ctrl+Alt+f)
+-->
+
+  <!-- Jump Back -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Jump backward to previous word or sexp"
+      id="jasko.tim.lisp.editors.actions.JumpBackAction"
+      name="Jump Back"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.JumpBackAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Ctrl+Alt+Arrow_Left"/>
+    <key
+      commandId="jasko.tim.lisp.editors.actions.JumpBackAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+Alt+B"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.JumpBackAction"
+        definitionId="jasko.tim.lisp.editors.actions.JumpBackAction"
+        id="jasko.tim.lisp.editors.actions.JumpBackdAction"
+        label="Jump Back"
+        menubarPath="Lisp/grpEditNavigation"
+        tooltip="Jump Back">
+      </action>
+    </editorContribution>
+  </extension>
+
+  <!-- Jump Forward -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Jump forward to next word or sexp"
+      id="jasko.tim.lisp.editors.actions.JumpForwardAction"
+      name="Jump Forward"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.JumpForwardAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Ctrl+Alt+Arrow_Right"/>
+    <key
+      commandId="jasko.tim.lisp.editors.actions.JumpForwardAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+Alt+F"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.JumpForwardAction"
+        definitionId="jasko.tim.lisp.editors.actions.JumpForwardAction"
+        id="jasko.tim.lisp.editors.actions.JumpForwardAction"
+        label="Jump Forward"
+        menubarPath="Lisp/grpEditNavigation"
+        tooltip="Jump Forward">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Expand Selection -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Expands the selection to the next outer atom/s-expression"
+      id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+      name="Expand Selection"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Enter"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+        definitionId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+        id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
+        label="Expand Selection"
+        menubarPath="Lisp/grpEditNavigation"
+        tooltip="Expand selection to include higher level expression">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Indent -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Indents the current selection/line."
+      id="jasko.tim.lisp.editors.actions.IndentAction"
+      name="Indent line"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.IndentAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Ctrl+Tab"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.IndentAction"
+        definitionId="jasko.tim.lisp.editors.actions.IndentAction"
+        id="jasko.tim.lisp.editors.actions.IndentAction"
+        label="Indent line"
+        menubarPath="Lisp/grpEditNavigation"
+        tooltip="Indent line">
+      </action>
+    </editorContribution>
+  </extension>
+
+  <!-- Commenting -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Comments out or removes commenting out"
+      id="jasko.tim.lisp.editors.actions.CommentingAction"
+      name="Commenting"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.CommentingAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+;"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.CommentingAction"
+        definitionId="jasko.tim.lisp.editors.actions.CommentingAction"
+        id="jasko.tim.lisp.editors.actions.CommentingAction"
+        label="Toggle Block Comment"
+        menubarPath="Lisp/grpEditNavigation"
+        tooltip="Toggle Block Comment">
+      </action>
+    </editorContribution>
+  </extension>
+  
+
+<!-- ============ grpDebug ==================
+Toggle Watch Alt+T
+Toggle Breakpoint Alt+B
+Profile Function Alt+P
+Profile Report
+Reset Profiling
+-->
+  <!-- Reset Profiling -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category2"
+      description="Resets profiling."
+      id="jasko.tim.lisp.actions.ProfileResetAction"
+      name="Reset Profiling"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus.profile">
+      <action
+        class="jasko.tim.lisp.editors.actions.ProfileResetAction"
+        definitionId="jasko.tim.lisp.actions.ProfileResetAction"
+        id="jasko.tim.lisp.editors.actions.ProfileResetAction"
+        label="&amp;Reset Profiling"
+        menubarPath="Lisp/grpDebug"
+        tooltip="Reset the profiler.">
+      </action>
+    </editorContribution>
+  </extension>
+
+  <!-- Profile report -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category2"
+      description="Shows the profiling report."
+      id="jasko.tim.lisp.actions.ProfileReportAction"
+      name="Profile Report"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus.profile">
+      <action
+        class="jasko.tim.lisp.editors.actions.ProfileReportAction"
+        definitionId="jasko.tim.lisp.actions.ProfileReportAction"
+        id="jasko.tim.lisp.editors.actions.ProfileReportAction"
+        label="Profile &amp;Report"
+        menubarPath="Lisp/grpDebug"
+        tooltip="Profile Report">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Profile function -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category2"
+      description="Toggles profiling for the function."
+      id="jasko.tim.lisp.actions.ProfileFunctionAction"
+      name="Profile Function"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.ProfileFunctionAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+P"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus.profile">
+      <action
+        class="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
+        definitionId="jasko.tim.lisp.actions.ProfileFunctionAction"
+        id="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
+        label="Profile &amp;Function"
+        menubarPath="Lisp/grpDebug"
+        tooltip="Profile function.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Breakpoint -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Puts or removes breakpoint"
+      id="jasko.tim.lisp.editors.actions.BreakpointAction"
+      name="Breakpoint"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.BreakpointAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+B"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.BreakpointAction"
+        definitionId="jasko.tim.lisp.editors.actions.BreakpointAction"
+        id="jasko.tim.lisp.editors.actions.BreakpointAction"
+        label="Toggle Breakpoint"
+        menubarPath="Lisp/grpDebug"
+        tooltip="Toggle Breakpoint">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Watch -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Puts or removes watch"
+      id="jasko.tim.lisp.editors.actions.WatchAction"
+      name="Watch"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.WatchAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+T"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.WatchAction"
+        definitionId="jasko.tim.lisp.editors.actions.WatchAction"
+        id="jasko.tim.lisp.editors.actions.WatchAction"
+        label="Toggle Watch"
+        menubarPath="Lisp/grpDebug"
+        tooltip="Toggle Watch">
+      </action>
+    </editorContribution>
+  </extension>
+  
+
+<!-- =========== grpEval ====================
+Eval Current Expression + Switch Alt+Shift+R
+Eval Current Expression  Alt+R
+Eval Top Level + Switch Alt+Shift+E
+Eval Top Level Alt+Shift+E
+Eval File Ctrl+Alt+E 
+-->
+
+  <!-- Eval File -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the current file."
+      id="jasko.tim.lisp.actions.EvalFileAction"
+      name="Evaluate File"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.EvalFileAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Ctrl+E"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalFileAction"
+        definitionId="jasko.tim.lisp.actions.EvalFileAction"
+        id="jasko.tim.lisp.editors.actions.EvalFileAction"
+        label="Eval File"
+        menubarPath="Lisp/grpEval"
+        tooltip="Evaluate File">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Eval Top Level -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the top level s-expression."
+      id="jasko.tim.lisp.actions.EvalTopLevelExpAction"
+      name="Eval Top-level Expression"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.EvalTopLevelExpAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+E"/>
+    <key
+      commandId="jasko.tim.lisp.actions.EvalTopLevelExpAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+X Ctrl+E"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"
+        definitionId="jasko.tim.lisp.actions.EvalTopLevelExpAction"
+        id="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"
+        label="&amp;Eval Top Level"
+        menubarPath="Lisp/grpEval"
+        tooltip="Evaluate top-level action.">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.EvalTopLevelExpAction" 
+           label="Eval Top-level Expression"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+  
+  <!-- Eval Top Level Quick -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the top level s-expression and switch to Repl"
+      id="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+      name="Eval Top-level Expression"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+E"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"
+        definitionId="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+        id="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"
+        label="&amp;Eval Top Level + Switch"
+        menubarPath="Lisp/grpEval"
+        tooltip="Evaluate top-level action + switch.">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction" 
+           label="Eval Top-level Expression + Switch"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+
+  <!-- Eval Current Expression -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the current s-expression."
+      id="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
+      name="Evaluate Current Expression"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+R"/>
+    <key
+      commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+X Ctrl+E"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
+        definitionId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
+        id="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
+        label="Eval Current Expression"
+        menubarPath="Lisp/grpEval"
+        tooltip="Evaluate current expression.">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.EvalCurrentExpAction" 
+           label="Eval Current Expression"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+
+  <!-- Eval Current Expression Quick -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Evaluates the current s-expression."
+      id="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+      name="Evaluate Current Expression + Switch"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+R"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+        definitionId="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+        id="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+        label="Eval Current Expression + Switch"
+        menubarPath="Lisp/grpEval"
+        tooltip="Evaluate current expression + switch">
+      </action>
+    </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.EvalCurrentExpQuickAction" 
+           label="Eval Current Expression + switch"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"> 
+        </action> 
+     </viewerContribution> 
+  </extension>
+
+<!-- =========== grpCompile =================
+Compile Top Level Alt+C
+Compile Top Level + Switch Alt+Shift+C
+Compile File Alt+K
+Compile File + Switch Alt+Shift+K
+-->
+
+	<!-- Compile File and Compile File + Switch-->
 	<extension point="org.eclipse.ui.commands">
 		<category
 			description="Shortcuts related to programming Lisp"
@@ -551,7 +1409,7 @@
 		</editorContribution>
 	</extension>
 	
-	<!-- Compile Top Level -->
+	<!-- Compile Top Level and Compile Top Level + Switch -->
 	<extension point="org.eclipse.ui.commands">
 		<command
 			categoryId="jasko.tim.lisp.category1"
@@ -610,924 +1468,67 @@
 		</editorContribution>
 	</extension>
 	
-	<!-- Eval File -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Evaluates the current file."
-			id="jasko.tim.lisp.actions.EvalFileAction"
-			name="Evaluate File"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.EvalFileAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Ctrl+E"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.EvalFileAction"
-				definitionId="jasko.tim.lisp.actions.EvalFileAction"
-				id="jasko.tim.lisp.editors.actions.EvalFileAction"
-				label="Evaluate File"
-				menubarPath="Lisp/grpCompile"
-				tooltip="Evaluate File">
-			</action>
-		</editorContribution>
-	</extension>
+  <!-- ============== End of menu ============ -->
 	
-	<!-- Eval Top Level -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Evaluates the top level s-expression."
-			id="jasko.tim.lisp.actions.EvalTopLevelExpAction"
-			name="Eval Top-level Expression"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.EvalTopLevelExpAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+E"/>
-		<key
-			commandId="jasko.tim.lisp.actions.EvalTopLevelExpAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+X Ctrl+E"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"
-				definitionId="jasko.tim.lisp.actions.EvalTopLevelExpAction"
-				id="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"
-				label="&amp;Evaluate Top Level"
-				menubarPath="Lisp/grpCompile"
-				tooltip="Evaluate top-level action.">
-			</action>
-		</editorContribution>
-	</extension>
-	<extension point="org.eclipse.ui.popupMenus"> 
-	   <viewerContribution 
-	      	id="jasko.tim.lisp.editors.LispEditor.popup"
-			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
-	      <action
-	         id="jasko.tim.lisp.actions.EvalTopLevelExpAction" 
-	         label="Eval Top-level Expression"
-	         menubarPath="Lisp" 
-	         class="jasko.tim.lisp.editors.actions.EvalTopLevelExpAction"> 
-	      </action> 
-	   </viewerContribution> 
-	</extension>
-	
-  <!-- Eval Top Level Quick -->
+
+  <!-- The REPL editing context -->
+  <!-- I couldn't figure out how to register the new repl key binding scope, since the repl component is a SourceViewer,
+    not a TextEditor (like LispEditor is).  So, the next/previous actions for the repl are "stuck" in the eclipse
+    default "in windows" context.  I'll bet some people will choose "While editing text" or "While editing lisp",
+    so this is worth fixing. -->
+  <!--
+  <extension point="org.eclipse.ui.contexts">
+    <context
+      id="jasko.tim.lisp.replcontext"
+      name="REPL Interaction"
+      parentId="org.eclipse.ui.contexts.window"/>
+  </extension>
+  -->
+
+  <!-- history dialog/last/next previous REPL command history -->
   <extension point="org.eclipse.ui.commands">
     <command
       categoryId="jasko.tim.lisp.category1"
-      description="Evaluates the top level s-expression and switch to Repl"
-      id="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
-      name="Eval Top-level Expression"/>
+      description="Opens REPL history dialog."
+      id="jasko.tim.lisp.actions.OpenHistoryDialogAction"
+      name="Open REPL History"/>
   </extension>
   <extension point="org.eclipse.ui.bindings">
     <key
-      commandId="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
+      commandId="jasko.tim.lisp.actions.OpenHistoryDialogAction"
       contextId="jasko.tim.lisp.context1"
       schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Alt+Shift+E"/>
+      sequence="Ctrl+Alt+H"/>
   </extension>
-  <extension point="org.eclipse.ui.editorActions">
-    <editorContribution
-      targetID="jasko.tim.lisp.editors.LispEditor"
-      id="jasko.tim.lisp.menus">
-      <action
-        class="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"
-        definitionId="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction"
-        id="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"
-        label="&amp;Evaluate Top Level + Switch"
-        menubarPath="Lisp/grpCompile"
-        tooltip="Evaluate top-level action + switch.">
-      </action>
-    </editorContribution>
-  </extension>
-  <extension point="org.eclipse.ui.popupMenus"> 
-     <viewerContribution 
-          id="jasko.tim.lisp.editors.LispEditor.popup"
-      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
-        <action
-           id="jasko.tim.lisp.actions.EvalTopLevelExpQuickAction" 
-           label="Eval Top-level Expression + Switch"
-           menubarPath="Lisp" 
-           class="jasko.tim.lisp.editors.actions.EvalTopLevelExpQuickAction"> 
-        </action> 
-     </viewerContribution> 
-  </extension>
-
-	<!-- Eval Current Expression -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Evaluates the current s-expression."
-			id="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
-			name="Evaluate Current Expression"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+R"/>
-		<key
-			commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+X Ctrl+E"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
-				definitionId="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
-				id="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"
-				label="Evaluate Current Expression"
-				menubarPath="Lisp/grpCompile"
-				tooltip="Evaluate current expression.">
-			</action>
-		</editorContribution>
-	</extension>
-	<extension point="org.eclipse.ui.popupMenus"> 
-	   <viewerContribution 
-	      	id="jasko.tim.lisp.editors.LispEditor.popup"
-			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
-	      <action
-	         id="jasko.tim.lisp.actions.EvalCurrentExpAction" 
-	         label="Eval Current Expression"
-	         menubarPath="Lisp" 
-	         class="jasko.tim.lisp.editors.actions.EvalCurrentExpAction"> 
-	      </action> 
-	   </viewerContribution> 
-	</extension>
-
-  <!-- Eval Current Expression Quick -->
   <extension point="org.eclipse.ui.commands">
     <command
       categoryId="jasko.tim.lisp.category1"
-      description="Evaluates the current s-expression."
-      id="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
-      name="Evaluate Current Expression + Switch"/>
+      description="Recalls the previous REPL command from history."
+      id="jasko.tim.lisp.actions.PreviousREPLCommandAction"
+      name="Previous REPL Command"/>
   </extension>
   <extension point="org.eclipse.ui.bindings">
     <key
-      commandId="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
+      commandId="jasko.tim.lisp.actions.PreviousREPLCommandAction"
       contextId="jasko.tim.lisp.context1"
       schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Alt+Shift+R"/>
+      sequence="Ctrl+P"/>
   </extension>
-  <extension point="org.eclipse.ui.editorActions">
-    <editorContribution
-      targetID="jasko.tim.lisp.editors.LispEditor"
-      id="jasko.tim.lisp.menus">
-      <action
-        class="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
-        definitionId="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
-        id="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"
-        label="Evaluate Current Expression + Switch"
-        menubarPath="Lisp/grpCompile"
-        tooltip="Evaluate current expression + switch">
-      </action>
-    </editorContribution>
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Recalls the next REPL command from history."
+      id="jasko.tim.lisp.actions.NextREPLCommandAction"
+      name="Next REPL Command"/>
   </extension>
-  <extension point="org.eclipse.ui.popupMenus"> 
-     <viewerContribution 
-          id="jasko.tim.lisp.editors.LispEditor.popup"
-      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
-        <action
-           id="jasko.tim.lisp.actions.EvalCurrentExpQuickAction" 
-           label="Eval Current Expression + switch"
-           menubarPath="Lisp" 
-           class="jasko.tim.lisp.editors.actions.EvalCurrentExpQuickAction"> 
-        </action> 
-     </viewerContribution> 
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.NextREPLCommandAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Ctrl+N"/>
   </extension>
-  
-	<!-- Indent -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Indents the current selection/line."
-			id="jasko.tim.lisp.editors.actions.IndentAction"
-			name="Indent line"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.IndentAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+Tab"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.IndentAction"
-				definitionId="jasko.tim.lisp.editors.actions.IndentAction"
-				id="jasko.tim.lisp.editors.actions.IndentAction"
-				label="Indent line"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Indent line">
-			</action>
-		</editorContribution>
-	</extension>
 
-	<!-- Commenting -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Comments out or removes commenting out"
-			id="jasko.tim.lisp.editors.actions.CommentingAction"
-			name="Commenting"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.CommentingAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+;"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.CommentingAction"
-				definitionId="jasko.tim.lisp.editors.actions.CommentingAction"
-				id="jasko.tim.lisp.editors.actions.CommentingAction"
-				label="Commenting"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Commenting">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Breakpoint -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Puts or removes breakpoint"
-			id="jasko.tim.lisp.editors.actions.BreakpointAction"
-			name="Breakpoint"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.BreakpointAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+B"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.BreakpointAction"
-				definitionId="jasko.tim.lisp.editors.actions.BreakpointAction"
-				id="jasko.tim.lisp.editors.actions.BreakpointAction"
-				label="Toggle Breakpoint"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Toggle Breakpoint">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Watch -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Puts or removes watch"
-			id="jasko.tim.lisp.editors.actions.WatchAction"
-			name="Watch"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.WatchAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+T"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.WatchAction"
-				definitionId="jasko.tim.lisp.editors.actions.WatchAction"
-				id="jasko.tim.lisp.editors.actions.WatchAction"
-				label="Toggle Watch"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Toggle Watch">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Jump Forward -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Jump forward to next word or sexp"
-			id="jasko.tim.lisp.editors.actions.JumpForwardAction"
-			name="Jump Forward"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.JumpForwardAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+Alt+Arrow_Right"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.JumpForwardAction"
-				definitionId="jasko.tim.lisp.editors.actions.JumpForwardAction"
-				id="jasko.tim.lisp.editors.actions.JumpForwardAction"
-				label="Jump Forward"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Jump Forward">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Jump Back -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Jump backward to previous word or sexp"
-			id="jasko.tim.lisp.editors.actions.JumpBackAction"
-			name="Jump Back"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.JumpBackAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+Alt+Arrow_Left"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.JumpBackAction"
-				definitionId="jasko.tim.lisp.editors.actions.JumpBackAction"
-				id="jasko.tim.lisp.editors.actions.JumpBackdAction"
-				label="Jump Back"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Jump Back">
-			</action>
-		</editorContribution>
-	</extension>
-
-	<!-- Expand Selection -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Expands the selection to the next outer atom/s-expression"
-			id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-			name="Expand Selection"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Enter"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-				definitionId="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-				id="jasko.tim.lisp.editors.actions.ExpandSelectionAction"
-				label="Expand Selection"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Expand Selection">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Select Current Expression -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Selects the current s-expression"
-			id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-			name="Select Current Expression"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Shift+Enter"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-				definitionId="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-				id="jasko.tim.lisp.editors.actions.SelectCurrentExpressionAction"
-				label="Select Current Expression"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Select Current Expression">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Content Assist -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Shows the content-assist popup."
-			id="jasko.tim.lisp.editors.actions.ContentAssistAction"
-			name="Show Lisp Content Assist"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.ContentAssistAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Ctrl+Space"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.ContentAssistAction"
-				definitionId="jasko.tim.lisp.editors.actions.ContentAssistAction"
-				id="jasko.tim.lisp.editors.actions.ContentAssistAction"
-				label="Show Content Assist"
-				menubarPath="Lisp/grpAssist"
-				tooltip="Show content assist popup">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	
-	
-	<!-- Parameter Hints -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Shows the parameter hints popup."
-			id="jasko.tim.lisp.editors.actions.ParameterHintsAction"
-			name="Show Lisp Parameter Hints"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.editors.actions.ParameterHintsAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Shift+Alt+P"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.ParameterHintsAction"
-				definitionId="jasko.tim.lisp.editors.actions.ParameterHintsAction"
-				id="jasko.tim.lisp.editors.actions.ParameterHintsAction"
-				label="Show Parameter Hints"
-				menubarPath="Lisp/grpAssist"
-				tooltip="Show parameter hints popup">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Profile function -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category2"
-			description="Toggles profiling for the function."
-			id="jasko.tim.lisp.actions.ProfileFunctionAction"
-			name="Profile Function"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.ProfileFunctionAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+P"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus.profile">
-			<action
-				class="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
-				definitionId="jasko.tim.lisp.actions.ProfileFunctionAction"
-				id="jasko.tim.lisp.editors.actions.ProfileFunctionAction"
-				label="Profile &amp;Function"
-				menubarPath="Lisp.Profile/grpMisc"
-				tooltip="Profile function.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Profile report -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category2"
-			description="Shows the profiling report."
-			id="jasko.tim.lisp.actions.ProfileReportAction"
-			name="Profile Report"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus.profile">
-			<action
-				class="jasko.tim.lisp.editors.actions.ProfileReportAction"
-				definitionId="jasko.tim.lisp.actions.ProfileReportAction"
-				id="jasko.tim.lisp.editors.actions.ProfileReportAction"
-				label="Profile &amp;Report"
-				menubarPath="Lisp.Profile/grpMisc"
-				tooltip="Profile Report">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Reset Profiling -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category2"
-			description="Resets profiling."
-			id="jasko.tim.lisp.actions.ProfileResetAction"
-			name="Reset Profiling"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus.profile">
-			<action
-				class="jasko.tim.lisp.editors.actions.ProfileResetAction"
-				definitionId="jasko.tim.lisp.actions.ProfileResetAction"
-				id="jasko.tim.lisp.editors.actions.ProfileResetAction"
-				label="&amp;Reset profiling"
-				menubarPath="Lisp.Profile/grpMisc"
-				tooltip="Reset the profiler.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Undefine function -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Undefines the function."
-			id="jasko.tim.lisp.actions.UndefineFunctionAction"
-			name="Undefine Function"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.UndefineFunctionAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+U"/>
-		<key
-			commandId="jasko.tim.lisp.actions.UndefineFunctionAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Ctrl+U"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.UndefineFunctionAction"
-				definitionId="jasko.tim.lisp.actions.UndefineFunctionAction"
-				id="jasko.tim.lisp.editors.actions.UndefineFunctionAction"
-				label="&amp;Undefine Function"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Undefine function.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Find Callers -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Finds the places where this function is called."
-			id="jasko.tim.lisp.actions.FindCallersAction"
-			name="Find Callers"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.FindCallersAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Shift+,"/>
-		<key
-			commandId="jasko.tim.lisp.actions.FindCallersAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Shift+,"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.FindCallersAction"
-				definitionId="jasko.tim.lisp.actions.FindCallersAction"
-				id="jasko.tim.lisp.actions.FindCallersAction"
-				label="Find &amp;Callers"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Find Callers.">
-			</action>
-		</editorContribution>
-	</extension>
-	<extension point="org.eclipse.ui.popupMenus"> 
-	   <viewerContribution 
-	      	id="jasko.tim.lisp.editors.LispEditor.popup"
-			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
-	      <action
-	         id="jasko.tim.lisp.actions.FindCallersAction" 
-	         label="Find Callers"
-	         menubarPath="Lisp" 
-	         class="jasko.tim.lisp.editors.actions.FindCallersAction"> 
-	      </action> 
-	   </viewerContribution> 
-	</extension>
-	
-	<!-- Find Callees -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Finds the functions this function calls."
-			id="jasko.tim.lisp.actions.FindCalleesAction"
-			name="Find Callees"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.FindCalleesAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Shift+."/>
-		<key
-			commandId="jasko.tim.lisp.actions.FindCalleesAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Shift+."/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.FindCalleesAction"
-				definitionId="jasko.tim.lisp.actions.FindCalleesAction"
-				id="jasko.tim.lisp.actions.FindCalleesAction"
-				label="Find &amp;Callees"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Find Callees.">
-			</action>
-		</editorContribution>
-	</extension>
-	<extension point="org.eclipse.ui.popupMenus"> 
-	   <viewerContribution 
-	      	id="jasko.tim.lisp.editors.LispEditor.popup"
-			targetID="jasko.tim.lisp.editors.LispEditor.context"> 
-	      <action
-	         id="jasko.tim.lisp.actions.FindCalleesAction" 
-	         label="Find Callees"
-	         menubarPath="Lisp" 
-	         class="jasko.tim.lisp.editors.actions.FindCalleesAction"> 
-	      </action> 
-	   </viewerContribution> 
-	</extension>
-	
-	<!-- LispDoc Lookup-->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Looks up the symbol in LispDoc."
-			id="jasko.tim.lisp.actions.LispDocAction"
-			name="LispDoc lookup"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.LispDocAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+L"/>
-		<key
-			commandId="jasko.tim.lisp.actions.LispDocAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Ctrl+D L"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.LispDocAction"
-				definitionId="jasko.tim.lisp.actions.LispDocAction"
-				id="jasko.tim.lisp.editors.actions.LispDocAction"
-				label="&amp;Lispdoc"
-				menubarPath="Lisp/grpDoc"
-				tooltip="Look up function in LispDoc.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- HyperSpec Lookup-->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Looks up the symbol in HyperSpec."
-			id="jasko.tim.lisp.actions.HyperSpecAction"
-			name="HyperSpec lookup"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.HyperSpecAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+H"/>
-		<key
-			commandId="jasko.tim.lisp.actions.HyperSpecAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Ctrl+D H"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.HyperSpecAction"
-				definitionId="jasko.tim.lisp.actions.HyperSpecAction"
-				id="jasko.tim.lisp.editors.actions.HyperSpecAction"
-				label="&amp;HyperSpec"
-				menubarPath="Lisp/grpDoc"
-				tooltip="Look up function in HyperSpec">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Find Definition -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Evaluates the top level s-expression."
-			id="jasko.tim.lisp.actions.FindDefinitionAction"
-			name="Find Definition"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.FindDefinitionAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+."/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.FindDefinitionAction"
-				definitionId="jasko.tim.lisp.actions.FindDefinitionAction"
-				id="jasko.tim.lisp.editors.actions.FindDefinitionAction"
-				label="&amp;Find Definition"
-				menubarPath="Lisp/grpMisc"
-				tooltip="Go to the symbol's definition.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Dissassemble -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Disassembles the current function."
-			id="jasko.tim.lisp.actions.DisassembleAction"
-			name="Disassemble"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.DisassembleAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+D"/>
-		<key
-			commandId="jasko.tim.lisp.actions.DisassembleAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Alt+D"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.DisassembleAction"
-				definitionId="jasko.tim.lisp.actions.DisassembleAction"
-				id="jasko.tim.lisp.editors.actions.DisassembleAction"
-				label="&amp;Disassemble"
-				menubarPath="Lisp/grpMacro"
-				tooltip="Disassembles the current function.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<!-- Macro-expand -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Macro-expands the current expression."
-			id="jasko.tim.lisp.actions.MacroExpandAction"
-			name="Macro-expand-1"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.MacroExpandAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+M"/>
-		<key
-			commandId="jasko.tim.lisp.actions.MacroExpandAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Enter"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.MacroExpandAction"
-				definitionId="jasko.tim.lisp.actions.MacroExpandAction"
-				id="jasko.tim.lisp.editors.actions.MacroExpandAction"
-				label="&amp;Macroexpand-1"
-				menubarPath="Lisp/grpMacro"
-				tooltip="Performs a single macro-expansion on the current expression.">
-			</action>
-		</editorContribution>
-	</extension>
-	
-	<extension point="org.eclipse.ui.commands">
-		<command
-			categoryId="jasko.tim.lisp.category1"
-			description="Macro-expands the current expression."
-			id="jasko.tim.lisp.actions.MacroExpandAllAction"
-			name="Macro-expand all"/>
-	</extension>
-	<extension point="org.eclipse.ui.bindings">
-		<key
-			commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-			sequence="Alt+Shift+M"/>
-		<key
-			commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
-			contextId="jasko.tim.lisp.context1"
-			schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-			sequence="Ctrl+C Esc M"/>
-	</extension>
-	<extension point="org.eclipse.ui.editorActions">
-		<editorContribution
-			targetID="jasko.tim.lisp.editors.LispEditor"
-			id="jasko.tim.lisp.menus">
-			<action
-				class="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
-				definitionId="jasko.tim.lisp.actions.MacroExpandAllAction"
-				id="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
-				label="&amp;Macroexpand-all"
-				menubarPath="Lisp/grpMacro"
-				tooltip="Performs a full macro-expansion on the current expression.">
-			</action>
-		</editorContribution>
-	</extension>
  
  <!-- Remove this later --> 
  <extension point="org.eclipse.ui.popupMenus">
