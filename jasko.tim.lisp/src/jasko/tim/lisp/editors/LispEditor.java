@@ -650,7 +650,7 @@ public class LispEditor extends TextEditor implements ILispEditor {
 		}
 		
 		// === undefine removed forms (at the moment functions and tests only)
-		boolean undefineTests = LispPlugin.getDefault().getSwank().useUnitTest; 
+		boolean undefineTests = LispPlugin.getDefault().getSwank().getUseUnitTest(); 
 		for( String itm: toUndefine){
 			String[] item = itm.split(",");
 			LispBuilder.CompileListener cl = new LispBuilder.CompileListener(this.getIFile(),false);

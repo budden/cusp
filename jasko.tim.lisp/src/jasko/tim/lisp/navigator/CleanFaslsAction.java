@@ -69,7 +69,7 @@ public class CleanFaslsAction implements IActionDelegate {
 				}
 				// TODO: also delete fasls from .cusp folder, if use cusp to manage packages
 				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				if( swank.isConnected() && swank.managePackages ){
+				if( swank.isConnected() && swank.getManagePackages() ){
 					//String cuspFolder = "this";
 				}
 			} catch (CoreException e) {

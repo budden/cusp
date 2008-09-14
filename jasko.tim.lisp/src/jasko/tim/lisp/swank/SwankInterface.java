@@ -63,7 +63,7 @@ public class SwankInterface {
 	private boolean connected = false;
 	private String currPackage = "COMMON-LISP-USER";
 	private String lispVersion = "(NO CL IMPLEMENTATION)";
-	private String lastTestPackage = "nil";
+	private String lastTestPackage = "nil"; //FIXME: this should be in test view
 
 	public String getCurrPackage() {
 		return currPackage;
@@ -73,12 +73,6 @@ public class SwankInterface {
 		return lastTestPackage;
 	}
 
-	private boolean ranafterLispStart = false;
-	
-	public boolean ranAfterLispStart(){
-		return ranafterLispStart;
-	}
-	
 	private ListenerThread listener;
 	private DisplayListenerThread displayListener;
 	
@@ -259,8 +253,20 @@ public class SwankInterface {
 	}
 	
 
-	public boolean managePackages = false;
-	public boolean useUnitTest = false;
+	// SK: note, MANAGE_PACKAGES and USE_UNIT_TEST preferences should be
+	// accessed only through SwankInterface.getManagePackages and 
+	// swankInterface.getUnitTest - because their value only have importance
+	// when lisp starts
+	private boolean managePackages = false;
+	private boolean useUnitTest = false;
+	
+	public boolean getManagePackages(){
+		return managePackages;
+	}
+
+	public boolean getUseUnitTest(){
+		return useUnitTest;
+	}
 
 	public String translateRemoteFilePath(String path) {
 		if (implementation != null) {
@@ -339,7 +345,6 @@ public class SwankInterface {
 				}
 			});
 		}
-		ranafterLispStart = true;
 	}
 
 	/** 

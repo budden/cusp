@@ -23,7 +23,17 @@ public interface PreferenceConstants {
 	public static final String LISP_EXE = "lispExecutable";
 	public static final String LISP_INI = "lispIni";
 	public static final String USE_SITEWIDE_LISP = "usePluginLisp";
+	/**
+	 * 	this preference should be accessed only through 
+	 *  SwankInterface.getManagePackages - because its value should be constant
+	 *  after lisp starts
+	 */
 	public static final String MANAGE_PACKAGES = "managePackages";
+	/**
+	 * 	this preference should be accessed only through 
+	 *  SwankInterface.getUseUnitTest - because its value should be constant after
+	 *  lisp starts
+	 */
 	public static final String USE_UNIT_TEST= "useUnitTest";
 	public static final String CONSOLE_COMPILER_LOG = "consoleCompilerLog";
 	public static final String SYSTEMS_PATH = "systemsPath";
