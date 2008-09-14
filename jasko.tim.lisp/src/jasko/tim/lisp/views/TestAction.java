@@ -28,7 +28,7 @@ public class TestAction extends Action {
 		SwankInterface swank = LispPlugin.getDefault().getSwank();
 		String hasunit = swank.sendEvalAndGrab("(some #'(lambda (x) " +
 				"(equal \"LISP-UNIT\" (package-name x))) (list-all-packages))", 1000);
-		if( swank != null && "T".equalsIgnoreCase(hasunit) && swank.useUnitTest ){
+		if( swank != null && "T".equalsIgnoreCase(hasunit) && swank.getUseUnitTest() ){
 			PackageDialog pd = 
 				new PackageDialog(shell,
 						swank.getPackagesWithTests(1000), 

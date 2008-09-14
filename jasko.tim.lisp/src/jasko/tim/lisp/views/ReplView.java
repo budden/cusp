@@ -760,7 +760,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 					this.setImageDescriptor(
 							LispImages.getImageDescriptor(
 									LispImages.RECONNECT));
-					loadPackageButton.setEnabled(swank.managePackages);
+					loadPackageButton.setEnabled(swank.getManagePackages());
 					
 				}
 			}
