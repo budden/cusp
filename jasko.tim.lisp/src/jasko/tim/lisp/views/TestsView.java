@@ -1,15 +1,11 @@
 package jasko.tim.lisp.views;
 
-import java.util.ArrayList;
-
 import jasko.tim.lisp.LispImages;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.swank.*;
-import jasko.tim.lisp.views.repl.PackageDialog;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
 import org.eclipse.swt.layout.*;
@@ -110,23 +106,7 @@ public class TestsView extends ViewPart {
 	
 	protected void fillToolBar(Composite parent) {
 		
-		runTestsButton = new Action("Run Tests") {
-			public void run() {
-				SwankInterface swank = LispPlugin.getDefault().getSwank();
-				if( swank != null && swank.ranAfterLispStart() && swank.useUnitTest ){
-					PackageDialog pd = 
-						new PackageDialog(TestsView.this.getSite().getShell(),
-								swank.getPackagesWithTests(1000), 
-								swank.getlastTestPackage(),true);
-					if (pd.open() == Dialog.OK) {
-						swank.sendRunTests(pd.getPackage(), new TestsRunnable());
-					}					
-				} else {
-					ArrayList<String> strings = new ArrayList<String>(2);
-					strings.add("Cannot run tests,");
-				}
-			}
-		};
+		runTestsButton = new TestAction(getSite().getShell()); 
 		runTestsButton.setImageDescriptor(
 				LispImages.getImageDescriptor(LispImages.RUN_TESTS));
 		runTestsButton.setToolTipText("Run tests");

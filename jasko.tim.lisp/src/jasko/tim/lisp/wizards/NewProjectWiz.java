@@ -12,7 +12,6 @@ package jasko.tim.lisp.wizards;
 
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.builder.LispNature;
-import jasko.tim.lisp.views.*;
 
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.Wizard;
@@ -222,11 +221,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 		
 		
 		monitor.worked(2);
-		monitor.done();/*
-		ReplView rv = ReplView.getInstance();
-		if (rv != null) {
-			rv.switchPackage(pkg);
-		}*/
+		monitor.done();
 	} // void doFinish(...)
 	
 	private String makePackageName(String projectName) {
