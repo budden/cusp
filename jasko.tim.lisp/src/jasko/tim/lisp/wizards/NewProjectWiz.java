@@ -208,8 +208,8 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 				try {
 					IDE.openEditor(page, asd, true);
 					IDE.openEditor(page, defpackage, true);
-					IDE.openEditor(page, main, true);
 					IDE.openEditor(page, tests, true);
+					IDE.openEditor(page, main, true);
 					
 					
 				} catch (PartInitException e) {
