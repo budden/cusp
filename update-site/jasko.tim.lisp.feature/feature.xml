@@ -2,7 +2,7 @@
 <feature
       id="jasko.tim.lisp"
       label="Cusp Plug-in"
-      version="0.9.245">
+      version="0.9.360">
 
    <description>
       Cusp is a development environment for Lisp.
