@@ -235,7 +235,6 @@ public class LispEditor extends TextEditor implements ILispEditor {
 				String contents = doc.get();
 				if (symbol == null) {
 					//System.out.println("A0 " + snippet);
-					//FIXME: should skip strings and comments
 					int offset = contents.indexOf(snippet, position);
 					if (offset >= 0) {
 						//System.out.println("A1 " + offset);
