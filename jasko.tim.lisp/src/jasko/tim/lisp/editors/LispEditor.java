@@ -231,11 +231,11 @@ public class LispEditor extends TextEditor implements ILispEditor {
 			try {
 				IDocument doc = editor2.getDocumentProvider()
 				  .getDocument(editor2.getEditorInput());
-				String contents = doc.get();
 				
+				String contents = doc.get();
 				if (symbol == null) {
 					//System.out.println("A0 " + snippet);
-					
+					//FIXME: should skip strings and comments
 					int offset = contents.indexOf(snippet, position);
 					if (offset >= 0) {
 						//System.out.println("A1 " + offset);
@@ -246,7 +246,20 @@ public class LispEditor extends TextEditor implements ILispEditor {
 					}
 				} else {
 					//System.out.println("B0");
-					int offset = contents.indexOf(symbol, position);
+					// skip comments or strings
+					int iters = 0;
+					int offset = position;
+					while( offset >= 0 && offset < doc.getLength() && 
+							(doc.getPartition(offset)
+								     .getType().equals(LispPartitionScanner.LISP_COMMENT)
+								     || doc.getPartition(offset)
+								     .getType().equals(LispPartitionScanner.LISP_STRING))){
+						offset = contents.indexOf(symbol,offset)+symbol.length();
+						++iters;
+					}
+					if( iters > 0 ){
+						offset -= symbol.length();
+					}
 					if (offset >= 0) {
 						//System.out.println("B1 " + offset);
 						editor2.selectAndReveal(offset, symbol.length());
