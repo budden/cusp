@@ -754,7 +754,7 @@ public class SwankInterface {
 		}
 		String res = sendEvalAndGrab(msg,2000);
 		
-		return (!(res.equalsIgnoreCase("nil") || res.contains(":ERROR")));
+		return (!(res.equalsIgnoreCase("nil") || (res.contains(":ERROR") && !res.contains(":LOCATION"))));
 	}
 
 	//finds definitions in package pkg or global context
