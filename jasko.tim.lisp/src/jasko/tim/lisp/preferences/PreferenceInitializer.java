@@ -59,23 +59,24 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         store.setDefault(PAIR_EDIT_BRACKETS, true);
         store.setDefault(PAIR_SMART_BRACKETS, true);
         store.setDefault(PAIR_EDIT_BRACES, false);
-        store.setDefault(PAIR_EDIT_QUOTES, false);
-        store.setDefault(PAIR_EDIT_COMMENTS, false);
+        store.setDefault(PAIR_EDIT_QUOTES, true);
+        store.setDefault(PAIR_EDIT_COMMENTS, true);
         store.setDefault(AUTO_POPUP_COMPLETIONS, true);
         store.setDefault(AUTO_POPUP_COMPLETIONS_DELAY, 700);
         store.setDefault(AUTO_INSERT_COMPLETIONS, false);
         store.setDefault(AUTO_FUZZY_COMPLETIONS, false);
         store.setDefault(DOCS_IN_COMPLETIONS, true);
-        store.setDefault(MAX_HINT_LINES, 10);
+        store.setDefault(MAX_HINT_LINES, 20);
         store.setDefault(ARGLIST_BELOW, false);
         store.setDefault(DEBUG_HIDE_SWANK_FRAMES, true);
-        store.setDefault(CUSTOM_AUTO_EDITS, "");
+        store.setDefault(CUSTOM_AUTO_EDITS, "let ;let ((|))\tdefun | ()\n  ");
+        store.setDefault(AUTO_COMPLETIONS_NLIMIT, 20);
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
         store.setDefault(REPL_INSPECTABLE_UNDERLINE, true);
         store.setDefault(REPL_FONT_SIZE, 9);
         
-        store.setDefault(OUTLINE_SORT, 0);
+        store.setDefault(OUTLINE_SORT, 1);
         
         store.setDefault(SSH_COMMAND, "ssh");
         store.setDefault(REMOTE_LISP_EXE, "sbcl");
