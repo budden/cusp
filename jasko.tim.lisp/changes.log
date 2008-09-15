@@ -32,6 +32,7 @@
       
     * Improved library/package management system
         - More robust library finding code
+        - Added all library dependencies and tested them on SBCL in supported OSs.
     
     * Wizards
         - When a new project is made, the REPL will now automatically switch to that project's package
