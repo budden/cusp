@@ -533,7 +533,7 @@ Show content assist Ctrl+Space
   </extension>
   
 <!-- ============ grpCode ============
-Find Definition Alt+. (or Ctrl+Click)
+Find Definition F3 (from Alt+. - F3 - default in eclipse) (or Ctrl+Click)
 Find Callees Alt+Shift+.
 Find Callers Alt+Shift+,
 Undefine Function Alt+U
@@ -541,6 +541,110 @@ Macroexpand-all Alt+Shift+M
 Macroexpand-1 Alt+M
 Disassemble Alt+D
 -->
+  <!-- Dissassemble -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Disassembles the current function."
+      id="jasko.tim.lisp.actions.DisassembleAction"
+      name="Disassemble"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.DisassembleAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+D"/>
+    <key
+      commandId="jasko.tim.lisp.actions.DisassembleAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Alt+D"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.DisassembleAction"
+        definitionId="jasko.tim.lisp.actions.DisassembleAction"
+        id="jasko.tim.lisp.editors.actions.DisassembleAction"
+        label="&amp;Disassemble"
+        menubarPath="Lisp/grpCode"
+        tooltip="Disassembles the current function.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <!-- Macro-expand -->
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Macro-expands the current expression."
+      id="jasko.tim.lisp.actions.MacroExpandAction"
+      name="Macro-expand-1"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+M"/>
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Enter"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.MacroExpandAction"
+        definitionId="jasko.tim.lisp.actions.MacroExpandAction"
+        id="jasko.tim.lisp.editors.actions.MacroExpandAction"
+        label="&amp;Macroexpand-1"
+        menubarPath="Lisp/grpCode"
+        tooltip="Performs a single macro-expansion on the current expression.">
+      </action>
+    </editorContribution>
+  </extension>
+  
+  <extension point="org.eclipse.ui.commands">
+    <command
+      categoryId="jasko.tim.lisp.category1"
+      description="Macro-expands the current expression."
+      id="jasko.tim.lisp.actions.MacroExpandAllAction"
+      name="Macro-expand all"/>
+  </extension>
+  <extension point="org.eclipse.ui.bindings">
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+      sequence="Alt+Shift+M"/>
+    <key
+      commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C Esc M"/>
+  </extension>
+  <extension point="org.eclipse.ui.editorActions">
+    <editorContribution
+      targetID="jasko.tim.lisp.editors.LispEditor"
+      id="jasko.tim.lisp.menus">
+      <action
+        class="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
+        definitionId="jasko.tim.lisp.actions.MacroExpandAllAction"
+        id="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
+        label="&amp;Macroexpand-all"
+        menubarPath="Lisp/grpCode"
+        tooltip="Performs a full macro-expansion on the current expression.">
+      </action>
+    </editorContribution>
+  </extension>
+
 
   <!-- Undefine function -->
   <extension point="org.eclipse.ui.commands">
@@ -675,7 +779,7 @@ Disassemble Alt+D
   <extension point="org.eclipse.ui.commands">
     <command
       categoryId="jasko.tim.lisp.category1"
-      description="Evaluates the top level s-expression."
+      description="Finds definition"
       id="jasko.tim.lisp.actions.FindDefinitionAction"
       name="Find Definition"/>
   </extension>
@@ -684,7 +788,12 @@ Disassemble Alt+D
       commandId="jasko.tim.lisp.actions.FindDefinitionAction"
       contextId="jasko.tim.lisp.context1"
       schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Alt+."/>
+      sequence="F3"/>
+    <key
+      commandId="jasko.tim.lisp.actions.FindDefinitionAction"
+      contextId="jasko.tim.lisp.context1"
+      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
+      sequence="Ctrl+C ."/>
   </extension>
   <extension point="org.eclipse.ui.editorActions">
     <editorContribution
@@ -693,118 +802,26 @@ Disassemble Alt+D
       <action
         class="jasko.tim.lisp.editors.actions.FindDefinitionAction"
         definitionId="jasko.tim.lisp.actions.FindDefinitionAction"
-        id="jasko.tim.lisp.editors.actions.FindDefinitionAction"
+        id="jasko.tim.lisp.actions.FindDefinitionAction"
         label="&amp;Find Definition"
         menubarPath="Lisp/grpCode"
-        tooltip="Go to the symbol's definition.">
+        tooltip="Find Definition">
       </action>
     </editorContribution>
+  </extension>
+  <extension point="org.eclipse.ui.popupMenus"> 
+     <viewerContribution 
+          id="jasko.tim.lisp.editors.LispEditor.popup"
+      targetID="jasko.tim.lisp.editors.LispEditor.context"> 
+        <action
+           id="jasko.tim.lisp.actions.FindDefinitionAction" 
+           label="Find Definition"
+           menubarPath="Lisp" 
+           class="jasko.tim.lisp.editors.actions.FindDefinitionAction"> 
+        </action> 
+     </viewerContribution> 
   </extension>
   
-  <!-- Dissassemble -->
-  <extension point="org.eclipse.ui.commands">
-    <command
-      categoryId="jasko.tim.lisp.category1"
-      description="Disassembles the current function."
-      id="jasko.tim.lisp.actions.DisassembleAction"
-      name="Disassemble"/>
-  </extension>
-  <extension point="org.eclipse.ui.bindings">
-    <key
-      commandId="jasko.tim.lisp.actions.DisassembleAction"
-      contextId="jasko.tim.lisp.context1"
-      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Alt+D"/>
-    <key
-      commandId="jasko.tim.lisp.actions.DisassembleAction"
-      contextId="jasko.tim.lisp.context1"
-      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-      sequence="Ctrl+C Alt+D"/>
-  </extension>
-  <extension point="org.eclipse.ui.editorActions">
-    <editorContribution
-      targetID="jasko.tim.lisp.editors.LispEditor"
-      id="jasko.tim.lisp.menus">
-      <action
-        class="jasko.tim.lisp.editors.actions.DisassembleAction"
-        definitionId="jasko.tim.lisp.actions.DisassembleAction"
-        id="jasko.tim.lisp.editors.actions.DisassembleAction"
-        label="&amp;Disassemble"
-        menubarPath="Lisp/grpCode"
-        tooltip="Disassembles the current function.">
-      </action>
-    </editorContribution>
-  </extension>
-  
-  <!-- Macro-expand -->
-  <extension point="org.eclipse.ui.commands">
-    <command
-      categoryId="jasko.tim.lisp.category1"
-      description="Macro-expands the current expression."
-      id="jasko.tim.lisp.actions.MacroExpandAction"
-      name="Macro-expand-1"/>
-  </extension>
-  <extension point="org.eclipse.ui.bindings">
-    <key
-      commandId="jasko.tim.lisp.actions.MacroExpandAction"
-      contextId="jasko.tim.lisp.context1"
-      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Alt+M"/>
-    <key
-      commandId="jasko.tim.lisp.actions.MacroExpandAction"
-      contextId="jasko.tim.lisp.context1"
-      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-      sequence="Ctrl+C Enter"/>
-  </extension>
-  <extension point="org.eclipse.ui.editorActions">
-    <editorContribution
-      targetID="jasko.tim.lisp.editors.LispEditor"
-      id="jasko.tim.lisp.menus">
-      <action
-        class="jasko.tim.lisp.editors.actions.MacroExpandAction"
-        definitionId="jasko.tim.lisp.actions.MacroExpandAction"
-        id="jasko.tim.lisp.editors.actions.MacroExpandAction"
-        label="&amp;Macroexpand-1"
-        menubarPath="Lisp/grpCode"
-        tooltip="Performs a single macro-expansion on the current expression.">
-      </action>
-    </editorContribution>
-  </extension>
-  
-  <extension point="org.eclipse.ui.commands">
-    <command
-      categoryId="jasko.tim.lisp.category1"
-      description="Macro-expands the current expression."
-      id="jasko.tim.lisp.actions.MacroExpandAllAction"
-      name="Macro-expand all"/>
-  </extension>
-  <extension point="org.eclipse.ui.bindings">
-    <key
-      commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
-      contextId="jasko.tim.lisp.context1"
-      schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Alt+Shift+M"/>
-    <key
-      commandId="jasko.tim.lisp.actions.MacroExpandAllAction"
-      contextId="jasko.tim.lisp.context1"
-      schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-      sequence="Ctrl+C Esc M"/>
-  </extension>
-  <extension point="org.eclipse.ui.editorActions">
-    <editorContribution
-      targetID="jasko.tim.lisp.editors.LispEditor"
-      id="jasko.tim.lisp.menus">
-      <action
-        class="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
-        definitionId="jasko.tim.lisp.actions.MacroExpandAllAction"
-        id="jasko.tim.lisp.editors.actions.MacroExpandAllAction"
-        label="&amp;Macroexpand-all"
-        menubarPath="Lisp/grpCode"
-        tooltip="Performs a full macro-expansion on the current expression.">
-      </action>
-    </editorContribution>
-  </extension>
-
 
 <!-- ============ grpEditNavigation ============
 Expand Selection Alt+Enter
