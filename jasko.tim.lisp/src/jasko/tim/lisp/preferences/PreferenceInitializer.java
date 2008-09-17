@@ -69,7 +69,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer impleme
         store.setDefault(MAX_HINT_LINES, 20);
         store.setDefault(ARGLIST_BELOW, false);
         store.setDefault(DEBUG_HIDE_SWANK_FRAMES, true);
-        store.setDefault(CUSTOM_AUTO_EDITS, "let ;let ((|))\tdefun | ()\n  ");
+        store.setDefault(CUSTOM_AUTO_EDITS, "let ;let ((|))\tdefun ;defun | ()\n  ");
         store.setDefault(AUTO_COMPLETIONS_NLIMIT, 20);
         
         store.setDefault(DECORATE_REPL_INSPECTABLES, true);
