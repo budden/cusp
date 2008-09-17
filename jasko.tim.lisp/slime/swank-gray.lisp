@@ -77,7 +77,8 @@
           (t (terpri stream) t))))
 
 (defclass slime-input-stream (fundamental-character-input-stream)
-  ((input-fn :initarg :input-fn)
+  ((output-stream :initarg :output-stream)
+   (input-fn :initarg :input-fn)
    (buffer :initform "") (index :initform 0)
    (lock :initform (make-lock :name "buffer read lock"))))
 
@@ -85,8 +86,10 @@
   (call-with-lock-held
    (slot-value s 'lock)
    (lambda ()
-     (with-slots (buffer index input-fn) s
+     (with-slots (buffer index output-stream input-fn) s
        (when (= index (length buffer))
+         (when output-stream
+           (finish-output output-stream))
          (let ((string (funcall input-fn)))
            (cond ((zerop (length string))
                   (return-from stream-read-char :eof))
@@ -158,9 +161,10 @@
 
 
 ;;;
-
-(defimplementation make-output-stream (write-string)
-  (make-instance 'slime-output-stream :output-fn write-string))
-
-(defimplementation make-input-stream (read-string)
-  (make-instance 'slime-input-stream :input-fn read-string))
+(defimplementation make-fn-streams (input-fn output-fn)
+  (let* ((output (make-instance 'slime-output-stream 
+                                :output-fn output-fn))
+         (input  (make-instance 'slime-input-stream
+                                :input-fn input-fn 
+                                :output-stream output)))
+    (values input output)))

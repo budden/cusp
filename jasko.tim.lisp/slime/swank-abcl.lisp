@@ -24,12 +24,10 @@
                                    :format-arguments format-arguments))))
     nil))
 
-(defimplementation make-output-stream (write-string)
-  (ext:make-slime-output-stream write-string))
-
-(defimplementation make-input-stream (read-string)
-  (ext:make-slime-input-stream read-string  
-                               (make-synonym-stream '*standard-output*)))
+(defimplementation make-fn-streams (input-fn output-fn)
+  (let* ((output (ext:make-slime-output-stream output-fn))
+         (input  (ext:make-slime-input-stream input-fn output)))
+    (values input output)))
 
 (defimplementation call-with-compilation-hooks (function)
   (funcall function))
