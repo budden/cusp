@@ -6,15 +6,19 @@ import jasko.tim.lisp.swank.*;
 
 import java.util.*;
 
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PlatformUI;
 
 public class FindDefinitionAction extends LispAction {
 	
 	private Shell shell;
+	
+	public FindDefinitionAction(){}
 	
 	public FindDefinitionAction(ILispEditor editor) {
 		super(editor);
@@ -29,6 +33,17 @@ public class FindDefinitionAction extends LispAction {
 		}
 		
 	}
+
+    public void setActiveEditor(IAction action, IEditorPart targetEditor) {
+        editor = (ILispEditor)targetEditor;
+		shell = null;
+		if( editor == null ){
+			shell = editor.getTextWidget().getShell();
+		} else {
+			shell = PlatformUI.getWorkbench().getDisplay().getActiveShell();
+		}
+    }
+    
 	
 	private class OpenDefinitionRunnable extends SwankRunnable {
 		private String symbol;
@@ -37,12 +52,6 @@ public class FindDefinitionAction extends LispAction {
 			this.symbol = symbol;
 		}
 		public void run() {
-			shell = null;
-			if( editor == null ){
-				shell = editor.getTextWidget().getShell();
-			} else {
-				shell = PlatformUI.getWorkbench().getDisplay().getActiveShell();
-			}
 			LispNode guts = result.getf(":return").getf(":ok");
 			ArrayList<String> names = new ArrayList<String>(guts.params.size());
 			ArrayList<LispNode> data = new ArrayList<LispNode>(guts.params.size());
