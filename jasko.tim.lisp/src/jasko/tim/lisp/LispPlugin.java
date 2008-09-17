@@ -109,8 +109,6 @@ public class LispPlugin extends AbstractUIPlugin {
 		cm =  new ColorManager(this);
 		
 		try {
-			startSwank(); //FIXME: do this with launcher rather on startup
-
 			Properties props = new Properties();
 			
 			InputStream in = LispPlugin.class.getResourceAsStream("/cusp.properties");
@@ -119,6 +117,8 @@ public class LispPlugin extends AbstractUIPlugin {
 			
 			CUSP_VERSION = props.getProperty("cusp.version");
 			RELEASE_DATE = props.getProperty("cusp.release_date");
+
+			startSwank(); //FIXME: do this with launcher rather on startup
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
