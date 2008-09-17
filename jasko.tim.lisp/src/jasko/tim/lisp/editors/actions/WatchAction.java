@@ -9,7 +9,7 @@ import org.eclipse.ui.IEditorPart;
 
 public class WatchAction extends LispAction {
     private ILispEditor editor;
-    public static String macro = "(defmacro cusp-watch (x) `(progn (format t \"~a -> ~a\" ',x ,x) ,x))";
+    public static String macro = "(defmacro cusp-watch (x) `(progn (format t \"~a -> ~a~%\" ',x ,x) ,x))";
     public static String start = "(cl-user::cusp-watch ";
     public static String splitregx = "\\(cl-user::cusp-watch ";
 
