@@ -184,7 +184,7 @@ public class LispLaunchTab extends AbstractLaunchConfigurationTab {
 	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#getImage()
 	 */
 	public Image getImage() {
-		Image img = LispPlugin.getDefault().getImageRegistry().get(LispImages.EXEC); 
+		Image img = LispPlugin.getDefault().getImageRegistry().get(CuspResources.EXEC); 
 		return img; 
 	}
 	

@@ -32,6 +32,7 @@ public class CuspResources {
 	public static final String BACKWARD_NAV = "backward-nav"; //$NON-NLS-1$
 	public static final String RUN_TESTS = "run-tests"; //$NON-NLS-1$
 	public static final String STEP = "step"; //$NON-NLS-1$
+	public static final String EXEC = "exec"; //$NON-NLS-1$
 
 	private final static String[][] keywordImageArray = {
 		{ "defclass", "defclass.gif" }, //$NON-NLS-1$ //$NON-NLS-2$
@@ -108,6 +109,7 @@ public class CuspResources {
 		imageReg.put(BACKWARD_NAV, loadImageDescriptor("backward-nav.gif")); //$NON-NLS-1$
 		
 		imageReg.put(STEP, loadImageDescriptor("step.gif")); //$NON-NLS-1$
+		imageReg.put(EXEC, loadImageDescriptor("exec-lisp.gif")); //$NON-NLS-1$
 		imageReg.put(RUN_TESTS, loadImageDescriptor("run-tests.gif")); //$NON-NLS-1$
 	}
 	
