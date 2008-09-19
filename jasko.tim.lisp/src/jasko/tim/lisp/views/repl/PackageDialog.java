@@ -302,8 +302,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 	}
 	
 	private void displayInfo(){
-		int sel = lstEnums.getSelectionIndex(); 
-		if( sel < 0 ){
+		if( lstEnums.getSelectionIndex() < 0 ){
 			lblLoaded.setVisible(false);
 			txtDoc.setText("");
 			for( int i = 0; i < 4; ++i ){
@@ -311,7 +310,7 @@ public class PackageDialog extends Dialog implements KeyListener {
 			}
 			return;
 		}
-		String pkg = packages.get(sel);
+		String pkg = (String)lstEnums.getSelection()[0];
 		String txt = infoMap.get(pkg);
 		if( txt != null ){
 			txtDoc.setText(txt);
