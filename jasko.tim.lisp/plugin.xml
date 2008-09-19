@@ -1593,12 +1593,12 @@ Compile File + Switch Alt+Shift+K
           class="jasko.tim.lisp.preferences.ImplementationsPreferencePage"
           id="jasko.tim.lisp.preferences.LispImplPreferencePage"
           name="%Lisp.Preferences.Implementations"/>
-    <page
+   <!-- <page
           category="jasko.tim.lisp.preferences.CuspPreferencePage"
           class="jasko.tim.lisp.preferences.BuildPreferences"
           id="jasko.tim.lisp.preferences.BuildPreferences"
-          name="%Lisp.Preferences.BuildOptions">
-    </page>
+          name="%Lisp.Preferences.BuildOptions"> 
+    </page> -->
  </extension>
  <extension
        point="org.eclipse.core.runtime.preferences">
