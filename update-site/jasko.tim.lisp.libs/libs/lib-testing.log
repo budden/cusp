@@ -1,24 +1,6 @@
 ============== I tested with sbcl 1.0.19 on WinXP.
 
 
----- archive_0.7.0 - Doesn't work
-- compiled
-- doesn't works. How to test:
-1) Repl: (in-package :archive)
-2) Create folder: c:\temp\lib-testing\archive.
-3) Create two files 1.txt, 2.txt
-4) Repl: (create-tar-file "c:/temp/lib-testing/arch.tar" 
-    '("c:/temp/lib-testing/archive/1.txt" "c:/temp/lib-testing/archive/2.txt"))
-5) Archive c:\temp\lib-testing\arch.tar is created (readable by winrar)
-6) However, trying to unpack with (extract-files-from-archive "c:/temp/lib-testing/arch.tar")
-drops into debugger with 
-
-There is no primary method for the generic function
-  #<STANDARD-GENERIC-FUNCTION READ-ENTRY-FROM-ARCHIVE (5)>
-when called with arguments
-  ("c:/temp/lib-testing/arch.tar").
-
-
 ----- chunga-0.4.3 - Drakma dependency - check if Drackma works
 - compiled
 - works ?
