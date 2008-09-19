@@ -13,7 +13,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
-import jasko.tim.lisp.LispImages;
+import jasko.tim.lisp.CuspResources;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.swank.*;
 
@@ -100,7 +100,7 @@ public class InspectorView extends ViewPart {
 			}
 		};
 		backButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.BACKWARD_NAV));
+				CuspResources.getImageDescriptor(CuspResources.BACKWARD_NAV));
 		backButton.setToolTipText("Go back to the previous object");
 				
 		foreButton = new Action("Go forward to next object") {
@@ -110,7 +110,7 @@ public class InspectorView extends ViewPart {
 			}
 		};
 		foreButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.FORWARD_NAV));
+				CuspResources.getImageDescriptor(CuspResources.FORWARD_NAV));
 		foreButton.setToolTipText("Go forward to next object");
 
 		tbm.add(backButton);

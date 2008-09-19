@@ -1,7 +1,7 @@
 package jasko.tim.lisp.editors.actions;
 
 
-import jasko.tim.lisp.LispImages;
+import jasko.tim.lisp.CuspResources;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
 
@@ -104,7 +104,7 @@ public class ListDialog<T>  extends Dialog implements KeyListener {
 				item.setData("tip", tips.get(i));
 			}
 			LispNode type = LispParser.parse(text);
-			item.setImage(LispImages.getImageForType(type.get(0).get(0).value));
+			item.setImage(CuspResources.getImageForType(type.get(0).get(0).value));
 		}
 		gridData = new GridData();
 		gridData.grabExcessHorizontalSpace = true;

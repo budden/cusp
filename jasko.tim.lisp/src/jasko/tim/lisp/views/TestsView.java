@@ -1,6 +1,6 @@
 package jasko.tim.lisp.views;
 
-import jasko.tim.lisp.LispImages;
+import jasko.tim.lisp.CuspResources;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.swank.*;
 
@@ -108,7 +108,7 @@ public class TestsView extends ViewPart {
 		
 		runTestsButton = new TestAction(getSite().getShell()); 
 		runTestsButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.RUN_TESTS));
+				CuspResources.getImageDescriptor(CuspResources.RUN_TESTS));
 		runTestsButton.setToolTipText("Run tests");
 		
 		this.fillNormalToolBar();

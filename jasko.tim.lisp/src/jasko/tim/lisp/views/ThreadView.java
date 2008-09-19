@@ -74,7 +74,7 @@ public class ThreadView extends ViewPart {
 				}
 			}
 		};
-		debugBtn.setImageDescriptor(LispImages.getImageDescriptor(LispImages.THREAD_DEBUG));
+		debugBtn.setImageDescriptor(CuspResources.getImageDescriptor(CuspResources.THREAD_DEBUG));
 		debugBtn.setToolTipText("Debug thread");
 		
 		tbm.add(debugBtn);
@@ -93,7 +93,7 @@ public class ThreadView extends ViewPart {
 				}
 			}
 		};
-		killBtn.setImageDescriptor(LispImages.getImageDescriptor(LispImages.THREAD_KILL));
+		killBtn.setImageDescriptor(CuspResources.getImageDescriptor(CuspResources.THREAD_KILL));
 		killBtn.setToolTipText("Kill thread");
 		
 		tbm.add(killBtn);
@@ -104,7 +104,7 @@ public class ThreadView extends ViewPart {
 				refreshThreads();
 			}
 		};
-		refreshBtn.setImageDescriptor(LispImages.getImageDescriptor(LispImages.REFRESH));
+		refreshBtn.setImageDescriptor(CuspResources.getImageDescriptor(CuspResources.REFRESH));
 		refreshBtn.setToolTipText("Refresh");
 		
 		tbm.add(refreshBtn);

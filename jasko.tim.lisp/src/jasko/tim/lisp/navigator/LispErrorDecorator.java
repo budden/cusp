@@ -67,10 +67,10 @@ public class LispErrorDecorator extends LabelProvider
 						
 						switch (severity) {
 						case IMarker.SEVERITY_ERROR:
-							decoration.addOverlay(LispImages.getImageDescriptor(LispImages.ERROR));
+							decoration.addOverlay(CuspResources.getImageDescriptor(CuspResources.ERROR));
 							break;
 						default:
-							decoration.addOverlay(LispImages.getImageDescriptor(LispImages.WARNING));
+							decoration.addOverlay(CuspResources.getImageDescriptor(CuspResources.WARNING));
 							break;	
 						}
 					}
