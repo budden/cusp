@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Cusp
+Bundle-Name: %Bundle-Name.0
 Bundle-SymbolicName: jasko.tim.lisp; singleton:=true
 Bundle-Version: 0.9.375
 Bundle-ClassPath: cusp.jar
@@ -122,3 +122,4 @@ Export-Package: jasko.tim.lisp;
    org.eclipse.swt.widgets",
  jasko.tim.lisp.wizards.actions;uses:="org.eclipse.jface.action,org.eclipse.ui,org.eclipse.jface.viewers"
 Import-Package: org.eclipse.core.expressions
+Bundle-Localization: plugin

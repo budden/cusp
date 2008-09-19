@@ -735,7 +735,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		};
 		loadPackageButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.LOAD_PACKAGE));
+				CuspResources.getImageDescriptor(CuspResources.LOAD_PACKAGE));
 		loadPackageButton.setToolTipText("Load Installed Package");
 				
 		connectButton = new Action("Reconnect") {
@@ -746,8 +746,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 						"Reconnect", 
 						"Are you sure you want to restart your Lisp session?")){
 					this.setImageDescriptor(
-							LispImages.getImageDescriptor(
-									LispImages.DISCONNECTED));										
+							CuspResources.getImageDescriptor(
+									CuspResources.DISCONNECTED));										
 					appendText("Reconnecting...");
 					swank.reconnect();
 					appendText("done.\n");
@@ -756,15 +756,15 @@ public class ReplView extends ViewPart implements SelectionListener {
 					resetState();
 					
 					this.setImageDescriptor(
-							LispImages.getImageDescriptor(
-									LispImages.RECONNECT));
+							CuspResources.getImageDescriptor(
+									CuspResources.RECONNECT));
 					loadPackageButton.setEnabled(swank.getManagePackages());
 					
 				}
 			}
 		};
 		connectButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.RECONNECT));
+				CuspResources.getImageDescriptor(CuspResources.RECONNECT));
 		connectButton.setToolTipText("Reconnect");
 		
 		packageButton = new Action("Change Package") {
@@ -778,7 +778,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		};
 		packageButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.DEFPACKAGE));
+				CuspResources.getImageDescriptor(CuspResources.DEFPACKAGE));
 		packageButton.setToolTipText("Change Package");
 				
 		pauseButton = new Action("Interrupt execution") {
@@ -787,7 +787,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		};
 		pauseButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.THREAD_DEBUG));
+				CuspResources.getImageDescriptor(CuspResources.THREAD_DEBUG));
 		pauseButton.setToolTipText("Interrupt execution");
 		
 		
@@ -797,7 +797,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		};
 		clearButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.CLEAR));
+				CuspResources.getImageDescriptor(CuspResources.CLEAR));
 		clearButton.setToolTipText("Clear Repl and Reset Sash");
 		
 		stepButton = new Action("Step") {
@@ -812,12 +812,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 			}
 		};
 		stepButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.STEP));
+				CuspResources.getImageDescriptor(CuspResources.STEP));
 		stepButton.setToolTipText("Step");
 
 		runTestsButton = new TestAction(getSite().getShell()); 
 		runTestsButton.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.RUN_TESTS));
+				CuspResources.getImageDescriptor(CuspResources.RUN_TESTS));
 		runTestsButton.setToolTipText("Run tests");
 		
 		
@@ -922,8 +922,8 @@ public class ReplView extends ViewPart implements SelectionListener {
 			public void run() {
 				if( !swank.isConnected() ){
 					connectButton.setImageDescriptor(
-							LispImages.getImageDescriptor(
-									LispImages.DISCONNECTED));
+							CuspResources.getImageDescriptor(
+									CuspResources.DISCONNECTED));
 			 		IStatusLineManager slm = 
 		 	 			getViewSite().getActionBars().getStatusLineManager();
 		 	 		slm.setMessage("Disconnected");

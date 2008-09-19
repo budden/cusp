@@ -125,7 +125,7 @@ public class LispOutlinePage extends ContentOutlinePage
 					item.offsetEnd = itm.offsetEnd;
 					item.info = "";
 					TreeItem tr = itemTr.get(item);
-					tr.setImage(LispImages.getImageForType(itm.type));
+					tr.setImage(CuspResources.getImageForType(itm.type));
 
 					if( sort == Sort.Type && !item.type.equals(itm.type) ){
 						TreeItem[] typeNodes = 
@@ -147,7 +147,7 @@ public class LispOutlinePage extends ContentOutlinePage
 							typeNode = 
 								new TreeItem(getTreeViewer().getTree(),SWT.NONE);
 							typeNode.setText(itm.type);
-							typeNode.setImage(LispImages
+							typeNode.setImage(CuspResources
 									.getImageForType(itm.type));
 						} else {
 							typeNode = typeNodes[i];
@@ -262,7 +262,7 @@ public class LispOutlinePage extends ContentOutlinePage
 						}						
 					}
 				}
-				tmp.setImage(LispImages.getImageForType(item.type));
+				tmp.setImage(CuspResources.getImageForType(item.type));
 				tmp.setText(item.name);
 				tmp.setData(item);
 				itemTr.put(item, tmp);
@@ -282,7 +282,7 @@ public class LispOutlinePage extends ContentOutlinePage
 					typeNode = 
 						new TreeItem(getTreeViewer().getTree(),SWT.NONE);
 					typeNode.setText(item.type);
-					typeNode.setImage(LispImages
+					typeNode.setImage(CuspResources
 							.getImageForType(item.type));
 				} else {
 					typeNode = typeNodes[i];
@@ -291,7 +291,7 @@ public class LispOutlinePage extends ContentOutlinePage
 					new TreeItem(typeNode,SWT.NONE,
 							getIndex(item.offset,
 									typeNode.getItems()));
-				tmp.setImage(LispImages.getImageForType(item.type));
+				tmp.setImage(CuspResources.getImageForType(item.type));
 				tmp.setText(item.name);
 				tmp.setData(item);
 				itemTr.put(item, tmp);
@@ -313,7 +313,7 @@ public class LispOutlinePage extends ContentOutlinePage
 				}
 				TreeItem tmp = 
 					new TreeItem(getTreeViewer().getTree(),SWT.NONE,i);
-				tmp.setImage(LispImages.getImageForType(item.type));
+				tmp.setImage(CuspResources.getImageForType(item.type));
 				tmp.setText(item.name);
 				tmp.setData(item);
 				itemTr.put(item, tmp);
@@ -524,7 +524,7 @@ public class LispOutlinePage extends ContentOutlinePage
 			}
 		};
 		sortAlpha.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.SORT_ALPHA));
+				CuspResources.getImageDescriptor(CuspResources.SORT_ALPHA));
 		if (sort == Sort.Alpha) {
 			sortAlpha.setChecked(true);
 		} else {
@@ -545,7 +545,7 @@ public class LispOutlinePage extends ContentOutlinePage
 			}
 		};
 		sortType.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.SORT_TYPE));
+				CuspResources.getImageDescriptor(CuspResources.SORT_TYPE));
 		if (sort == Sort.Type) {
 			sortType.setChecked(true);
 		} else {
@@ -565,7 +565,7 @@ public class LispOutlinePage extends ContentOutlinePage
 			}
 		};
 		sortPosition.setImageDescriptor(
-				LispImages.getImageDescriptor(LispImages.SORT_POSITION));
+				CuspResources.getImageDescriptor(CuspResources.SORT_POSITION));
 		if (sort == Sort.Position) {
 			sortPosition.setChecked(true);
 		} else {
@@ -650,13 +650,13 @@ public class LispOutlinePage extends ContentOutlinePage
 					currType = item.type;
 					category = new TreeItem(tree, SWT.NONE);
 					category.setText(currType);
-					category.setImage(LispImages.getImageForType(currType));
+					category.setImage(CuspResources.getImageForType(currType));
 					category.setData("");
 				}
 				temp = new TreeItem(category, SWT.NONE);
 			}
 			
-			temp.setImage(LispImages.getImageForType(item.type));
+			temp.setImage(CuspResources.getImageForType(item.type));
 			temp.setText(item.name);
 			temp.setData(item);
 			itemTr.put(item, temp);

@@ -38,10 +38,10 @@ public class LispPlugin extends AbstractUIPlugin {
 	//The shared instance.
 	private static LispPlugin plugin;
     
-    private static String CUSP_VERSION = "0.0.0";
-    private static String RELEASE_DATE = "0000.00.00";
+    private static String CUSP_VERSION = "0.0.0"; //$NON-NLS-1$
+    private static String RELEASE_DATE = "0000.00.00"; //$NON-NLS-1$
     
-    private static String CONSOLE_NAME = "jasko.tim.lisp.console";
+    private static String CONSOLE_NAME = "jasko.tim.lisp.console"; //$NON-NLS-1$
 
     // strings to store configurations
 	public static final String ATTR_LISP_EXE = "jasko.tim.lisp" + ".ATTR_LISP_EXE";
@@ -111,12 +111,12 @@ public class LispPlugin extends AbstractUIPlugin {
 		try {
 			Properties props = new Properties();
 			
-			InputStream in = LispPlugin.class.getResourceAsStream("/cusp.properties");
+			InputStream in = LispPlugin.class.getResourceAsStream("/cusp.properties"); //$NON-NLS-1$
 			props.load(in);
 			in.close();
 			
-			CUSP_VERSION = props.getProperty("cusp.version");
-			RELEASE_DATE = props.getProperty("cusp.release_date");
+			CUSP_VERSION = props.getProperty("cusp.version"); //$NON-NLS-1$
+			RELEASE_DATE = props.getProperty("cusp.release_date"); //$NON-NLS-1$
 
 			startSwank(); //FIXME: do this with launcher rather on startup
 		} catch (Exception e) {
@@ -208,7 +208,7 @@ public class LispPlugin extends AbstractUIPlugin {
 	 * @return the image descriptor
 	 */
 	public static ImageDescriptor getImageDescriptor(String path) {
-		return AbstractUIPlugin.imageDescriptorFromPlugin("jasko.tim.lisp", path);
+		return AbstractUIPlugin.imageDescriptorFromPlugin("jasko.tim.lisp", path); //$NON-NLS-1$
 	}
 	
 	
@@ -218,32 +218,32 @@ public class LispPlugin extends AbstractUIPlugin {
 	}
 	
 	public String getLibsPathRegisterCode(){
-		String code = "";
+		String code = ""; //$NON-NLS-1$
 		ArrayList<File> subdirs = getLibsPath();
 		if(subdirs.size() > 0){
-		//	code = "(mapcar #'com.gigamonkeys.asdf-extensions:register-source-directory '(\n";
-			code = "(com.gigamonkeys.asdf-extensions:register-source-directories '(\n";
+		//	code = "(mapcar #'com.gigamonkeys.asdf-extensions:register-source-directory '(\n"; // $NON-NLS-1$
+			code = "(com.gigamonkeys.asdf-extensions:register-source-directories '(\n"; // $NON-NLS-1$
 			for (int i = 0; i < subdirs.size(); i++) {
 				File child = subdirs.get(i);
-				String name = child.getAbsolutePath().replace("\\", "/");
-				if (!name.endsWith("/")) {
-					name += "/";
+				String name = child.getAbsolutePath().replace("\\", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+				if (!name.endsWith("/")) { //$NON-NLS-1$
+					name += "/"; //$NON-NLS-1$
 				}
-				code += "  \"" + name + "\"\n"; 
+				code += "  \"" + name + "\"\n"; //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			code += "))";
+			code += "))"; //$NON-NLS-1$
 		}
 		return code;
 	}
 	
 	public ArrayList<File> getLibsPath(){
-		String path = getPluginPath() + "libraries";
+		String path = getPluginPath() + "libraries"; //$NON-NLS-1$
 	
 	    // This filter only returns directories of type jasko.tim.lisp.libs
 	    FileFilter libPluginFilter = new FileFilter() {
 	        public boolean accept(File file) {
 	            return (file.isDirectory()
-	            		&& file.toString().matches(".*jasko\\.tim\\.lisp\\.libs.*"));
+	            		&& file.toString().matches(".*jasko\\.tim\\.lisp\\.libs.*")); //$NON-NLS-1$
 	        }
 	    };
 	
@@ -251,17 +251,17 @@ public class LispPlugin extends AbstractUIPlugin {
 	    topLevelDirs.add(new File(path));
 
 		String sysdirs[] = 
-			getPreferenceStore().getString(PreferenceConstants.SYSTEMS_PATH).split(";");
+			getPreferenceStore().getString(PreferenceConstants.SYSTEMS_PATH).split(";"); //$NON-NLS-1$
 		
 		for(String sysdir: sysdirs){
-			if( sysdir != null && !sysdir.equals("")){
+			if( sysdir != null && !sysdir.equals("")){ //$NON-NLS-1$
 				topLevelDirs.add(new File(sysdir));			
 			}
 		}
 	    
 		File pluginsDir = (new File(LispPlugin.getDefault().getPluginPath())).getParentFile();
 	    for( File dir : pluginsDir.listFiles(libPluginFilter)){
-	    	topLevelDirs.add(new File(dir.getAbsolutePath()+"/libs"));
+	    	topLevelDirs.add(new File(dir.getAbsolutePath()+"/libs")); //$NON-NLS-1$
 	    }
 		
 	    // This filter only returns directories
@@ -284,16 +284,16 @@ public class LispPlugin extends AbstractUIPlugin {
 		}
 		if (subdirs.size() == 0) {
 			// Either dir does not exist or is not a directory
-			System.out.println("*libraries dir not found! " + path);
+			System.out.println("*libraries dir not found! " + path); //$NON-NLS-1$
 		}
 		return subdirs;
 	}
 	
 	public String getPluginPath() {
 		try {
-			String path = FileLocator.resolve(Platform.getBundle("jasko.tim.lisp").getEntry("/") ).getFile();
-			if (System.getProperty("os.name").toLowerCase().contains("windows")){
-				if(path.matches("/\\w:/.*")){
+			String path = FileLocator.resolve(Platform.getBundle("jasko.tim.lisp").getEntry("/") ).getFile(); //$NON-NLS-1$ //$NON-NLS-2$
+			if (System.getProperty("os.name").toLowerCase().contains("windows")){ //$NON-NLS-1$ //$NON-NLS-2$
+				if(path.matches("/\\w:/.*")){ //$NON-NLS-1$
 					path = path.substring(1);
 				}
 			}
@@ -301,6 +301,6 @@ public class LispPlugin extends AbstractUIPlugin {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return "";
+		return ""; //$NON-NLS-1$
 	}
 }

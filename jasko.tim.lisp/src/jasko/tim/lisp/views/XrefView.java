@@ -1,6 +1,6 @@
 package jasko.tim.lisp.views;
 
-import jasko.tim.lisp.LispImages;
+import jasko.tim.lisp.CuspResources;
 import jasko.tim.lisp.editors.LispEditor;
 import jasko.tim.lisp.swank.LispNode;
 import jasko.tim.lisp.swank.LispParser;
@@ -75,7 +75,7 @@ public class XrefView extends ViewPart implements KeyListener {
 				item.setData("tip", tips.get(i));
 			}
 			LispNode type = LispParser.parse(text);
-			item.setImage(LispImages.getImageForType(type.get(0).get(0).value));
+			item.setImage(CuspResources.getImageForType(type.get(0).get(0).value));
 		}		
 	}
 	
