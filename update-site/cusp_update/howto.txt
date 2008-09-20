@@ -40,3 +40,8 @@ feature tag (as in <feature id="sbcl_linux" label="SBCL-Linux" version="1.0.15">
 
 LAST UPDATE: sbcl features are no longer provided - use binary packages
 from sbcl site.
+
+
+-- add architecture and os to sbcl-os.feature, right click on feature.xml, pde tools, create
+ant build file, run as ant -> get error, go to temp folder inside feature folder, zip it and change
+extension to jar, copy to features on update site

@@ -12,6 +12,15 @@
    <feature url="features/jasko.tim.lisp.libs_1.1.0.jar" id="jasko.tim.lisp.libs" version="1.1.0">
       <category name="cusp"/>
    </feature>
+   <feature url="features/sbcl_win32_1.0.20.jar" id="sbcl_win32" version="1.0.20" os="win32" arch="x86">
+      <category name="cusp"/>
+   </feature>
+   <feature url="features/sbcl_linux_1.0.20.jar" id="sbcl_linux" version="1.0.20" os="linux" arch="x86">
+      <category name="cusp"/>
+   </feature>
+   <feature url="features/jasko.tim.lisp_0.9.375.jar" id="jasko.tim.lisp" version="0.9.375">
+      <category name="cusp"/>
+   </feature>
    <category-def name="cusp" label="Cusp">
       <description>
          Cusp plugins with lisp libraries.
