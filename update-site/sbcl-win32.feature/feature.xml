@@ -2,7 +2,9 @@
 <feature
       id="sbcl_win32"
       label="SBCL-Win32"
-      version="1.0.13">
+      version="1.0.20"
+      os="win32"
+      arch="x86">
    <install-handler library="sbcl.installer.jar" handler="sbcl.installer.sbclInstallHandler"/>
 
    <description>
