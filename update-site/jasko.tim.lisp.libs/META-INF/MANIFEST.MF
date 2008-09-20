@@ -2,4 +2,4 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Lisp Libraries
 Bundle-SymbolicName: jasko.tim.lisp.libs
-Bundle-Version: 1.1.0
+Bundle-Version: 1.1.1
