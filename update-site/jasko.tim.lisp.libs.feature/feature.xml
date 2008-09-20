@@ -2,7 +2,7 @@
 <feature
       id="jasko.tim.lisp.libs"
       label="Lisp Libraries"
-      version="1.1.0">
+      version="1.1.1">
 
    <description>
       Lisp libraries.
