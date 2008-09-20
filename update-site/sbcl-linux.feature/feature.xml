@@ -2,7 +2,9 @@
 <feature
       id="sbcl_linux"
       label="SBCL-Linux"
-      version="1.0.15">
+      version="1.0.20"
+      os="linux"
+      arch="x86">
    <install-handler library="sbcl.installer.jar" handler="sbcl.installer.sbclInstallHandler"/>
 
    <description>
