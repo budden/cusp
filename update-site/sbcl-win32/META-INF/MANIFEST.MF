@@ -2,4 +2,4 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Sbcl_win Plug-in
 Bundle-SymbolicName: sbcl_win32
-Bundle-Version: 1.0.13
+Bundle-Version: 1.0.20
