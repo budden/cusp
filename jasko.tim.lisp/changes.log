@@ -10,7 +10,7 @@
         - Improved indentation.
         - Added several actions to LispEditor context menu.
         - Added a few more words to highlight as important Lisp words
-        - Fined tuned pair auto edits and expand selection
+        - Fine-tuned pair auto edits and expand selection
       
     * Repl
         - Fixed up the repl toolbar to only show buttons relevant to the current state
@@ -22,9 +22,8 @@
         - Autocompletions are off, when in Read mode
         - "Use Ctrl+Enter" preference has no effect when in Read mode: Hitting Enter always sends results to Lisp.
       
-    * Improved work with lisp implementations:
+    * Improved work with lisp implementations (still doesn't work with clisp):
         - Added ability to use remote Slime over SSH
-        - Improvement in handling clisp
         - Lisp welcome message now is more reliable
         - Lisp startup and shut down now should be more robust (but still there is room for improvement)
         - Communication code is greatly improved, which should result in quicker and more reliable connection to lisp (through swank)
