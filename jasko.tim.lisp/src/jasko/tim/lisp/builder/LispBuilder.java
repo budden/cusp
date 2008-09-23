@@ -347,7 +347,7 @@ public class LispBuilder extends IncrementalProjectBuilder {
 		try {
 			boolean cancompile = true;
 			// check if package dependence is satisfied:
-			ArrayList<String> pkgs = LispPlugin.getDefault().getSwank().getAvailablePackages(2000);
+			ArrayList<String> pkgs = LispPlugin.getDefault().getSwank().getAvailablePackages(3000);
 			for( LispNode node: code.params ){
 				String nodetype = node.car().value.toLowerCase();
 				// == defpackage
@@ -552,9 +552,9 @@ public class LispBuilder extends IncrementalProjectBuilder {
 							charOffset += line.length() - i;
 							i = line.length();
 							break;
-						} else if (c == '"' && !(i > 1 && (line.charAt(i-1) == '\\' || line.charAt(i-2) == '#'))) {
+						} else if (c == '"' && !(i > 1 && (!inQuotes && (line.charAt(i-1) == '\\' || line.charAt(i-2) == '#')))) {
 							inQuotes = !inQuotes;
-						} else if (c == '#' && !(i > 1 && (line.charAt(i-1) == '\\' || line.charAt(i-2) == '#'))) {
+						} else if (c == '#' && !inQuotes && !(i > 1 && (line.charAt(i-1) == '\\' || line.charAt(i-2) == '#'))) {
 							if (i+1 < line.length()) {
 								if (line.charAt(i+1) == '|') {
 									inComment = true;
