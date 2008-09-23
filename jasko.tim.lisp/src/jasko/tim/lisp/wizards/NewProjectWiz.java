@@ -105,7 +105,7 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 	 * create the appropriate Soar heirarchy and files.
 	 */
 	private void doFinish (String projectName, String customProjectPath,
-			boolean useLispUnit, boolean makeExample,
+			final boolean useLispUnit, boolean makeExample,
 			IProgressMonitor monitor) throws CoreException {
   		monitor.beginTask("Creating " + projectName, 10);
   		
@@ -208,7 +208,9 @@ public class NewProjectWiz extends Wizard implements INewWizard {
 				try {
 					IDE.openEditor(page, asd, true);
 					IDE.openEditor(page, defpackage, true);
-					IDE.openEditor(page, tests, true);
+					if (useLispUnit) {
+						IDE.openEditor(page, tests, true);
+					}
 					IDE.openEditor(page, main, true);
 					
 					
