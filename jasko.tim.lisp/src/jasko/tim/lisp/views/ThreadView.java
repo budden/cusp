@@ -38,9 +38,12 @@ public class ThreadView extends ViewPart {
  		TreeColumn col1 = new TreeColumn(threadTree, SWT.LEFT);
  		col1.setText("Thread");
  		col1.setWidth(200);
- 		TreeColumn col2 = new TreeColumn(threadTree, SWT.RIGHT);
+ 		TreeColumn col2 = new TreeColumn(threadTree, SWT.LEFT);
  		col2.setText("Status");
  		col2.setWidth(200);
+ 		TreeColumn col3 = new TreeColumn(threadTree, SWT.LEFT);
+ 		col3.setText("Location");
+ 		col3.setWidth(200);
  		
  		fillToolBar(parent);
 	}
@@ -128,16 +131,17 @@ public class ThreadView extends ViewPart {
 		swank.sendListThreads(new SwankRunnable() {
 			public void run() {
 				threadTree.removeAll();
-				LispNode threads = result.getf(":return").getf(":ok");
+				LispNode threads = this.getReturn();
 				for (int i=0; i < threads.params.size(); ++i) {
 					LispNode thread = threads.get(i);
 					
-					String name = thread.get(0).value;
-					String status = thread.get(1).value;
-					String num = thread.get(2).value;
+					String num = thread.get(0).value;
+					String name = thread.get(1).value;
+					String status = thread.get(2).value;
+					String location = thread.get(3).value;
 					
 					TreeItem item = new TreeItem(threadTree, 0);
-					item.setText(new String[] {num, name, status});
+					item.setText(new String[] {num, name, status, location});
 					item.setData(i);
 				}
 			}
