@@ -205,15 +205,15 @@ public class SBCLImplementation extends LispImplementation {
 			ArrayList<String> commandLine = new ArrayList<String>();
 			commandLine.add(executable.getPath());
 			commandLine.add("--eval");
-			commandLine.add(LispUtil.cleanPackage(BreakpointAction.macro));
+			commandLine.add(LispUtil.cleanPackage(BreakpointAction.macro).replace("`", "\\`"));
 			commandLine.add("--eval");
-			commandLine.add(LispUtil.cleanPackage(WatchAction.macro));
+			commandLine.add(LispUtil.cleanPackage(WatchAction.macro).replace("`", "\\`"));
 			commandLine.add("--eval");
-			commandLine.add("\"(require 'asdf)\"");
+			commandLine.add("(require 'asdf)");
 			if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
 				commandLine.add("--load");
-				commandLine.add("\""+LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/lisp-unit.lisp\"");
+				commandLine.add(LispPlugin.getDefault().getPluginPath() 
+						+ "lisp-extensions/lisp-unit.lisp");
 			}
 			if(prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES)){
 				String code = LispPlugin.getDefault().getLibsPathRegisterCode();
@@ -221,9 +221,9 @@ public class SBCLImplementation extends LispImplementation {
 					String asdfext = LispPlugin.getDefault().getPluginPath() 
 						+ "lisp-extensions/asdf-extensions.lisp";
 					commandLine.add("--load");
-					commandLine.add("\""+asdfext+"\"");
+					commandLine.add(asdfext);
 					commandLine.add("--eval");
-					commandLine.add(LispUtil.cleanPackage(code));
+					commandLine.add(code);
 				}
 				
 			}
@@ -237,19 +237,23 @@ public class SBCLImplementation extends LispImplementation {
  			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
  			
  			commandLine.add("--load");
- 			commandLine.add("\""+asdFile+"\"");
+ 			commandLine.add(asdFile);
  			commandLine.add("--eval");
- 			commandLine.add(LispUtil.cleanPackage("(asdf:oos 'asdf:load-op \""+asdName+"\")"));
+ 			commandLine.add("(asdf:oos 'asdf:load-op \""+asdName+"\")");
 			
 			commandLine.add("--eval");
 			if( pkg != null && !pkg.equals("") && !pkg.equalsIgnoreCase("nil")){
-				commandLine.add(LispUtil.cleanPackage("(sb-ext:save-lisp-and-die \""
-						+exeFile+"\" :executable t :toplevel '"+pkg+"::"+toplevel+" :purify t)"));				
+				commandLine.add("(sb-ext:save-lisp-and-die \""
+						+exeFile+"\" :executable t :toplevel '"+pkg+"::"+toplevel+" :purify t)");				
 			} else {
-				commandLine.add(LispUtil.cleanPackage("(sb-ext:save-lisp-and-die \""
-						+exeFile.replace('\\', '/')+"\" :executable t :toplevel '"+toplevel+" :purify t)"));				
+				commandLine.add("(sb-ext:save-lisp-and-die \""
+						+exeFile.replace('\\', '/')+"\" :executable t :toplevel '"+toplevel+" :purify t)");				
 			}
-			
+
+			commandLine.add("--eval");
+			commandLine.add("(print 1)");
+			commandLine.add("--eval");
+			commandLine.add("(print 2)");
 			String[] cmd = new String[commandLine.size()];
 			ProcessBuilder pb = new ProcessBuilder(commandLine.toArray(cmd));
 			pb.environment().put("SBCL_HOME", path.getPath());
@@ -257,18 +261,30 @@ public class SBCLImplementation extends LispImplementation {
 				LispPlugin.getDefault().out("=== Start Create Exe Log:");
 				LispPlugin.getDefault().out("--- compilation command:");
 				for(String str : cmd){
+					System.out.println("$" + str);
 					LispPlugin.getDefault().out(str);
 				}
 				LispPlugin.getDefault().out("--- compilation log:");
+				pb.redirectErrorStream(true);
 				Process p = pb.start();
-			    BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
+				BufferedReader is = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			    
 			    String line;
 			    while ((line = is.readLine()) != null){
 					LispPlugin.getDefault().out(line);
 					if( line.contains("[QUIT ") ){ //ended up in debugger
+						/*BufferedReader es = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+						String errline;
+					    while ((errline = es.readLine()) != null){
+							LispPlugin.getDefault().out(errline);
+							System.out.println(errline);
+					    }*/
 						p.destroy();
 						LispPlugin.getDefault().out("=== Error.");				
 						return false;
+					} else if (line.contains("DONE")) {
+						//hacky way to detect the finishing point.
+						break;
 					}
 			    }
 				
