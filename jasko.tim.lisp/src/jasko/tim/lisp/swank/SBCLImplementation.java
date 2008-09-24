@@ -203,58 +203,115 @@ public class SBCLImplementation extends LispImplementation {
 				LispPlugin.getDefault().getPreferenceStore();
 			
 			ArrayList<String> commandLine = new ArrayList<String>();
-			commandLine.add(executable.getPath());
-			commandLine.add("--eval");
-			commandLine.add(LispUtil.cleanPackage(BreakpointAction.macro).replace("`", "\\`"));
-			commandLine.add("--eval");
-			commandLine.add(LispUtil.cleanPackage(WatchAction.macro).replace("`", "\\`"));
-			commandLine.add("--eval");
-			commandLine.add("(require 'asdf)");
-			if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
-				commandLine.add("--load");
-				commandLine.add(LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/lisp-unit.lisp");
-			}
-			if(prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES)){
-				String code = LispPlugin.getDefault().getLibsPathRegisterCode();
-				if( !code.equals("")){
-					String asdfext = LispPlugin.getDefault().getPluginPath() 
-						+ "lisp-extensions/asdf-extensions.lisp";
-					commandLine.add("--load");
-					commandLine.add(asdfext);
-					commandLine.add("--eval");
-					commandLine.add(code);
-				}
-				
-			}
-	 		asdFile = asdFile.replace('\\', '/');
-	 		asdFile = translateLocalFilePath(asdFile);
-	 		String[] fpathparts = asdFile.split("/");
-	 		if( fpathparts.length <= 0 || !fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
-	 			LispPlugin.getDefault().out("=== Error - no project (.asd) file found.");	
-	 			return false;
-	 		}
- 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
- 			
- 			commandLine.add("--load");
- 			commandLine.add(asdFile);
- 			commandLine.add("--eval");
- 			commandLine.add("(asdf:oos 'asdf:load-op \""+asdName+"\")");
 			
-			commandLine.add("--eval");
-			if( pkg != null && !pkg.equals("") && !pkg.equalsIgnoreCase("nil")){
-				commandLine.add("(sb-ext:save-lisp-and-die \""
-						+exeFile+"\" :executable t :toplevel '"+pkg+"::"+toplevel+" :purify t)");				
-			} else {
-				commandLine.add("(sb-ext:save-lisp-and-die \""
-						+exeFile.replace('\\', '/')+"\" :executable t :toplevel '"+toplevel+" :purify t)");				
-			}
+			if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+				commandLine.add(executable.getPath());
+				commandLine.add("--eval");
+				commandLine.add(LispUtil.cleanPackage(BreakpointAction.macro));
+				commandLine.add("--eval");
+				commandLine.add(LispUtil.cleanPackage(WatchAction.macro));
+				commandLine.add("--eval");
+				commandLine.add("\"(require 'asdf)\"");
+				if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
+					commandLine.add("--load");
+					commandLine.add("\""+LispPlugin.getDefault().getPluginPath() 
+							+ "lisp-extensions/lisp-unit.lisp\"");
+				}
+				if(prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES)){
+					String code = LispPlugin.getDefault().getLibsPathRegisterCode();
+					if( !code.equals("")){
+						String asdfext = LispPlugin.getDefault().getPluginPath() 
+							+ "lisp-extensions/asdf-extensions.lisp";
+						commandLine.add("--load");
+						commandLine.add("\""+asdfext+"\"");
+						commandLine.add("--eval");
+						commandLine.add(LispUtil.cleanPackage(code));
+					}
+					
+				}
+		 		asdFile = asdFile.replace('\\', '/');
+		 		asdFile = translateLocalFilePath(asdFile);
+		 		String[] fpathparts = asdFile.split("/");
+		 		if( fpathparts.length <= 0 || !fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
+		 			LispPlugin.getDefault().out("=== Error - no project (.asd) file found.");	
+		 			return false;
+		 		}
+	 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
+	 			
+	 			commandLine.add("--load");
+	 			commandLine.add("\""+asdFile+"\"");
+	 			commandLine.add("--eval");
+	 			commandLine.add(LispUtil.cleanPackage("(asdf:oos 'asdf:load-op \""+asdName+"\")"));
+				
+				commandLine.add("--eval");
+				if( pkg != null && !pkg.equals("") && !pkg.equalsIgnoreCase("nil")){
+					commandLine.add(LispUtil.cleanPackage("(sb-ext:save-lisp-and-die \""
+							+exeFile+"\" :executable t :toplevel '"+pkg+"::"+toplevel+" :purify t)"));				
+				} else {
+					commandLine.add(LispUtil.cleanPackage("(sb-ext:save-lisp-and-die \""
+							+exeFile.replace('\\', '/')+"\" :executable t :toplevel '"+toplevel+" :purify t)"));				
+				}
 
-			commandLine.add("--eval");
-			commandLine.add("(print 1)");
-			commandLine.add("--eval");
-			commandLine.add("(print 2)");
-			String[] cmd = new String[commandLine.size()];
+				commandLine.add("--eval");
+				commandLine.add("(print 1)");
+				commandLine.add("--eval");
+				commandLine.add("(print 2)");
+			} else {
+				commandLine.add(executable.getPath());
+				commandLine.add("--eval");
+				commandLine.add(LispUtil.cleanPackage(BreakpointAction.macro).replace("`", "\\`"));
+				commandLine.add("--eval");
+				commandLine.add(LispUtil.cleanPackage(WatchAction.macro).replace("`", "\\`"));
+				commandLine.add("--eval");
+				commandLine.add("(require 'asdf)");
+				if(prefs.getBoolean(PreferenceConstants.USE_UNIT_TEST)){
+					commandLine.add("--load");
+					commandLine.add(LispPlugin.getDefault().getPluginPath() 
+							+ "lisp-extensions/lisp-unit.lisp");
+				}
+				if(prefs.getBoolean(PreferenceConstants.MANAGE_PACKAGES)){
+					String code = LispPlugin.getDefault().getLibsPathRegisterCode();
+					if( !code.equals("")){
+						String asdfext = LispPlugin.getDefault().getPluginPath() 
+							+ "lisp-extensions/asdf-extensions.lisp";
+						commandLine.add("--load");
+						commandLine.add(asdfext);
+						commandLine.add("--eval");
+						commandLine.add(code);
+					}
+					
+				}
+		 		asdFile = asdFile.replace('\\', '/');
+		 		asdFile = translateLocalFilePath(asdFile);
+		 		String[] fpathparts = asdFile.split("/");
+		 		if( fpathparts.length <= 0 || !fpathparts[fpathparts.length-1].matches(".+\\.asd") ){
+		 			LispPlugin.getDefault().out("=== Error - no project (.asd) file found.");	
+		 			return false;
+		 		}
+	 			String asdName = fpathparts[fpathparts.length-1].replace(".asd", "");
+	 			
+	 			commandLine.add("--load");
+	 			commandLine.add(asdFile);
+	 			commandLine.add("--eval");
+	 			commandLine.add("(asdf:oos 'asdf:load-op \""+asdName+"\")");
+				
+				commandLine.add("--eval");
+				if( pkg != null && !pkg.equals("") && !pkg.equalsIgnoreCase("nil")){
+					commandLine.add("(sb-ext:save-lisp-and-die \""
+							+exeFile+"\" :executable t :toplevel '"+pkg+"::"+toplevel+" :purify t)");				
+				} else {
+					commandLine.add("(sb-ext:save-lisp-and-die \""
+							+exeFile.replace('\\', '/')+"\" :executable t :toplevel '"+toplevel+" :purify t)");				
+				}
+
+				commandLine.add("--eval");
+				commandLine.add("(print 1)");
+				commandLine.add("--eval");
+				commandLine.add("(print 2)");
+			}
+			String[] cmd = new String[commandLine.size()];				
+			
+			
 			ProcessBuilder pb = new ProcessBuilder(commandLine.toArray(cmd));
 			pb.environment().put("SBCL_HOME", path.getPath());
 			try{
