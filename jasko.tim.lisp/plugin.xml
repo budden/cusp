@@ -340,8 +340,6 @@
 			category="jasko.tim.lisp"
 			class="jasko.tim.lisp.navigator.LispNavigator" />
 	</extension>
-	
-
 
 	<!-- Decorator -->
 	<extension point="org.eclipse.ui.decorators">
