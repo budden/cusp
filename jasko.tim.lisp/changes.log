@@ -49,6 +49,7 @@
         - Made message for undefined variable produced by SBCL prettier. 
         - Fixed couple bugs in Compile on save mode.
         - Profiler now is a little bit more intuitive (little tweak)
+        - Updated Threads View to suppply more information
         - Improved debugger:
             - Forcing the debug label not to exceed 50px in height 
             - Stepping support
