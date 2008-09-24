@@ -1864,7 +1864,7 @@ public class SwankInterface {
 									lines += 1;
 							}
 							System.out.print("]");
-							System.out.print(curr);
+							System.out.println(curr);
 							runFilters(curr);
 							if(curr.toLowerCase().contains(implementation.fatalErrorString())){
 								disconnect();
