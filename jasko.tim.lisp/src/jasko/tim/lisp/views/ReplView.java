@@ -1104,15 +1104,21 @@ public class ReplView extends ViewPart implements SelectionListener {
 	
 	protected class CheckEvalListener implements VerifyKeyListener {
 		public void verifyKey(VerifyEvent event) {
-			boolean ctrl = true;
-			if( !inReadMode && LispPlugin.getDefault().getPreferenceStore()
-				.getBoolean(PreferenceConstants.USE_CTRL_ENTER) ){
-				ctrl = event.stateMask == SWT.CONTROL; 
+			boolean doit = false;
+			if( inReadMode ){
+				doit = (event.keyCode == '\r' || event.keyCode == '\n');
+			} else {
+				boolean ctrl = true;
+				if( LispPlugin.getDefault().getPreferenceStore()
+					.getBoolean(PreferenceConstants.USE_CTRL_ENTER) ){
+					ctrl = (event.stateMask == SWT.CONTROL); 
+				}
+				doit = ( ctrl
+						&& (event.keyCode == '\r' || event.keyCode == '\n')
+						&& !in.getDocument().get().matches("\\s*")
+						&& LispUtil.doParensBalance(in.getDocument()));
 			}
-			if ( ctrl
-					&& (event.keyCode == '\r' || event.keyCode == '\n')
-					&& !in.getDocument().get().matches("\\s*")
-					&& LispUtil.doParensBalance(in.getDocument())) {
+			if ( doit ) {
 				// System.out.println("*" + event.text + ":" +
 				// event.text.length());
 				sentEvalByKeyboard = true;
