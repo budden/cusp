@@ -35,9 +35,9 @@ public class REPLPreferencePage extends FieldEditorPreferencePage implements IWo
         addField(new BooleanFieldEditor(PreferenceConstants.SHOW_EVAL_IN_REPL,
         		"Show expression evaluated from file in REPL", parent));
 
-        addField(new BooleanFieldEditor(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES,
+        /*addField(new BooleanFieldEditor(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES,
         		"Clean up backtraces in debugger: don't show swank frames.", 
-        		parent));
+        		parent));*/
 
         addField(new StringFieldEditor(
                 PreferenceConstants.REPL_FONT_SIZE,
