@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.*;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.*;
@@ -647,6 +648,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 	private Action pauseButton;
 	private Action clearButton;
 	private Action stepButton;
+	private Action showSwankFramesButton;
 	private Action runTestsButton;
 	
 	protected void fillNormalToolBar() {
@@ -671,6 +673,7 @@ public class ReplView extends ViewPart implements SelectionListener {
 			tbm.removeAll();
 			tbm.add(stepButton);
 			stepButton.setEnabled(true);
+			tbm.add(showSwankFramesButton);
 			tbm.add(connectButton);
 			tbm.update(true);
 		}
@@ -800,12 +803,35 @@ public class ReplView extends ViewPart implements SelectionListener {
 				CuspResources.getImageDescriptor(CuspResources.CLEAR));
 		clearButton.setToolTipText("Clear Repl and Reset Sash");
 		
+		showSwankFramesButton = new Action("Show Swank Frames", Action.AS_CHECK_BOX) {
+			public void run() {
+				State currState = currState();
+				if (currState != null
+						&& currState.getClass().getName().contains("DebugState")) {
+					IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+					boolean hide = prefs.getBoolean(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES);
+					hide = !hide;
+					prefs.setValue(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES, hide);
+					((DebugState) currState).fillDebugTree(false);
+					this.setChecked(!hide);
+				}
+			}
+		};
+		showSwankFramesButton.setImageDescriptor(
+				CuspResources.getImageDescriptor(CuspResources.SORT_POSITION));
+		showSwankFramesButton.setToolTipText("Show Swank Frames");
+		IPreferenceStore prefs = LispPlugin.getDefault().getPreferenceStore();
+		boolean hide = prefs.getBoolean(PreferenceConstants.DEBUG_HIDE_SWANK_FRAMES);
+		showSwankFramesButton.setChecked(!hide);
+		
+		
 		stepButton = new Action("Step") {
 			public void run() {
 				State currState = currState();
 				if (currState != null
 						&& currState.getClass().getName()
-								.contains("DebugState")) {
+										.contains("DebugState")) {
+					
 					((DebugState) currState).startDebug();
 					this.setEnabled(false);
 				}
@@ -1331,18 +1357,51 @@ public class ReplView extends ViewPart implements SelectionListener {
 			if (size.y > 50) {
 				debugLabel.setSize(size.x, 50);
 			}
-			debugTree.removeAll();
+			
 			
 			appendText(desc.car().value + "\n" + desc.cadr().value + "\n");
 			
+			fillDebugTree(true);
+
+			debugTree.addSelectionListener(this);
+			debugTree.addTreeListener(this);
+			debugTree.addMouseListener(this);
+			debugTree.addKeyListener(this);
+			debugView.addKeyListener(this);
+			
+			hideFrame(mainView);
+			showFrame(debugView);
+			
+			LispNode condExtras = desc.caadr();
+
+			if (condExtras.getNumberOfSubSexps() > 0) {
+				for (int i = 0; i < condExtras.getNumberOfSubSexps(); i++) {
+					LispNode extra = condExtras.get(i);
+					if (extra.car().value.equals(":show-frame-source")) {
+						String frame = extra.cadr().value;
+						getSwank().sendGetFrameSourceLocation(frame, thread,
+								new SwankRunnable() {
+									public void run() {
+										processFrameSourceLocationResult(result);
+									}
+								});
+					}
+				}
+			}
+		}
+		
+		public void fillDebugTree(boolean print) {
+			debugTree.removeAll();
 			TreeItem slimeTopLevelOption = null;
 			TreeItem breakContinueOption = null;
 			TreeItem quickOption = null;
 			TreeItem firstItem = null;
 			for (int i=0; i<options.params.size(); ++i) {
 				LispNode option = options.get(i);
-				appendText("\t" + i + ": [" + option.car().value + "] "
-						+ option.cadr().value + "\n");
+				if (print) {
+					appendText("\t" + i + ": [" + option.car().value + "] "
+							+ option.cadr().value + "\n");
+				}
 				TreeItem item = new TreeItem(debugTree, 0);
 				item.setText(i + ": [" + option.car().value + "] " 
 						+ option.cadr().value);
@@ -1400,37 +1459,12 @@ public class ReplView extends ViewPart implements SelectionListener {
 			} // for
 			bt.setExpanded(true);
 			
-			debugTree.addSelectionListener(this);
-			debugTree.addTreeListener(this);
-			debugTree.addMouseListener(this);
-			debugTree.addKeyListener(this);
-			debugView.addKeyListener(this);
-			
-			hideFrame(mainView);
-			showFrame(debugView);
 			debugTree.setFocus();
 			
 			// scroll to top of the tree
 			debugTree.setSelection(firstItem);
 			// select most often used (by me?) option
 			debugTree.setSelection(quickOption);
-			
-			LispNode condExtras = desc.caadr();
-
-			if (condExtras.getNumberOfSubSexps() > 0) {
-				for (int i = 0; i < condExtras.getNumberOfSubSexps(); i++) {
-					LispNode extra = condExtras.get(i);
-					if (extra.car().value.equals(":show-frame-source")) {
-						String frame = extra.cadr().value;
-						getSwank().sendGetFrameSourceLocation(frame, thread,
-								new SwankRunnable() {
-									public void run() {
-										processFrameSourceLocationResult(result);
-									}
-								});
-					}
-				}
-			}
 		}
 		
 		public void choose(Integer choice) {
