@@ -791,7 +791,7 @@ Disassemble Alt+D
       commandId="jasko.tim.lisp.actions.FindDefinitionAction"
       contextId="jasko.tim.lisp.context1"
       schemeId="org.eclipse.ui.emacsAcceleratorConfiguration"
-      sequence="Ctrl+C ."/>
+      sequence="Alt+."/>
   </extension>
   <extension point="org.eclipse.ui.editorActions">
     <editorContribution
@@ -824,7 +824,7 @@ Disassemble Alt+D
 <!-- ============ grpEditNavigation ============
 Expand Selection Alt+Enter
 Toggle comment Alt+; (how is done i slime?)
-Indent Ctrl+Tab (have better Tab version, but keep Ctrl+Tab for those who don't know about tab)
+Indent Shift+Tab (have better Tab version, but keep Shift+Tab for those who don't know about tab)
 Jump Back Ctrl+Alt+Left (paredit: Ctrl+Alt+b)
 Jump Forward Ctrl+Alt+Right (paredit: Ctrl+Alt+f)
 -->
@@ -942,7 +942,7 @@ Jump Forward Ctrl+Alt+Right (paredit: Ctrl+Alt+f)
       commandId="jasko.tim.lisp.editors.actions.IndentAction"
       contextId="jasko.tim.lisp.context1"
       schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-      sequence="Ctrl+Tab"/>
+      sequence="Shift+Tab"/>
   </extension>
   <extension point="org.eclipse.ui.editorActions">
     <editorContribution
