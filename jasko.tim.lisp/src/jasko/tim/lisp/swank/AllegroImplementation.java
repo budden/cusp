@@ -126,7 +126,6 @@ public class AllegroImplementation extends LispImplementation {
 			return null;
 		}
 	}
-	public String getQuitForm() { return "(exit)"; }
 	
 	public String getLoadSwankCommand() {
 		return "(load \"" + this.loadPath.replace("\\", "\\\\") + "\")\n";
