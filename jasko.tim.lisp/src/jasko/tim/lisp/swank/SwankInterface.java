@@ -589,7 +589,7 @@ public class SwankInterface {
 		}
 		
 		try {
-			commandInterface.writeBytes(implementation.getQuitForm() + "\n");
+			commandInterface.writeBytes("(swank:quit-lisp)\n");
 			commandInterface.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
