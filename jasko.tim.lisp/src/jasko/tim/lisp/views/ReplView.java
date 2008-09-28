@@ -880,6 +880,15 @@ public class ReplView extends ViewPart implements SelectionListener {
 		history.appendInput(text);
 	}
 	
+	public void appendToInputArea(String text) {
+		in.getTextWidget().append(text);
+	}
+	
+	public void insertInInputArea(String text) {
+		StyledText st = in.getTextWidget();
+		st.insert(text);
+	}
+	
 	
 	/**
 	 * This is a real class rather than an anonymous one so that it can be
