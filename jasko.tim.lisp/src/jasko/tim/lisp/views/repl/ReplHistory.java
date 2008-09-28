@@ -8,6 +8,7 @@ import jasko.tim.lisp.ColorManager.ChangeEventListener;
 import jasko.tim.lisp.ColorManager.ColorChangeEvent;
 import jasko.tim.lisp.inspector.InspectorRunnable;
 import jasko.tim.lisp.preferences.PreferenceConstants;
+import jasko.tim.lisp.views.ReplView;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.*;
@@ -17,6 +18,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.dnd.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.*;
@@ -31,7 +33,7 @@ public class ReplHistory extends SourceViewer
 	private Color inputBack;
 	private Color inputFore;
 	private Color commentFore;
-    
+	
     private boolean applyInspectableStyles;
     private boolean underlineInspectables;
 	
@@ -257,14 +259,62 @@ public class ReplHistory extends SourceViewer
 
 	public void mouseUp(MouseEvent e) {
 		Point p = new Point(e.x, e.y);
-        int offset;
-        try {
-    		offset = getTextWidget().getOffsetAtLocation(p);
-        } catch (IllegalArgumentException ex) {
-            return;
-        }
+		int offset;
+		try {
+			offset = getTextWidget().getOffsetAtLocation(p);
+		} catch (IllegalArgumentException ex) {
+			return;
+		}
 		InspectableRegion region = getRegion(offset);
-		if (region != null) sendInspect(region.id);
+		if (region != null) {
+			if (e.button == 1) { // left click
+				sendInspect(region.id);
+			} else if (e.button == 3) { // right click
+				showInspectableMenu(region);
+			}
+		}
+	}
+	
+	protected void showInspectableMenu(final InspectableRegion region) {
+		Menu menu = new Menu (this.getControl());
+		MenuItem inspect = new MenuItem(menu, SWT.PUSH);
+		inspect.setText("Inspect");
+		inspect.addSelectionListener(new SelectionListener () {
+			public void widgetDefaultSelected(SelectionEvent e) {
+
+			}
+			public void widgetSelected(SelectionEvent e) {
+				sendInspect(region.id);
+			}
+		});
+		MenuItem copyRepl = new MenuItem(menu, SWT.PUSH);
+		copyRepl.setText("Copy to REPL");
+		copyRepl.addSelectionListener(new SelectionListener () {
+			public void widgetDefaultSelected(SelectionEvent e) {
+
+			}
+			public void widgetSelected(SelectionEvent e) {
+				ReplView.getInstance().insertInInputArea("#.(swank:get-repl-result #10r" + region.id + ")");
+			}
+		});
+		MenuItem copy = new MenuItem(menu, SWT.PUSH);
+		copy.setText("Copy to clipboard");
+		copy.addSelectionListener(new SelectionListener () {
+			public void widgetDefaultSelected(SelectionEvent e) {
+
+			}
+			public void widgetSelected(SelectionEvent e) {
+				String data = "#.(swank:get-repl-result #10r" + region.id + ")";
+
+				Clipboard cb = new Clipboard(getControl().getDisplay());
+				TextTransfer textTransfer = TextTransfer.getInstance();
+				cb.setContents(new Object[] { data },
+						new Transfer[] { textTransfer });
+				cb.dispose();
+			}
+		});
+		//menu.setLocation(p);
+		menu.setVisible(true);
 	}
 	
 	protected void sendInspect(String id) {
@@ -279,7 +329,7 @@ public class ReplHistory extends SourceViewer
 	public void mouseDoubleClick(MouseEvent e) {}
 	public void mouseDown(MouseEvent e) {}
     
-    private class InspectableRegion extends Region {
+    protected class InspectableRegion extends Region {
         public final String id;
         
         public InspectableRegion(int offset, int length, String id) {
