@@ -11,6 +11,12 @@ import java.io.IOException;
 public abstract class LispImplementation {
 	protected String flispType = ""; //possible values SBCL, CLISP etc.
 	protected boolean hasthreads = true; 
+	private static final String [] compilerOutputs = new String[] {
+			".fasl",		// SBCL compiler output
+			".dfsl",		// Clozure CL, openmcl output
+			".d64fsl",		// Same as above
+			".dx64fsl"		// Same as above
+	};
 	
 	// Probably lisp implementation specific - tested with SBCL
 	protected String fatalError = "fatal error";
@@ -18,6 +24,15 @@ public abstract class LispImplementation {
 	
 	public String lispType(){ return flispType; }
 	public boolean hasThreads(){ return hasthreads; }
+	
+	public static boolean isCompilerOutput(String lispFile) {
+		boolean result = false;
+		for (int i = 0; i < compilerOutputs.length && !result; ++i) {
+			if (lispFile.endsWith(compilerOutputs[i]))
+				result = true;
+		}
+		return result;
+	}
 	/**
 	 * @return whether this instance is valid (ie can roll off a process) 
 	 */
