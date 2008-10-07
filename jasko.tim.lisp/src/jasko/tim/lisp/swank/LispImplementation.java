@@ -15,7 +15,10 @@ public abstract class LispImplementation {
 			".fasl",		// SBCL compiler output
 			".dfsl",		// Clozure CL, openmcl output
 			".d64fsl",		// Same as above
-			".dx64fsl"		// Same as above
+			".dx64fsl",		// Same as above
+			".dx32fsl",		// Same as above
+			".fas",			// CLISP interpreter output
+			".lib"			// CLISP interpreter output
 	};
 	
 	// Probably lisp implementation specific - tested with SBCL
