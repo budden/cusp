@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.swank.SwankInterface;
+import jasko.tim.lisp.swank.LispImplementation;
 
 import org.eclipse.core.resources.*;
 import org.eclipse.core.runtime.CoreException;
@@ -61,8 +62,9 @@ public class CleanFaslsAction implements IActionDelegate {
 						cleanFasls((IContainer) resource, monitor);
 					} else if (resource instanceof IFile) {
 						IFile file = (IFile) resource;
+						String fname = file.getName();
 						
-						if (file.exists() && file.getName().endsWith(".fasl")) {
+						if (file.exists() && LispImplementation.isCompilerOutput(fname)) {
 							file.delete(true, monitor);
 						}
 					}

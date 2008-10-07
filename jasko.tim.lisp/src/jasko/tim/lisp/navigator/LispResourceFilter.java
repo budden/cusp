@@ -3,6 +3,7 @@ package jasko.tim.lisp.navigator;
 import org.eclipse.core.resources.*;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.views.navigator.ResourcePatternFilter;
+import jasko.tim.lisp.swank.LispImplementation;
 
 
 public class LispResourceFilter extends ResourcePatternFilter {
@@ -16,7 +17,7 @@ public class LispResourceFilter extends ResourcePatternFilter {
 			if (fileName.equals(".project")
 					|| fileName.equals(".DS_Store")
 					|| fileName.endsWith(".fas")
-					|| fileName.endsWith(".fasl")
+					|| LispImplementation.isCompilerOutput(fileName)
 					|| fileName.endsWith("~")
 					|| fileName.endsWith(".lib")) {
 				return false;

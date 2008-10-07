@@ -205,7 +205,7 @@
 			</filter>
 			<action
 				id="jasko.tim.lisp.navigator.CleanFaslsAction"
-				label="%Action.DeleteFASLs"
+				label="%Action.DeleteCompilerOutputs"
 				icon="icons/clear.gif"
 				menubarPath="group.add"
 				class="jasko.tim.lisp.navigator.CleanFaslsAction"
