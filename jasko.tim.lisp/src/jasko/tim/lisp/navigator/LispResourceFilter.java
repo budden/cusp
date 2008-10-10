@@ -11,15 +11,12 @@ public class LispResourceFilter extends ResourcePatternFilter {
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
 		if (element instanceof IFile) {
 			IFile file = (IFile) element;
-			
 			String fileName = file.getName();
 		
 			if (fileName.equals(".project")
 					|| fileName.equals(".DS_Store")
-					|| fileName.endsWith(".fas")
-					|| LispImplementation.isCompilerOutput(fileName)
 					|| fileName.endsWith("~")
-					|| fileName.endsWith(".lib")) {
+					|| LispImplementation.isCompilerOutput(fileName)) {
 				return false;
 			}
 		} else if (element instanceof IResource) {
