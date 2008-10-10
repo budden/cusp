@@ -29,12 +29,11 @@ public abstract class LispImplementation {
 	public boolean hasThreads(){ return hasthreads; }
 	
 	public static boolean isCompilerOutput(String lispFile) {
-		boolean result = false;
-		for (int i = 0; i < compilerOutputs.length && !result; ++i) {
-			if (lispFile.endsWith(compilerOutputs[i]))
-				result = true;
+		for (String extension : compilerOutputs) {
+			if (lispFile.endsWith(extension))
+				return true;
 		}
-		return result;
+		return false;
 	}
 	/**
 	 * @return whether this instance is valid (ie can roll off a process) 
