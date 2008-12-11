@@ -2,7 +2,7 @@
 <feature
       id="sbcl_osx"
       label="SBCL-MacOSX"
-      version="1.0.20"
+      version="1.0.22"
       os="macosx"
       arch="x86">
    <install-handler library="sbcl.installer.jar" handler="sbcl.installer.sbclInstallHandler"/>
@@ -33,7 +33,7 @@ Xerox and Gerd Moellmann are retained.
    </license>
 
    <url>
-      <update label="Cusp Update" url="http://www.sergeykolos.com/cusp/update/"/>
+      <update label="Cusp Update" url="http://www.bitfauna.com/projects/cusp/update/"/>
    </url>
 
    <plugin
