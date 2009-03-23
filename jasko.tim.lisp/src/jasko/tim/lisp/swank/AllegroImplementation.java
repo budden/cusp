@@ -77,14 +77,16 @@ public class AllegroImplementation extends LispImplementation {
 	 */
 	static public AllegroImplementation findImplementation()
 	{
+		AllegroImplementation implementation = null;
 		File executable = findExecutable();
-		File dir = findFolder();
-		if (executable != null && dir != null)
-		{
-			return new AllegroImplementation(executable, dir);
+		if (executable != null ) {
+			File dir = findFolder();
+			if (dir != null)
+			{
+				implementation = new AllegroImplementation(executable, dir);
+			}
 		}
-		else
-			return null;
+		return implementation;
 	}
 
 	File executable = null;

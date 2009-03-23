@@ -3,21 +3,24 @@ package jasko.tim.lisp.swank;
 import jasko.tim.lisp.LispPlugin;
 import jasko.tim.lisp.preferences.PreferenceConstants;
 
-import java.io.IOException;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.dialogs.Dialog;
-
-import org.eclipse.swt.*;
-import org.eclipse.swt.widgets.*;
-import org.eclipse.swt.layout.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 
 
 /**
- * This is a very simple class that starts the lisp that the user
- * chose in the preferences
+ * This class connects to a lisp implementation via SSH.
  *  
  * @author Marc Halbruegge
  */
@@ -27,11 +30,7 @@ public class RemoteImplementation extends LispImplementation {
 	 * @return Lisp implementation found in the preferences, or null if none is found
 	 */
 	static public RemoteImplementation findImplementation() {
-		IPreferenceStore prefStore = LispPlugin.getDefault().getPreferenceStore();
-		if (prefStore.getBoolean(PreferenceConstants.USE_REMOTE_LISP)) {
-			return new RemoteImplementation();
-		}
-		return null;
+		return new RemoteImplementation();
 	}
 
 	

@@ -121,6 +121,9 @@ public class LispPlugin extends AbstractUIPlugin {
 			startSwank(); //FIXME: do this with launcher rather on startup
 		} catch (Exception e) {
 			e.printStackTrace();
+			// to show the error with the stack trace in error log view
+			IStatus errorStatus = new Status(IStatus.ERROR,"LispPlugin", 0, e.getMessage(), e);
+			this.getLog().log(errorStatus);
 		}
 	}
 	
@@ -188,7 +191,9 @@ public class LispPlugin extends AbstractUIPlugin {
 	 */
 	public void stop(BundleContext context) throws Exception {
 		cm.dispose();
-		getSwank().disconnect();
+		if( getSwank() != null && getSwank().isConnected()) {
+ 			swank.disconnect();
+ 		}
 		plugin = null;
 		super.stop(context);
 	}

@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
 import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
+import org.eclipse.jface.resource.DataFormatException;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.Display;
@@ -82,14 +83,23 @@ public class ColorManager {
 		public void propertyChange(PropertyChangeEvent event) {
 			//get the token type that corresponds to the modified property
 			TokenType toktype = preferenceStringToTokenType(event.getProperty());
-			//get the new color assigned to the token type
-			String newval = (String)event.getNewValue();
-			RGB rgb = StringConverter.asRGB(newval);
-			Color color = setRGBForTokenType(toktype, rgb);
-            
-			//notify all listeners of the change
-            ColorChangeEvent evt = new ColorChangeEvent(ColorManager.this, toktype, color);
-			for (ChangeEventListener listener : colorChangeListeners) listener.colorPreferenceChanged(evt);
+			// check whether even was a Color Change event at all, as all evens (e.g. checkbox) pass through here
+			if (toktype != null) {
+				//get the new color assigned to the token type
+				String newval = (String)event.getNewValue();
+				try {
+					RGB rgb = StringConverter.asRGB(newval);
+					Color color = setRGBForTokenType(toktype, rgb);
+
+					//notify all listeners of the change
+					ColorChangeEvent evt = new ColorChangeEvent(ColorManager.this, toktype, color);
+					for (ChangeEventListener listener : colorChangeListeners) listener.colorPreferenceChanged(evt);
+				} catch (DataFormatException dfe) {
+					// should never happen, except for bugs
+					// TODO use Eclipse warning instead of sysout
+					System.out.println("Warning: RGB format not recognized for " + newval);
+				}
+			}
 		}
 	};
 	

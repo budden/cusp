@@ -359,16 +359,18 @@ public class SwankInterface {
 		
 		synchronized(port) {
 			++port;
-			implementation = null;
-			
-			// Find an implementation and start a lisp process
-			// the pecking order of lisps:
-			if (implementation == null) {
-				implementation = RemoteImplementation.findImplementation();
-			}
-			if (implementation == null) {
-				implementation = SiteWideImplementation.findImplementation();
- 			}
+  			implementation = null;
+  			
+ 			// First attempt to use preferences to identify lisp implementation
+ 			IPreferenceStore prefStore = LispPlugin.getDefault().getPreferenceStore();
+ 			if (prefStore.getBoolean(PreferenceConstants.USE_SITEWIDE_LISP)) {
+ 				implementation = SiteWideImplementation.findImplementation();
+ 			} else if (prefStore.getBoolean(PreferenceConstants.USE_REMOTE_LISP)) {  
+  				implementation = RemoteImplementation.findImplementation();
+   			}
+ 			
+ 			// As a fallback, if the above failed, find an implementation 
+ 			// and start a lisp process trying sbcl and allegro in default locations:
 			if (implementation == null) {
 				implementation = SBCLImplementation.findImplementation();
 			}
@@ -386,6 +388,7 @@ public class SwankInterface {
 					return false;
 				}
 			} else {
+				// always try to load sbcl as second fallback
 				try {
 					ProcessBuilder pb = new ProcessBuilder(new String[] {
 							"sbcl", "--load", slimePath });
