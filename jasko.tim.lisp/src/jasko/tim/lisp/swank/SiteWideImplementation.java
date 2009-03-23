@@ -5,6 +5,7 @@ import jasko.tim.lisp.preferences.PreferenceConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 
@@ -24,12 +25,8 @@ public class SiteWideImplementation extends LispImplementation {
 	 */
 	static public SiteWideImplementation findImplementation() {
 		IPreferenceStore prefStore = LispPlugin.getDefault().getPreferenceStore();
-		if (prefStore.getBoolean(PreferenceConstants.USE_SITEWIDE_LISP)) {
-			return new SiteWideImplementation(
-				prefStore.getString(PreferenceConstants.LISP_EXE));
-		} else {
-			return null;
-		}
+		String executable = prefStore.getString(PreferenceConstants.LISP_EXE);
+		return new SiteWideImplementation(executable);
 	}
 
 	
@@ -50,6 +47,9 @@ public class SiteWideImplementation extends LispImplementation {
 	
 	public Process start(String loadPath, int port) throws IOException {
 		if (isValid()) {
+			if (!executable.exists()) {
+				throw new IllegalArgumentException("Executable file does not exist :'" + executable + "'");
+			}
 			ProcessBuilder pb;
 			String[] commandLine = new String[] {
 				executable.getPath(),

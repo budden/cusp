@@ -146,7 +146,11 @@ public class ReplView extends ViewPart implements SelectionListener {
 		if (currState() instanceof DebugState) {
 			debugTree.setFocus();
 		} else {
-			in.getControl().setFocus();
+			// in is null if connection to swank failed, 
+ 			// because as a workaround just a label is created in view
+ 			if (in != null) {
+ 				in.getControl().setFocus();
+ 			}
 		}
 	}
 	

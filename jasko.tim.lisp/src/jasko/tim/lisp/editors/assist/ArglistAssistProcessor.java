@@ -374,8 +374,12 @@ public class ArglistAssistProcessor implements IContentAssistProcessor {
 		public boolean updatePresentation(int offset, TextPresentation pres) {
 			String display = info.getInformationDisplayString();
 			LispNode stuff = LispParser.parse(display,true);
-			pres.addStyleRange(new StyleRange(0, Math.min(stuff.endOffset+1,display.length())
-					, null, null, SWT.BOLD));
+			// Without the check, sometimes the same range gets added twice for some reason, which causes an 
+ 			// IllegalArgumentException later in StyledText.setStyleRanges because of overlap
+ 			if (pres.getCoverage() == null || pres.getCoverage().getLength() == 0) {
+ 				pres.addStyleRange(new StyleRange(0, Math.min(stuff.endOffset+1,display.length())
+ 						, null, null, SWT.BOLD));
+ 			}
 			return true;
 		}
 	}

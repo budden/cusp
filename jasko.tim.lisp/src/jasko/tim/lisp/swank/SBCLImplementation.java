@@ -38,8 +38,8 @@ public class SBCLImplementation extends LispImplementation {
 	 */
 	static public File findExecutable()
 	{
-		File implementafoltionFolder = findFolder();
-		if (implementafoltionFolder != null)
+		File implementationFolder = findFolder();
+		if (implementationFolder != null)
 		{
 			String os = System.getProperty("os.name").toLowerCase();
 			String execName;
@@ -47,7 +47,7 @@ public class SBCLImplementation extends LispImplementation {
 				execName = "sbcl.exe";
 			else
 				execName = "sbcl";
-			File possibleExecutable = new File(implementafoltionFolder.getPath() 
+			File possibleExecutable = new File(implementationFolder.getPath() 
 					+ File.separator + execName);
 			
 			if (possibleExecutable.exists())
@@ -130,14 +130,16 @@ public class SBCLImplementation extends LispImplementation {
 	 */
 	static public SBCLImplementation findImplementation()
 	{
+		SBCLImplementation implementation = null;
 		File executable = findExecutable();
-		File dir = findFolder();
-		if (executable != null && dir != null)
-		{
-			return new SBCLImplementation(executable, dir);
+		if (executable != null){
+			File dir = findFolder();
+			if( dir != null)
+			{
+				implementation = new SBCLImplementation(executable, dir);
+			}
 		}
-		else
-			return null;
+		return implementation;
 	}
 
 	static public SBCLImplementation findImplementation(String filepath)
