@@ -1,7 +1,7 @@
 ;;; -*- Mode: LISP; Syntax: COMMON-LISP; Package: STARTER-PACK; Base: 10 -*-
-;;; $Header: /usr/local/cvsrep/starter-pack/specials.lisp,v 1.34 2007/05/27 10:12:19 edi Exp $
+;;; $Header: /usr/local/cvsrep/starter-pack/specials.lisp,v 1.38 2008/07/24 00:55:35 edi Exp $
 
-;;; Copyright (c) 2006-2007, Dr. Edmund Weitz.  All rights reserved.
+;;; Copyright (c) 2006-2008, Dr. Edmund Weitz.  All rights reserved.
 
 ;;; Redistribution and use in source and binary forms, with or without
 ;;; modification, are permitted provided that the following conditions
@@ -39,19 +39,27 @@
     (:chunga
      "Portable chunked streams."
      "http://weitz.de/files/chunga.tar.gz"
-     :flexi-streams)
+     :trivial-gray-streams)
     (:cl-base64
      "Base64 decoding and encoding."
      "http://files.b9.com/cl-base64/cl-base64-latest.tar.gz")
     (:cl-fad
      "Portable pathname operations."
      "http://weitz.de/files/cl-fad.tar.gz")
+    (:cl-interpol
+     "String interpolation."
+     "http://weitz.de/files/cl-interpol.tar.gz"
+     :cl-unicode)
     (:cl-ppcre
      "Perl-compatible regular expressions."
      "http://weitz.de/files/cl-ppcre.tar.gz")
     (:cl-smtp
      "SMTP client functionality."
      "http://common-lisp.net/project/cl-smtp/cl-smtp.tar.gz")
+    (:cl-unicode
+     "A portable Unicode library."
+     "http://weitz.de/files/cl-unicode.tar.gz"
+     :cl-ppcre)
     (:cl-utilities 
      "A library of semi-standard utilities."
      "http://www.common-lisp.net/project/cl-utilities/cl-utilities-latest.tar.gz")
@@ -70,7 +78,7 @@
     (:drakma
      "An HTTP client"
      "http://weitz.de/files/drakma.tar.gz"
-     :chunga :cl-base64 :puri)
+     :chunga :cl-base64 :flexi-streams :puri)
     (:flexi-streams
      "Flexible bivalent streams."
      "http://weitz.de/files/flexi-streams.tar.gz"
@@ -85,7 +93,7 @@
     (:hunchentoot
      "Web server."
      "http://weitz.de/files/hunchentoot.tar.gz"     
-     :md5 :cl-base64 :rfc2388 :cl-ppcre :url-rewrite :chunga :gzip-stream)
+     :md5 :cl-base64 :rfc2388 :cl-ppcre :url-rewrite :chunga :flexi-streams :gzip-stream :cl-fad)
     (:lw-add-ons
      "Enhancement to the LispWorks IDE."
      "http://weitz.de/files/lw-add-ons.tar.gz"
@@ -153,7 +161,7 @@ image exits.")
 (defvar *asdf-url* "http://cclan.cvs.sourceforge.net/*checkout*/cclan/asdf/asdf.lisp"
   "The URL to get the `asdf.lisp' file from.")
 
-(defvar *sqlite-url* "http://www.sqlite.org/sqlitedll-3_3_6.zip"
+(defvar *sqlite-url* "http://www.sqlite.org/sqlitedll-3_5_4.zip"
   "The URL used to retrieve the SQLite3 DLL.")
 
 (defvar *start-file-url* "http://weitz.de/starter-pack/start.lisp"
