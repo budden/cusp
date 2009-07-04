@@ -4,14 +4,14 @@ This wiki is oriented toward the further development of Cusp. If you just want t
 Otherwise, read these:  
  * MissionStatement - Why we do what we do.  
  * DevStart - What you need to do to do what we do.  
- * [http://cusp.devjavu.com/projects/cusp/wiki/Apologia Apologia] - What I did wrong.  
+ * [Apologia] - What I did wrong.  
  * WishList - What you can do right.  
                   
 	                  
-There's also a [http://cusp.devjavu.com/projects/cusp/wiki/FAQ FAQ].  
+There's also a [FAQ].  
                   
  
 
 = Repository =  
           
-The [http://subversion.tigris.org/ Subversion] repository is now available at '''http://svn.devjavu.com/cusp'''
+The  repository is now available at http://code.google.com/p/cusp/source/checkout
