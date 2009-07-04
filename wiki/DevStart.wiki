@@ -1,0 +1,25 @@
+
+== Getting Cusp running from source ==
+
+ * Check out the repository from '''http://svn.devjavu.com/cusp'''
+ * Import the project into Eclipse (File > Import > Existing Projects into Workspace)
+ * Create an sbcl directory in the project. Put sbcl in there. Make sure to include the sbcl executable.
+ * Run Cusp as a plugin, and behold the glory! (Run > Run... > Eclipse Application > New)
+ * Sometimes you need to provide .classpath file to compile and launch plugin from development environment. Here is what you can do: Go to File->New->Project->Plug-in Project Keep everything default and create temporary project. Then go to project folder and find .classpath file. Copy it to jasko.tim.lisp folder before importing plugin to Eclipse using File->Import->Existing Projects into Workspace.
+ * On Windows it may be necessary to edit jasko.tim.lisp\build.properties and remove trailing slashes from all directory names. Also Eclipse Plug-in libraries need to be added as an external dependency (project properties->Java Build Path->Libraries->Add Library->Plug-in Dependencies)
+
+== The following references will help you immensely ==
+
+ * [http://www.jlab.net/eclipse/doc/3.1/ Eclipse API]
+ * [http://help.eclipse.org/help32/index.jsp Eclipse Platform Plugin Developer Guide]
+
+ * [http://www.eclipse.org/swt/snippets/ SWT Snippets]
+ * [http://wiki.eclipse.org/index.php/Eclipse_FAQs#Implementing_Support_for_Your_Own_Language Official Eclipse Faqs]
+
+ * [http://java.sun.com/j2se/1.5.0/docs/api/ Java 5 API]
+
+
+
+== Notes for development ==
+
+ * If you're looking to hook into swank commands not currently used by Cusp, the fastest way to find them is to load up Slime in Linux, listen to the loopback on Ethereal, and perform the function you want to emulate. Then look at the sniffed packets to find out what swank command you want.
