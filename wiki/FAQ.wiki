@@ -6,7 +6,7 @@ Try one of the procedures described in the following messages:
 - [http://groups.google.com/group/cusp-development/msg/721a012e3af35dc8]
 
 == When trying to start Cusp, I get a java.lang.NoClassDefFoundError error or "Problems opening perspective 'jasko.tim.lisp.perspective.LispPerspectiveFactory'". What's the deal? ==
-You have an old version of Java. Make sure you have the latest Java ''and'' make sure that Eclipse is running under it.
+You have an old version of Java. Make sure you have the latest Java _and_ make sure that Eclipse is running under it.
 Feel dumb now, don't you? Just keep in mind that enough people had this problem that it got into the FAQ.
 
 Still not working? You're on Linux, aren't you? I bet you think you upgraded your Java installation but really didn't (the Linux Java installer sucks). In Eclipse, open the Error Log view, and double-click on the error. See the java.version? Bet it's older than 1.5. (You can also get at this information in Help > About Eclipse SDK > Configuration Details.)
@@ -32,7 +32,8 @@ First, set SBCL_HOME to the Cusp/sbcl directory. Then try starting sbcl with a c
 
 More information on the issue you're probably encountering can be found at [http://www.archivesat.com/Steel_Bank_Common_Lisp_(SBCL)/thread2297905.htm http://www.archivesat.com/Steel_Bank_Common_Lisp_(SBCL)/thread2297905.htm] and [http://groups.google.pl/group/comp.lang.lisp/msg/e03a8ebf612f6a0d http://groups.google.pl/group/comp.lang.lisp/msg/e03a8ebf612f6a0d]
 
-'''I get the same error, but I'm not on Windows:''' Maybe the automatic installation of sbcl failed. If the sbcl.zip file is already in "plugins/sbcl_linux_.../" extract it manually and make sbcl executable. Otherwise install sbcl yourself. Don't forget to set up implementation paths in eclipse.
+===I get the same error, but I'm not on Windows:===
+Maybe the automatic installation of sbcl failed. If the sbcl.zip file is already in "plugins/sbcl`_`linux`_`.../" extract it manually and make sbcl executable. Otherwise install sbcl yourself. Don't forget to set up implementation paths in eclipse.
 
 ----
 
@@ -59,7 +60,7 @@ Note: Updating Slime is not advised, as the swank protocol changes semi-often, a
 
 
 == Is Cusp open source? ==
-At last, yes. The svn repository is at http://svn.devjavu.com/cusp . The Trac wiki lives at [http://cusp.devjavu.com/ http://cusp.devjavu.com/].
+Yes. Info on how to access the svn repository is at http://code.google.com/p/cusp/source/checkout . The wiki lives right here.
 
 
 ----
