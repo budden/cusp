@@ -1,6 +1,6 @@
 == Getting Cusp running from source ==
 
- * Check out the repository with the command "svn checkout http://cusp.googlecode.com/svn/trunk/ cusp-read-only"
+ * Check out the repository with the command "svn checkout http://cusp.googlecode.com/svn/ cusp-read-only"
  * Import the project into Eclipse (File > Import > Existing Projects into Workspace)
  * Create an sbcl directory in the project. Put sbcl in there. Make sure to include the sbcl executable.
  * Run Cusp as a plugin, and behold the glory! (Run > Run... > Eclipse Application > New)
