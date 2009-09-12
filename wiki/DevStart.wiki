@@ -22,3 +22,8 @@
 == Notes for development ==
 
  * If you're looking to hook into swank commands not currently used by Cusp, the fastest way to find them is to load up Slime in Linux, listen to the loopback on Ethereal, and perform the function you want to emulate. Then look at the sniffed packets to find out what swank command you want.
+
+
+== Submitting your changes ==
+
+Bundle your changes up into a patch and submit it to the newsgroup. Somebody with commit access will look it over and add it in if it looks good. Do that a few times and if it looks like you're on a roll, I'll probably give you commit access.
