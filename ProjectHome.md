@@ -1,0 +1,1 @@
+Cusp is a development environment for Lisp built on top of the Eclipse platform. It runs SBCL and hooks into the Swank half of Slime. It provides a repl, project manager, an outline of your code for simple navigation, code editor, syntax highlighting, auto-indentation, parenthesis matching, auto-completion, library management, and more.
